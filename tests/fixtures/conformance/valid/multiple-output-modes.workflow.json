@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "multiple-output-modes",
+  "name": "Multiple output modes",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "log",
+      "type": "core.log",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "log",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {
+    "result": {
+      "mode": "single",
+      "from": {
+        "node": "log",
+        "port": "main"
+      },
+      "description": "Final result."
+    },
+    "items": {
+      "mode": "collection",
+      "from": {
+        "node": "log",
+        "port": "items"
+      }
+    },
+    "records": {
+      "mode": "stream",
+      "channel": "records.done",
+      "description": "Streamed records."
+    }
+  }
+}

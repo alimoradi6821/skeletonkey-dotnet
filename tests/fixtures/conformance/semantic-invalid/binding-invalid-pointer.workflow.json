@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "binding-invalid-pointer",
+  "name": "Binding invalid pointer",
+  "inputs": { "account": { "type": "object", "required": false } },
+  "variables": {},
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1, "disabled": false, "parameters": {} },
+    { "id": "invoke", "type": "workflow.invoke", "typeVersion": 1, "disabled": false, "parameters": { "workflow": { "id": "child-workflow" }, "inputs": { "account": { "$binding": { "source": "input", "name": "account", "path": "/bad~2path" } } } } }
+  ],
+  "connections": [
+    { "from": { "node": "start", "port": "main" }, "to": { "node": "invoke", "port": "main" } }
+  ],
+  "outputs": {}
+}

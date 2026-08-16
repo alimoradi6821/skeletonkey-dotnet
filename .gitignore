@@ -1,0 +1,18 @@
+﻿# Build outputs
+bin/
+obj/
+artifacts/
+
+# Test outputs
+TestResults/
+coverage/
+
+# IDE and user files
+.vs/
+.idea/
+*.user
+*.suo
+
+# Packages
+*.nupkg
+*.snupkg

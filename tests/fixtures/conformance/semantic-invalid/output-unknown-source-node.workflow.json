@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "output-unknown-source-node",
+  "name": "Output unknown source node",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [],
+  "outputs": {
+    "result": {
+      "mode": "single",
+      "from": {
+        "node": "missing",
+        "port": "main"
+      }
+    }
+  }
+}

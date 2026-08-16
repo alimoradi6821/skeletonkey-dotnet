@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Runner.Core</AssemblyName>
+    <RootNamespace>SkeletonKey.Runner.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Analysis.Default\SkeletonKey.Analysis.Default.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Artifacts\SkeletonKey.Artifacts.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Artifacts.FileSystem\SkeletonKey.Artifacts.FileSystem.csproj" />
+    <ProjectReference Include="..\SkeletonKey.BuiltIns.Runtime\SkeletonKey.BuiltIns.Runtime.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Catalog.Validation\SkeletonKey.Catalog.Validation.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Locators.Json\SkeletonKey.Locators.Json.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Locators.Runtime\SkeletonKey.Locators.Runtime.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Materialization\SkeletonKey.Materialization.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Planning.Default\SkeletonKey.Planning.Default.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Runtime.Default\SkeletonKey.Runtime.Default.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Serialization.Json\SkeletonKey.Serialization.Json.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Validation\SkeletonKey.Validation.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Web.BuiltIns\SkeletonKey.Web.BuiltIns.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Web.Playwright\SkeletonKey.Web.Playwright.csproj" />
+  </ItemGroup>
+</Project>

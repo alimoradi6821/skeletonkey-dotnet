@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "check-account",
+  "name": "Check Account",
+  "inputs": {
+    "account": {
+      "type": "object",
+      "required": true
+    }
+  },
+  "variables": {},
+  "resources": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "check",
+      "type": "core.log",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "message": "Check whether the account is logged in."
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "check",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {
+    "loggedOut": {
+      "mode": "single",
+      "from": {
+        "node": "check",
+        "port": "main"
+      }
+    }
+  }
+}

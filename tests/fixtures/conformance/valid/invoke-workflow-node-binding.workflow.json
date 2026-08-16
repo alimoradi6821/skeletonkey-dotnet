@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "invoke-node-binding",
+  "name": "Invoke node binding",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1, "disabled": false, "parameters": {} },
+    { "id": "previous", "type": "core.log", "typeVersion": 1, "disabled": false, "parameters": {} },
+    {
+      "id": "invoke",
+      "type": "workflow.invoke",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "workflow": { "id": "child-workflow", "version": "1.0.0" },
+        "inputs": { "previousResult": { "$binding": { "source": "node", "node": "previous", "port": "result" } } }
+      }
+    }
+  ],
+  "connections": [
+    { "from": { "node": "start", "port": "main" }, "to": { "node": "previous", "port": "main" } },
+    { "from": { "node": "previous", "port": "main" }, "to": { "node": "invoke", "port": "main" } }
+  ],
+  "outputs": {}
+}

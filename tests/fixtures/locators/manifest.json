@@ -1,0 +1,22 @@
+{
+  "formatVersion": "0.1.0",
+  "cases": [
+    { "id": "valid-semantic-strategies", "category": "valid", "file": "valid/semantic-strategies.locators.json", "schema": "valid", "semantic": { "isValid": true, "errors": [] } },
+    { "id": "valid-fallback-strategies", "category": "valid", "file": "valid/fallback-strategies.locators.json", "schema": "valid", "semantic": { "isValid": true, "errors": [] } },
+    { "id": "valid-scoped-locators", "category": "valid", "file": "valid/scoped-locators.locators.json", "schema": "valid", "semantic": { "isValid": true, "errors": [] } },
+    { "id": "valid-collection-locator", "category": "valid", "file": "valid/collection-locator.locators.json", "schema": "valid", "semantic": { "isValid": true, "errors": [] } },
+    { "id": "valid-css-xpath-fallback", "category": "valid", "file": "valid/css-xpath-fallback.locators.json", "schema": "valid", "semantic": { "isValid": true, "errors": [] } },
+    { "id": "schema-invalid-missing-spec-version", "category": "schema-invalid", "file": "schema-invalid/missing-spec-version.locators.json", "schema": "invalid", "semantic": null },
+    { "id": "schema-invalid-missing-locators", "category": "schema-invalid", "file": "schema-invalid/missing-locators.locators.json", "schema": "invalid", "semantic": null },
+    { "id": "schema-invalid-unknown-root-property", "category": "schema-invalid", "file": "schema-invalid/unknown-root-property.locators.json", "schema": "invalid", "semantic": null },
+    { "id": "schema-invalid-strategy-unknown-kind", "category": "schema-invalid", "file": "schema-invalid/strategy-unknown-kind.locators.json", "schema": "invalid", "semantic": null },
+    { "id": "schema-invalid-strategy-missing-value", "category": "schema-invalid", "file": "schema-invalid/strategy-missing-value.locators.json", "schema": "invalid", "semantic": null },
+    { "id": "schema-invalid-locator-unknown-property", "category": "schema-invalid", "file": "schema-invalid/locator-unknown-property.locators.json", "schema": "invalid", "semantic": null },
+    { "id": "semantic-invalid-invalid-document-id", "category": "semantic-invalid", "file": "semantic-invalid/invalid-document-id.locators.json", "schema": "valid", "semantic": { "isValid": false, "errors": ["SKL1001"] } },
+    { "id": "semantic-invalid-invalid-locator-id", "category": "semantic-invalid", "file": "semantic-invalid/invalid-locator-id.locators.json", "schema": "valid", "semantic": { "isValid": false, "errors": ["SKL1002"] } },
+    { "id": "semantic-invalid-unknown-within", "category": "semantic-invalid", "file": "semantic-invalid/unknown-within.locators.json", "schema": "valid", "semantic": { "isValid": false, "errors": ["SKL1005"] } },
+    { "id": "semantic-invalid-direct-self-scope", "category": "semantic-invalid", "file": "semantic-invalid/direct-self-scope.locators.json", "schema": "valid", "semantic": { "isValid": false, "errors": ["SKL1006"] } },
+    { "id": "semantic-invalid-scope-cycle", "category": "semantic-invalid", "file": "semantic-invalid/scope-cycle.locators.json", "schema": "valid", "semantic": { "isValid": false, "errors": ["SKL1007", "SKL1007"] } },
+    { "id": "semantic-invalid-empty-strategy-value", "category": "semantic-invalid", "file": "semantic-invalid/empty-strategy-value.locators.json", "schema": "valid", "semantic": { "isValid": false, "errors": ["SKL1009"] } }
+  ]
+}

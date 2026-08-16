@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Catalog</AssemblyName>
+    <RootNamespace>SkeletonKey.Catalog</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
+  </ItemGroup>
+</Project>

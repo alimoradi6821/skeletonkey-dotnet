@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.BuiltIns</AssemblyName>
+    <RootNamespace>SkeletonKey.BuiltIns</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Catalog\SkeletonKey.Catalog.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+  </ItemGroup>
+</Project>

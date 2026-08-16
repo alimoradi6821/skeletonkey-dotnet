@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "invoke-forward-streams",
+  "name": "Invoke forward streams",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1, "disabled": false, "parameters": {} },
+    { "id": "invoke", "type": "workflow.invoke", "typeVersion": 1, "disabled": false, "parameters": { "workflow": { "id": "child-workflow", "version": "1.0.0" }, "streams": { "mode": "forward" } } }
+  ],
+  "connections": [
+    { "from": { "node": "start", "port": "main" }, "to": { "node": "invoke", "port": "main" } }
+  ],
+  "outputs": {}
+}

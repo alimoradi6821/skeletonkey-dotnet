@@ -1,0 +1,126 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "early-return",
+  "name": "Early Return",
+  "inputs": {
+    "account": {
+      "type": "object",
+      "required": true
+    }
+  },
+  "variables": {},
+  "resources": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "check-account",
+      "type": "workflow.invoke",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "workflow": {
+          "id": "check-account",
+          "version": "0.1.0"
+        },
+        "inputs": {
+          "account": {
+            "$binding": {
+              "source": "input",
+              "name": "account"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "is-logged-out",
+      "type": "flow.if",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "condition": {
+          "$expression": "nodes[\u0027check-account\u0027].outputs.loggedOut"
+        }
+      }
+    },
+    {
+      "id": "return-login-required",
+      "type": "core.return",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "outcome": {
+          "kind": "requires-action",
+          "code": "account.logged-out",
+          "message": "The account must be logged in again.",
+          "data": {
+            "accountId": {
+              "$binding": {
+                "source": "input",
+                "name": "account",
+                "path": "/accountId"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "check-account",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "check-account",
+        "port": "main"
+      },
+      "to": {
+        "node": "is-logged-out",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "is-logged-out",
+        "port": "true"
+      },
+      "to": {
+        "node": "return-login-required",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "is-logged-out",
+        "port": "false"
+      },
+      "to": {
+        "node": "end",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {}
+}

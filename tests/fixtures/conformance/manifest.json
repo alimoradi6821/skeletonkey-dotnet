@@ -1,0 +1,1353 @@
+{
+  "formatVersion": "0.1.0",
+  "cases": [
+    {
+      "id": "valid-minimal",
+      "category": "valid",
+      "file": "valid/minimal.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-inputs-and-variables",
+      "category": "valid",
+      "file": "valid/inputs-and-variables.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-policy-and-designer",
+      "category": "valid",
+      "file": "valid/policy-and-designer.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-nested-parameters",
+      "category": "valid",
+      "file": "valid/nested-parameters.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-single-output",
+      "category": "valid",
+      "file": "valid/single-output.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-collection-output",
+      "category": "valid",
+      "file": "valid/collection-output.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-stream-output",
+      "category": "valid",
+      "file": "valid/stream-output.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-multiple-output-modes",
+      "category": "valid",
+      "file": "valid/multiple-output-modes.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-invoke-workflow-literal-inputs",
+      "category": "valid",
+      "file": "valid/invoke-workflow-literal-inputs.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-invoke-workflow-input-binding",
+      "category": "valid",
+      "file": "valid/invoke-workflow-input-binding.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-invoke-workflow-variable-binding",
+      "category": "valid",
+      "file": "valid/invoke-workflow-variable-binding.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-invoke-workflow-node-binding",
+      "category": "valid",
+      "file": "valid/invoke-workflow-node-binding.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-invoke-workflow-nested-bindings",
+      "category": "valid",
+      "file": "valid/invoke-workflow-nested-bindings.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-invoke-workflow-literal-wrapper",
+      "category": "valid",
+      "file": "valid/invoke-workflow-literal-wrapper.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-invoke-workflow-forward-streams",
+      "category": "valid",
+      "file": "valid/invoke-workflow-forward-streams.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-invoke-workflow-suppressed-streams",
+      "category": "valid",
+      "file": "valid/invoke-workflow-suppressed-streams.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-invoke-workflow-mapped-streams",
+      "category": "valid",
+      "file": "valid/invoke-workflow-mapped-streams.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "serialization-invalid-comment",
+      "category": "serialization-invalid",
+      "file": "serialization-invalid/comment.workflow.json",
+      "serialization": "failure",
+      "schema": "not-applicable",
+      "semantic": null
+    },
+    {
+      "id": "serialization-invalid-trailing-comma",
+      "category": "serialization-invalid",
+      "file": "serialization-invalid/trailing-comma.workflow.json",
+      "serialization": "failure",
+      "schema": "not-applicable",
+      "semantic": null
+    },
+    {
+      "id": "serialization-invalid-duplicate-root-property",
+      "category": "serialization-invalid",
+      "file": "serialization-invalid/duplicate-root-property.workflow.json",
+      "serialization": "failure",
+      "schema": "valid",
+      "semantic": null
+    },
+    {
+      "id": "serialization-invalid-duplicate-nested-parameter",
+      "category": "serialization-invalid",
+      "file": "serialization-invalid/duplicate-nested-parameter.workflow.json",
+      "serialization": "failure",
+      "schema": "valid",
+      "semantic": null
+    },
+    {
+      "id": "serialization-invalid-unknown-root-property",
+      "category": "serialization-invalid",
+      "file": "serialization-invalid/unknown-root-property.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "serialization-invalid-wrong-property-casing",
+      "category": "serialization-invalid",
+      "file": "serialization-invalid/wrong-property-casing.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-missing-required-root-property",
+      "category": "schema-invalid",
+      "file": "schema-invalid/missing-required-root-property.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-null-nodes",
+      "category": "schema-invalid",
+      "file": "schema-invalid/null-nodes.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-null-node-entry",
+      "category": "schema-invalid",
+      "file": "schema-invalid/null-node-entry.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-numeric-enum",
+      "category": "schema-invalid",
+      "file": "schema-invalid/numeric-enum.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-invalid-node-type-format",
+      "category": "schema-invalid",
+      "file": "schema-invalid/invalid-node-type-format.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-invalid-endpoint-port",
+      "category": "schema-invalid",
+      "file": "schema-invalid/invalid-endpoint-port.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-unknown-node-property",
+      "category": "schema-invalid",
+      "file": "schema-invalid/unknown-node-property.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-required-input-with-default",
+      "category": "schema-invalid",
+      "file": "schema-invalid/required-input-with-default.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-input-default-type-mismatch",
+      "category": "schema-invalid",
+      "file": "schema-invalid/input-default-type-mismatch.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-non-positive-designer-size",
+      "category": "schema-invalid",
+      "file": "schema-invalid/non-positive-designer-size.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-output-missing-mode",
+      "category": "schema-invalid",
+      "file": "schema-invalid/output-missing-mode.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-output-unknown-property",
+      "category": "schema-invalid",
+      "file": "schema-invalid/output-unknown-property.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-output-invalid-mode",
+      "category": "schema-invalid",
+      "file": "schema-invalid/output-invalid-mode.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-single-output-missing-source",
+      "category": "schema-invalid",
+      "file": "schema-invalid/single-output-missing-source.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-single-output-with-channel",
+      "category": "schema-invalid",
+      "file": "schema-invalid/single-output-with-channel.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-stream-output-missing-channel",
+      "category": "schema-invalid",
+      "file": "schema-invalid/stream-output-missing-channel.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-stream-output-with-source",
+      "category": "schema-invalid",
+      "file": "schema-invalid/stream-output-with-source.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-invalid-output-channel",
+      "category": "schema-invalid",
+      "file": "schema-invalid/invalid-output-channel.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-invoke-missing-workflow",
+      "category": "schema-invalid",
+      "file": "schema-invalid/invoke-missing-workflow.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-invoke-unknown-parameter",
+      "category": "schema-invalid",
+      "file": "schema-invalid/invoke-unknown-parameter.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-invoke-invalid-stream-mode",
+      "category": "schema-invalid",
+      "file": "schema-invalid/invoke-invalid-stream-mode.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-binding-missing-source",
+      "category": "schema-invalid",
+      "file": "schema-invalid/binding-missing-source.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-binding-invalid-source-shape",
+      "category": "schema-invalid",
+      "file": "schema-invalid/binding-invalid-source-shape.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-binding-unknown-property",
+      "category": "schema-invalid",
+      "file": "schema-invalid/binding-unknown-property.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-literal-wrapper-with-sibling",
+      "category": "schema-invalid",
+      "file": "schema-invalid/literal-wrapper-with-sibling.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-map-streams-without-mappings",
+      "category": "schema-invalid",
+      "file": "schema-invalid/map-streams-without-mappings.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "semantic-invalid-duplicate-node-id",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/duplicate-node-id.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2304"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-missing-start-node",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/missing-start-node.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2308"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-multiple-start-nodes",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/multiple-start-nodes.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2308"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-unknown-connection-source",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/unknown-connection-source.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2403"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-unknown-connection-target",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/unknown-connection-target.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2404"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-duplicate-connection",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/duplicate-connection.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2407"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-incoming-connection-to-start",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/incoming-connection-to-start.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2408"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-outgoing-connection-from-end",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/outgoing-connection-from-end.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2409"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-invalid-timeout",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/invalid-timeout.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2601"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-max-delay-less-than-delay",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/max-delay-less-than-delay.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2606"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-output-unknown-source-node",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/output-unknown-source-node.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2805"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-invoke-invalid-reference-id",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/invoke-invalid-reference-id.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2902"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-invoke-invalid-reference-version",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/invoke-invalid-reference-version.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2903"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-binding-unknown-input",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/binding-unknown-input.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2907"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-binding-unknown-variable",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/binding-unknown-variable.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2908"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-binding-unknown-node",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/binding-unknown-node.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2909"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-binding-self-reference",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/binding-self-reference.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2910"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-binding-invalid-pointer",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/binding-invalid-pointer.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2912"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-binding-invalid-default-policy",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/binding-invalid-default-policy.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2913"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-invoke-undeclared-stream-target",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/invoke-undeclared-stream-target.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2917"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-invoke-unsupported-version",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/invoke-unsupported-version.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW2918"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "warning-unreachable-node",
+      "category": "warning",
+      "file": "warning/unreachable-node.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": [
+          "SKW2501"
+        ]
+      }
+    },
+    {
+      "id": "warning-unknown-designer-position-node",
+      "category": "warning",
+      "file": "warning/unknown-designer-position-node.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": [
+          "SKW2701"
+        ]
+      }
+    },
+    {
+      "id": "warning-unknown-designer-size-node",
+      "category": "warning",
+      "file": "warning/unknown-designer-size-node.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": [
+          "SKW2702"
+        ]
+      }
+    },
+    {
+      "id": "valid-expression-condition",
+      "category": "valid",
+      "file": "valid/expression-condition.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-expression-with-functions",
+      "category": "valid",
+      "file": "valid/expression-with-functions.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-iteration-binding",
+      "category": "valid",
+      "file": "valid/iteration-binding.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-flow-if",
+      "category": "valid",
+      "file": "valid/flow-if.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-flow-switch",
+      "category": "valid",
+      "file": "valid/flow-switch.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-flow-foreach-sequential",
+      "category": "valid",
+      "file": "valid/flow-foreach-sequential.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-flow-foreach-parallel",
+      "category": "valid",
+      "file": "valid/flow-foreach-parallel.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-flow-repeat",
+      "category": "valid",
+      "file": "valid/flow-repeat.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-flow-while",
+      "category": "valid",
+      "file": "valid/flow-while.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-core-return",
+      "category": "valid",
+      "file": "valid/core-return.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "id": "schema-invalid-expression-wrapper-with-sibling",
+      "category": "schema-invalid",
+      "file": "schema-invalid/expression-wrapper-with-sibling.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-expression-non-string",
+      "category": "schema-invalid",
+      "file": "schema-invalid/expression-non-string.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-flow-if-missing-condition",
+      "category": "schema-invalid",
+      "file": "schema-invalid/flow-if-missing-condition.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-flow-switch-missing-cases",
+      "category": "schema-invalid",
+      "file": "schema-invalid/flow-switch-missing-cases.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-flow-foreach-missing-items",
+      "category": "schema-invalid",
+      "file": "schema-invalid/flow-foreach-missing-items.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-flow-foreach-invalid-mode",
+      "category": "schema-invalid",
+      "file": "schema-invalid/flow-foreach-invalid-mode.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-flow-while-invalid-max-iterations-type",
+      "category": "schema-invalid",
+      "file": "schema-invalid/flow-while-invalid-max-iterations-type.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-core-return-missing-outcome",
+      "category": "schema-invalid",
+      "file": "schema-invalid/core-return-missing-outcome.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "semantic-invalid-expression-syntax-error",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/expression-syntax-error.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3002"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-expression-unknown-input",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/expression-unknown-input.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3003"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-expression-unknown-variable",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/expression-unknown-variable.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3004"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-expression-unknown-node",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/expression-unknown-node.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3005"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-expression-self-reference",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/expression-self-reference.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3006"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-iteration-unknown-loop",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/iteration-unknown-loop.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3007"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-flow-if-invalid-condition",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/flow-if-invalid-condition.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3012"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-flow-switch-duplicate-case",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/flow-switch-duplicate-case.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3015"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-flow-foreach-invalid-policy",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/flow-foreach-invalid-policy.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3016"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-flow-repeat-negative-count",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/flow-repeat-negative-count.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3017"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-flow-while-invalid-limit",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/flow-while-invalid-limit.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3018"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "semantic-invalid-core-return-outgoing-connection",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/core-return-outgoing-connection.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": {
+        "isValid": false,
+        "errors": [
+          "SKW3022"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "id": "valid-workflow-resources",
+      "category": "valid",
+      "file": "valid/workflow-resources.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": true, "errors": [], "warnings": [] }
+    },
+    {
+      "id": "valid-resource-reference",
+      "category": "valid",
+      "file": "valid/resource-reference.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": true, "errors": [], "warnings": [] }
+    },
+    {
+      "id": "valid-invoke-resource-mapping",
+      "category": "valid",
+      "file": "valid/invoke-resource-mapping.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": true, "errors": [], "warnings": [] }
+    },
+    {
+      "id": "valid-locator-reference",
+      "category": "valid",
+      "file": "valid/locator-reference.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": true, "errors": [], "warnings": [] }
+    },
+    {
+      "id": "valid-interaction-confirmation",
+      "category": "valid",
+      "file": "valid/interaction-confirmation.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": true, "errors": [], "warnings": [] }
+    },
+    {
+      "id": "valid-interaction-secret",
+      "category": "valid",
+      "file": "valid/interaction-secret.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": true, "errors": [], "warnings": [] }
+    },
+    {
+      "id": "valid-interaction-choice",
+      "category": "valid",
+      "file": "valid/interaction-choice.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": true, "errors": [], "warnings": [] }
+    },
+    {
+      "id": "valid-interaction-manual-action",
+      "category": "valid",
+      "file": "valid/interaction-manual-action.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": true, "errors": [], "warnings": [] }
+    },
+    {
+      "id": "schema-invalid-resource-missing-kind",
+      "category": "schema-invalid",
+      "file": "schema-invalid/resource-missing-kind.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-resource-unknown-property",
+      "category": "schema-invalid",
+      "file": "schema-invalid/resource-unknown-property.workflow.json",
+      "serialization": "failure",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-resource-wrapper-with-sibling",
+      "category": "schema-invalid",
+      "file": "schema-invalid/resource-wrapper-with-sibling.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-locator-wrapper-with-sibling",
+      "category": "schema-invalid",
+      "file": "schema-invalid/locator-wrapper-with-sibling.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-interaction-missing-kind",
+      "category": "schema-invalid",
+      "file": "schema-invalid/interaction-missing-kind.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-interaction-missing-prompt",
+      "category": "schema-invalid",
+      "file": "schema-invalid/interaction-missing-prompt.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "schema-invalid-interaction-unknown-property",
+      "category": "schema-invalid",
+      "file": "schema-invalid/interaction-unknown-property.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": null
+    },
+    {
+      "id": "semantic-invalid-resource-invalid-name",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/resource-invalid-name.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": { "isValid": false, "errors": [ "SKW3101" ], "warnings": [] }
+    },
+    {
+      "id": "semantic-invalid-resource-invalid-kind",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/resource-invalid-kind.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": { "isValid": false, "errors": [ "SKW3102" ], "warnings": [] }
+    },
+    {
+      "id": "semantic-invalid-resource-duplicate-capability",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/resource-duplicate-capability.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": { "isValid": false, "errors": [ "SKW3104" ], "warnings": [] }
+    },
+    {
+      "id": "semantic-invalid-resource-reference-unknown",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/resource-reference-unknown.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": false, "errors": [ "SKW3107" ], "warnings": [] }
+    },
+    {
+      "id": "semantic-invalid-invoke-resource-unknown-parent",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/invoke-resource-unknown-parent.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": false, "errors": [ "SKW3107", "SKW3107" ], "warnings": [] }
+    },
+    {
+      "id": "semantic-invalid-locator-invalid-version",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/locator-invalid-version.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": false, "errors": [ "SKW3113" ], "warnings": [] }
+    },
+    {
+      "id": "semantic-invalid-interaction-choice-without-options",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/interaction-choice-without-options.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": { "isValid": false, "errors": [ "SKW3117" ], "warnings": [] }
+    },
+    {
+      "id": "semantic-invalid-interaction-secret-with-default",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/interaction-secret-with-default.workflow.json",
+      "serialization": "success",
+      "schema": "invalid",
+      "semantic": { "isValid": false, "errors": [ "SKW3122" ], "warnings": [] }
+    },
+    {
+      "id": "semantic-invalid-interaction-invalid-timeout",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/interaction-invalid-timeout.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": false, "errors": [ "SKW3120" ], "warnings": [] }
+    },
+    {
+      "id": "semantic-invalid-interaction-invalid-port",
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/interaction-invalid-port.workflow.json",
+      "serialization": "success",
+      "schema": "valid",
+      "semantic": { "isValid": false, "errors": [ "SKW3121" ], "warnings": [] }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "interaction-invalid-port",
+  "name": "Interaction Invalid Port",
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1 },
+    { "id": "request", "type": "interaction.request", "typeVersion": 1, "parameters": { "kind": "confirmation", "prompt": "Continue?" } }
+  ],
+  "connections": [
+    { "from": { "node": "start", "port": "main" }, "to": { "node": "request", "port": "wrong" } }
+  ]
+}

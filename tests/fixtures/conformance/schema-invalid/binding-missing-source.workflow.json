@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "binding-missing-source",
+  "name": "Binding missing source",
+  "nodes": [
+    {
+      "id": "invoke",
+      "type": "workflow.invoke",
+      "typeVersion": 1,
+      "parameters": {
+        "workflow": { "id": "child-workflow" },
+        "inputs": {
+          "value": { "$binding": { "name": "account" } }
+        }
+      }
+    }
+  ],
+  "connections": []
+}

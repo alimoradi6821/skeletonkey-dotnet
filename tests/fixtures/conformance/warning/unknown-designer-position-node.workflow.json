@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "unknown-designer-position-node",
+  "name": "Unknown Designer Position Node",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1
+    }
+  ],
+  "connections": [],
+  "designer": {
+    "positions": {
+      "missing": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  }
+}

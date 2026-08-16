@@ -1,0 +1,74 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "expression-condition",
+  "name": "expression-condition",
+  "inputs": {
+    "enabled": {
+      "type": "boolean"
+    },
+    "items": {
+      "type": "array"
+    },
+    "method": {
+      "type": "string"
+    },
+    "count": {
+      "type": "integer"
+    },
+    "account": {
+      "type": "object"
+    }
+  },
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "branch",
+      "type": "flow.if",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "condition": {
+          "$expression": "inputs.enabled"
+        }
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "branch",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "branch",
+        "port": "true"
+      },
+      "to": {
+        "node": "end",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {}
+}

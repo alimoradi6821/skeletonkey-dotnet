@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "multiple-start-nodes",
+  "name": "Multiple Start Nodes",
+  "nodes": [
+    {
+      "id": "start1",
+      "type": "core.start",
+      "typeVersion": 1
+    },
+    {
+      "id": "start2",
+      "type": "core.start",
+      "typeVersion": 1
+    }
+  ],
+  "connections": []
+}

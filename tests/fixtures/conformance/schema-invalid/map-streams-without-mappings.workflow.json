@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "map-streams-without-mappings",
+  "name": "Map streams without mappings",
+  "nodes": [
+    {
+      "id": "invoke",
+      "type": "workflow.invoke",
+      "typeVersion": 1,
+      "parameters": {
+        "workflow": { "id": "child-workflow" },
+        "streams": { "mode": "map" }
+      }
+    }
+  ],
+  "connections": []
+}

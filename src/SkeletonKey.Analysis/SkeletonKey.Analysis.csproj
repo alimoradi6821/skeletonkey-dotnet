@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Analysis</AssemblyName>
+    <RootNamespace>SkeletonKey.Analysis</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Catalog\SkeletonKey.Catalog.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+  </ItemGroup>
+</Project>

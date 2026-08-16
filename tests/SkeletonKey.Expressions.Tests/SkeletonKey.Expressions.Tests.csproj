@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Expressions.Tests</AssemblyName>
+    <RootNamespace>SkeletonKey.Expressions.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SkeletonKey.Expressions\SkeletonKey.Expressions.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+  </ItemGroup>
+</Project>

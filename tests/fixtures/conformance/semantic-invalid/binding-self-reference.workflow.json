@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "binding-self-reference",
+  "name": "Binding self reference",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1, "disabled": false, "parameters": {} },
+    { "id": "invoke", "type": "workflow.invoke", "typeVersion": 1, "disabled": false, "parameters": { "workflow": { "id": "child-workflow" }, "inputs": { "result": { "$binding": { "source": "node", "node": "invoke", "port": "result" } } } } }
+  ],
+  "connections": [
+    { "from": { "node": "start", "port": "main" }, "to": { "node": "invoke", "port": "main" } }
+  ],
+  "outputs": {}
+}

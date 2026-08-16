@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/locators/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "contacts",
+  "locators": {
+    "addContact": {
+      "strategies": [
+        { "kind": "role", "role": "button", "name": "Add contact", "match": "exact", "caseSensitive": true },
+        { "kind": "label", "value": "Phone", "match": "exact", "caseSensitive": true },
+        { "kind": "placeholder", "value": "Search", "match": "contains", "caseSensitive": false },
+        { "kind": "text", "value": "Add contact", "match": "contains", "caseSensitive": true },
+        { "kind": "title", "value": "Add member", "match": "exact", "caseSensitive": true },
+        { "kind": "alt-text", "value": "Profile", "match": "exact", "caseSensitive": true }
+      ]
+    }
+  }
+}

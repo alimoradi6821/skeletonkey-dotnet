@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "invoke-literal-wrapper",
+  "name": "Invoke literal wrapper",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1, "disabled": false, "parameters": {} },
+    {
+      "id": "invoke",
+      "type": "workflow.invoke",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "workflow": { "id": "child-workflow", "version": "1.0.0" },
+        "inputs": {
+          "literal": {
+            "$literal": {
+              "$binding": { "this": "is literal application data" }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "connections": [
+    { "from": { "node": "start", "port": "main" }, "to": { "node": "invoke", "port": "main" } }
+  ],
+  "outputs": {}
+}

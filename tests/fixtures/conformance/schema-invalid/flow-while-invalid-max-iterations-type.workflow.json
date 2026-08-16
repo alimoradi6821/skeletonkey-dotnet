@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "flow-while-invalid-max-iterations-type",
+  "name": "flow-while-invalid-max-iterations-type",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "loop",
+      "type": "flow.while",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "condition": true,
+        "maxIterations": "many"
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "loop",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {}
+}

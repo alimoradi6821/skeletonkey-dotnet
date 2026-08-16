@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Expressions</AssemblyName>
+    <RootNamespace>SkeletonKey.Expressions</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "comment",
+  "name": "Comment",
+  // comments are not strict JSON
+  "nodes": [],
+  "connections": []
+}

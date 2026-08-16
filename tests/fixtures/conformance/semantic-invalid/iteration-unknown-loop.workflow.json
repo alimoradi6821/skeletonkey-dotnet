@@ -1,0 +1,48 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "iteration-unknown-loop",
+  "name": "iteration-unknown-loop",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "return",
+      "type": "core.return",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "outcome": {
+          "kind": "success",
+          "code": "ok",
+          "data": {
+            "$binding": {
+              "source": "iteration",
+              "iteration": "missing"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "return",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {}
+}

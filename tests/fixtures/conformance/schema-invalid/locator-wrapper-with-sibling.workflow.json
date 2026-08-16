@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "locator-wrapper-with-sibling",
+  "name": "Locator Wrapper With Sibling",
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1 },
+    { "id": "invoke", "type": "workflow.invoke", "typeVersion": 1, "parameters": { "workflow": { "id": "child-workflow" }, "inputs": { "locator": { "$locator": { "catalog": "contacts", "id": "saveButton" }, "extra": true } } } }
+  ],
+  "connections": [
+    { "from": { "node": "start", "port": "main" }, "to": { "node": "invoke", "port": "main" } }
+  ]
+}

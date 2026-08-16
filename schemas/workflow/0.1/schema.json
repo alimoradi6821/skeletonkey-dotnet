@@ -1,0 +1,1732 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "title": "SkeletonKey Workflow Language 0.1",
+  "description": "The normative JSON structure for SkeletonKey workflow documents using specification version 0.1.0.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "title": "Schema URI",
+      "description": "The workflow schema URI declaration.",
+      "const": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json"
+    },
+    "specVersion": {
+      "title": "Specification Version",
+      "description": "The workflow language specification version.",
+      "const": "0.1.0"
+    },
+    "id": {
+      "$ref": "#/$defs/workflowId"
+    },
+    "name": {
+      "title": "Workflow Name",
+      "description": "A human-readable workflow name.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "description": {
+      "title": "Workflow Description",
+      "description": "Optional human-readable workflow description.",
+      "type": "string"
+    },
+    "inputs": {
+      "title": "Inputs",
+      "description": "Workflow input declarations keyed by input name.",
+      "type": "object",
+      "default": {},
+      "propertyNames": {
+        "$ref": "#/$defs/inputOrVariableName"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/workflowInputDefinition"
+      }
+    },
+    "variables": {
+      "title": "Variables",
+      "description": "Initial workflow variables keyed by variable name.",
+      "type": "object",
+      "default": {},
+      "propertyNames": {
+        "$ref": "#/$defs/inputOrVariableName"
+      },
+      "additionalProperties": true
+    },
+    "resources": {
+      "title": "Resources",
+      "description": "Provider-neutral workflow resource requirements keyed by resource name.",
+      "type": "object",
+      "default": {},
+      "propertyNames": {
+        "$ref": "#/$defs/resourceName"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/workflowResourceDefinition"
+      }
+    },
+    "nodes": {
+      "title": "Nodes",
+      "description": "Workflow graph node declarations.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/workflowNode"
+      }
+    },
+    "connections": {
+      "title": "Connections",
+      "description": "Directed workflow graph connections.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/workflowConnection"
+      }
+    },
+    "outputs": {
+      "$ref": "#/$defs/workflowOutputs"
+    },
+    "designer": {
+      "$ref": "#/$defs/designerMetadata"
+    }
+  },
+  "required": [
+    "$schema",
+    "specVersion",
+    "id",
+    "name",
+    "nodes",
+    "connections"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "workflowId": {
+      "title": "Workflow Identifier",
+      "description": "A workflow identifier.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "nodeId": {
+      "title": "Node Identifier",
+      "description": "A node identifier.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "inputOrVariableName": {
+      "title": "Input Or Variable Name",
+      "description": "An input or variable name.",
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+    },
+    "nodeType": {
+      "title": "Node Type",
+      "description": "A namespace-style node type identifier.",
+      "type": "string",
+      "pattern": "^[a-z](?:(?:[A-Za-z0-9]|-(?!-))*[A-Za-z0-9])?(\\.[a-z](?:(?:[A-Za-z0-9]|-(?!-))*[A-Za-z0-9])?)+$"
+    },
+    "portName": {
+      "title": "Port Name",
+      "description": "A node port name.",
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "outputChannelName": {
+      "title": "Output Channel Name",
+      "description": "A streamed workflow output channel name.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.-]*$"
+    },
+    "resourceName": {
+      "title": "Resource Name",
+      "description": "A workflow-local resource name.",
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+    },
+    "resourceKindId": {
+      "title": "Resource Kind Identifier",
+      "description": "A dotted resource kind or capability identifier.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9-]*)+$"
+    },
+    "jsonObject": {
+      "title": "JSON Object",
+      "description": "An extensible JSON object.",
+      "type": "object",
+      "additionalProperties": true
+    },
+    "workflowResourceDefinition": {
+      "title": "Workflow Resource Definition",
+      "description": "A provider-neutral workflow resource requirement.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/resourceKindId"
+        },
+        "lifetime": {
+          "enum": [
+            "execution",
+            "invocation"
+          ],
+          "default": "invocation"
+        },
+        "access": {
+          "enum": [
+            "exclusive",
+            "shared"
+          ],
+          "default": "exclusive"
+        },
+        "required": {
+          "type": "boolean",
+          "default": true
+        },
+        "capabilities": {
+          "type": "array",
+          "default": [],
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/resourceKindId"
+          }
+        },
+        "constraints": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "webBrowserConstraints": {
+      "title": "Standard Web Browser Constraints",
+      "description": "Provider-neutral preferences for web.browser resources.",
+      "type": "object",
+      "properties": {
+        "engine": {
+          "enum": [
+            "any",
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "default": "any"
+        },
+        "profile": {
+          "enum": [
+            "any",
+            "ephemeral",
+            "persistent"
+          ],
+          "default": "any"
+        },
+        "visibility": {
+          "enum": [
+            "any",
+            "headless",
+            "headful"
+          ],
+          "default": "any"
+        }
+      },
+      "additionalProperties": false
+    },
+    "workflowInputDefinition": {
+      "title": "Workflow Input Definition",
+      "description": "A workflow input declaration.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "title": "Input Type",
+          "description": "The declared input value type.",
+          "enum": [
+            "string",
+            "integer",
+            "number",
+            "boolean",
+            "object",
+            "array"
+          ]
+        },
+        "required": {
+          "title": "Required",
+          "description": "Whether the caller must explicitly supply the input.",
+          "type": "boolean",
+          "default": false
+        },
+        "default": {
+          "title": "Default",
+          "description": "An optional input default value.",
+          "type": [
+            "string",
+            "integer",
+            "number",
+            "boolean",
+            "object",
+            "array",
+            "null"
+          ]
+        },
+        "description": {
+          "title": "Input Description",
+          "description": "Optional human-readable input help text.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "required": {
+                "const": true
+              }
+            },
+            "required": [
+              "required"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "default"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "string"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "integer"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "number"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "boolean"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "object"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "array"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": [
+                  "array",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "workflowNode": {
+      "title": "Workflow Node",
+      "description": "A workflow graph node declaration.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nodeId"
+        },
+        "type": {
+          "$ref": "#/$defs/nodeType"
+        },
+        "typeVersion": {
+          "title": "Node Type Version",
+          "description": "The declared node type version.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "displayName": {
+          "title": "Display Name",
+          "description": "Optional display text for authoring surfaces.",
+          "type": "string"
+        },
+        "description": {
+          "title": "Node Description",
+          "description": "Optional human-readable node description.",
+          "type": "string"
+        },
+        "disabled": {
+          "title": "Disabled",
+          "description": "Whether the node is disabled.",
+          "type": "boolean",
+          "default": false
+        },
+        "parameters": {
+          "title": "Parameters",
+          "description": "Extensible node-specific parameters.",
+          "type": "object",
+          "default": {},
+          "additionalProperties": true
+        },
+        "policy": {
+          "$ref": "#/$defs/executionPolicy"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "typeVersion"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "workflow.invoke"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "parameters"
+            ],
+            "properties": {
+              "parameters": {
+                "$ref": "#/$defs/workflowInvokeParameters"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "flow.if"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "parameters"
+            ],
+            "properties": {
+              "typeVersion": {
+                "const": 1
+              },
+              "parameters": {
+                "$ref": "#/$defs/flowIfParameters"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "flow.switch"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "parameters"
+            ],
+            "properties": {
+              "typeVersion": {
+                "const": 1
+              },
+              "parameters": {
+                "$ref": "#/$defs/flowSwitchParameters"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "flow.foreach"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "parameters"
+            ],
+            "properties": {
+              "typeVersion": {
+                "const": 1
+              },
+              "parameters": {
+                "$ref": "#/$defs/flowForEachParameters"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "flow.repeat"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "parameters"
+            ],
+            "properties": {
+              "typeVersion": {
+                "const": 1
+              },
+              "parameters": {
+                "$ref": "#/$defs/flowRepeatParameters"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "flow.while"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "parameters"
+            ],
+            "properties": {
+              "typeVersion": {
+                "const": 1
+              },
+              "parameters": {
+                "$ref": "#/$defs/flowWhileParameters"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "core.return"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "parameters"
+            ],
+            "properties": {
+              "typeVersion": {
+                "const": 1
+              },
+              "parameters": {
+                "$ref": "#/$defs/returnParameters"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "interaction.request"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "parameters"
+            ],
+            "properties": {
+              "typeVersion": {
+                "const": 1
+              },
+              "parameters": {
+                "$ref": "#/$defs/interactionRequestParameters"
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "workflowInvokeParameters": {
+      "title": "Workflow Invocation Parameters",
+      "description": "Parameters for the reserved workflow.invoke node type.",
+      "type": "object",
+      "properties": {
+        "workflow": {
+          "$ref": "#/$defs/workflowReference"
+        },
+        "inputs": {
+          "title": "Invocation Inputs",
+          "description": "Input values supplied to the child workflow.",
+          "type": "object",
+          "default": {},
+          "propertyNames": {
+            "$ref": "#/$defs/inputOrVariableName"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/workflowValue"
+          }
+        },
+        "resources": {
+          "title": "Invocation Resource Mappings",
+          "description": "Child workflow resource names mapped explicitly to parent workflow resources.",
+          "type": "object",
+          "default": {},
+          "propertyNames": {
+            "$ref": "#/$defs/resourceName"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/workflowResourceReferenceWrapper"
+          }
+        },
+        "streams": {
+          "$ref": "#/$defs/invocationStreamPolicy"
+        }
+      },
+      "required": [
+        "workflow"
+      ],
+      "additionalProperties": false
+    },
+    "workflowReference": {
+      "title": "Workflow Reference",
+      "description": "A referenced workflow ID with an optional exact version string.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "title": "Referenced Workflow ID",
+          "description": "The referenced workflow identifier.",
+          "type": "string"
+        },
+        "version": {
+          "title": "Referenced Workflow Version",
+          "description": "An optional exact Semantic Version 2.0 value validated semantically.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "workflowValue": {
+      "title": "Workflow Value",
+      "description": "A literal JSON value, structured binding wrapper, literal wrapper, or nested workflow value.",
+      "oneOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number",
+            "string"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/workflowValue"
+          }
+        },
+        {
+          "$ref": "#/$defs/bindingWrapper"
+        },
+        {
+          "$ref": "#/$defs/workflowExpressionWrapper"
+        },
+        {
+          "$ref": "#/$defs/workflowResourceReferenceWrapper"
+        },
+        {
+          "$ref": "#/$defs/locatorReferenceWrapper"
+        },
+        {
+          "$ref": "#/$defs/literalWrapper"
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "not": {
+              "enum": [
+                "$binding",
+                "$expression",
+                "$resource",
+                "$locator",
+                "$literal"
+              ]
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/workflowValue"
+          }
+        }
+      ]
+    },
+    "bindingWrapper": {
+      "title": "Binding Wrapper",
+      "description": "A structured workflow binding wrapper.",
+      "type": "object",
+      "properties": {
+        "$binding": {
+          "$ref": "#/$defs/workflowBinding"
+        }
+      },
+      "required": [
+        "$binding"
+      ],
+      "additionalProperties": false
+    },
+    "workflowExpressionWrapper": {
+      "title": "Expression Wrapper",
+      "description": "A safe deterministic workflow expression wrapper.",
+      "type": "object",
+      "properties": {
+        "$expression": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "$expression"
+      ],
+      "additionalProperties": false
+    },
+    "workflowResourceReferenceWrapper": {
+      "title": "Resource Reference Wrapper",
+      "description": "A workflow-local resource reference wrapper.",
+      "type": "object",
+      "properties": {
+        "$resource": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/resourceName"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "$resource"
+      ],
+      "additionalProperties": false
+    },
+    "locatorReferenceWrapper": {
+      "title": "Locator Reference Wrapper",
+      "description": "A provider-neutral locator catalog reference wrapper.",
+      "type": "object",
+      "properties": {
+        "$locator": {
+          "type": "object",
+          "properties": {
+            "catalog": {
+              "$ref": "#/$defs/workflowId"
+            },
+            "version": {
+              "type": "string"
+            },
+            "id": {
+              "$ref": "#/$defs/workflowId"
+            }
+          },
+          "required": [
+            "catalog",
+            "id"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "$locator"
+      ],
+      "additionalProperties": false
+    },
+    "literalWrapper": {
+      "title": "Literal Wrapper",
+      "description": "Escapes reserved workflow value wrapper names for literal application data.",
+      "type": "object",
+      "properties": {
+        "$literal": true
+      },
+      "required": [
+        "$literal"
+      ],
+      "additionalProperties": false
+    },
+    "workflowBinding": {
+      "title": "Workflow Binding",
+      "description": "A structured workflow data binding declaration.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "const": "input"
+            },
+            "name": {
+              "$ref": "#/$defs/inputOrVariableName"
+            },
+            "path": {
+              "$ref": "#/$defs/bindingPath"
+            },
+            "onMissing": {
+              "$ref": "#/$defs/bindingMissingBehavior"
+            },
+            "default": true
+          },
+          "required": [
+            "source",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "const": "variable"
+            },
+            "name": {
+              "$ref": "#/$defs/inputOrVariableName"
+            },
+            "path": {
+              "$ref": "#/$defs/bindingPath"
+            },
+            "onMissing": {
+              "$ref": "#/$defs/bindingMissingBehavior"
+            },
+            "default": true
+          },
+          "required": [
+            "source",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "const": "node"
+            },
+            "node": {
+              "$ref": "#/$defs/nodeId"
+            },
+            "port": {
+              "type": "string"
+            },
+            "path": {
+              "$ref": "#/$defs/bindingPath"
+            },
+            "onMissing": {
+              "$ref": "#/$defs/bindingMissingBehavior"
+            },
+            "default": true
+          },
+          "required": [
+            "source",
+            "node",
+            "port"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "const": "iteration"
+            },
+            "iteration": {
+              "$ref": "#/$defs/nodeId"
+            },
+            "path": {
+              "$ref": "#/$defs/bindingPath"
+            },
+            "onMissing": {
+              "$ref": "#/$defs/bindingMissingBehavior"
+            },
+            "default": true
+          },
+          "required": [
+            "source",
+            "iteration"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "controlConditionValue": {
+      "title": "Control Condition Value",
+      "description": "A value expected to resolve to a boolean in a future runtime.",
+      "$ref": "#/$defs/workflowValue"
+    },
+    "flowIfParameters": {
+      "title": "If Parameters",
+      "type": "object",
+      "properties": {
+        "condition": {
+          "$ref": "#/$defs/controlConditionValue"
+        }
+      },
+      "required": [
+        "condition"
+      ],
+      "additionalProperties": false
+    },
+    "flowSwitchParameters": {
+      "title": "Switch Parameters",
+      "type": "object",
+      "properties": {
+        "cases": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/flowSwitchCase"
+          }
+        }
+      },
+      "required": [
+        "cases"
+      ],
+      "additionalProperties": false
+    },
+    "flowSwitchCase": {
+      "title": "Switch Case",
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/portName",
+          "not": {
+            "const": "default"
+          }
+        },
+        "when": {
+          "$ref": "#/$defs/controlConditionValue"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "when"
+      ],
+      "additionalProperties": false
+    },
+    "flowForEachParameters": {
+      "title": "Foreach Parameters",
+      "type": "object",
+      "properties": {
+        "items": {
+          "$ref": "#/$defs/workflowValue"
+        },
+        "execution": {
+          "$ref": "#/$defs/flowForEachExecution"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "flowForEachExecution": {
+      "title": "Foreach Execution Policy",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "sequential",
+            "parallel"
+          ],
+          "default": "sequential"
+        },
+        "maxConcurrency": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "flowRepeatParameters": {
+      "title": "Repeat Parameters",
+      "type": "object",
+      "properties": {
+        "count": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/$defs/bindingWrapper"
+            },
+            {
+              "$ref": "#/$defs/workflowExpressionWrapper"
+            }
+          ]
+        }
+      },
+      "required": [
+        "count"
+      ],
+      "additionalProperties": false
+    },
+    "flowWhileParameters": {
+      "title": "While Parameters",
+      "type": "object",
+      "properties": {
+        "condition": {
+          "$ref": "#/$defs/controlConditionValue"
+        },
+        "maxIterations": {
+          "type": "integer",
+          "default": 1000
+        }
+      },
+      "required": [
+        "condition"
+      ],
+      "additionalProperties": false
+    },
+    "returnParameters": {
+      "title": "Return Parameters",
+      "type": "object",
+      "properties": {
+        "outcome": {
+          "$ref": "#/$defs/returnOutcome"
+        }
+      },
+      "required": [
+        "outcome"
+      ],
+      "additionalProperties": false
+    },
+    "returnOutcome": {
+      "title": "Return Outcome",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "success",
+            "partial",
+            "requires-action",
+            "no-results",
+            "skipped"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9.-]*$"
+        },
+        "message": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/bindingWrapper"
+            },
+            {
+              "$ref": "#/$defs/workflowExpressionWrapper"
+            },
+            {
+              "$ref": "#/$defs/literalWrapper"
+            }
+          ]
+        },
+        "data": {
+          "$ref": "#/$defs/workflowValue"
+        }
+      },
+      "required": [
+        "kind",
+        "code"
+      ],
+      "additionalProperties": false
+    },
+    "interactionRequestParameters": {
+      "title": "Interaction Request Parameters",
+      "description": "Parameters for the reserved interaction.request node type.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "confirmation",
+            "text",
+            "secret",
+            "choice",
+            "multiple-choice",
+            "manual-action"
+          ]
+        },
+        "prompt": {
+          "$ref": "#/$defs/interactionTextValue"
+        },
+        "description": {
+          "$ref": "#/$defs/interactionTextValue"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/interactionOption"
+          }
+        },
+        "default": true,
+        "required": {
+          "type": "boolean",
+          "default": true
+        },
+        "timeout": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "prompt"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "choice",
+                  "multiple-choice"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "options"
+            ],
+            "properties": {
+              "options": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "not": {
+              "required": [
+                "options"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "secret"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "default"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "manual-action"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "default"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "confirmation"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "text"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "interactionTextValue": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/bindingWrapper"
+        },
+        {
+          "$ref": "#/$defs/workflowExpressionWrapper"
+        },
+        {
+          "$ref": "#/$defs/literalWrapper"
+        }
+      ]
+    },
+    "interactionOption": {
+      "title": "Interaction Option",
+      "description": "A static interaction option.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/workflowId"
+        },
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "value": true
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "additionalProperties": false
+    },
+    "bindingMissingBehavior": {
+      "title": "Binding Missing Behavior",
+      "description": "Missing-value behavior for a binding.",
+      "enum": [
+        "error",
+        "null",
+        "default"
+      ],
+      "default": "error"
+    },
+    "bindingPath": {
+      "title": "Binding JSON Pointer",
+      "description": "A read-only RFC 6901 JSON Pointer.",
+      "type": "string",
+      "default": ""
+    },
+    "bindingDefaultRules": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "onMissing": {
+                "const": "default"
+              }
+            },
+            "required": [
+              "onMissing"
+            ]
+          },
+          "then": {
+            "required": [
+              "default"
+            ]
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "onMissing": {
+                  "const": "default"
+                }
+              },
+              "required": [
+                "onMissing"
+              ]
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "default"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "invocationStreamPolicy": {
+      "title": "Invocation Stream Policy",
+      "description": "Declares how child workflow stream events are exposed to the parent workflow.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "forward",
+              "default": "forward"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "suppress"
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "map"
+            },
+            "mappings": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "$ref": "#/$defs/outputChannelName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/outputChannelName"
+              }
+            }
+          },
+          "required": [
+            "mode",
+            "mappings"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "workflowConnection": {
+      "title": "Workflow Connection",
+      "description": "A directed connection between two workflow endpoints.",
+      "type": "object",
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/workflowEndpoint"
+        },
+        "to": {
+          "$ref": "#/$defs/workflowEndpoint"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "workflowEndpoint": {
+      "title": "Workflow Endpoint",
+      "description": "One named port on one workflow node.",
+      "type": "object",
+      "properties": {
+        "node": {
+          "$ref": "#/$defs/nodeId"
+        },
+        "port": {
+          "$ref": "#/$defs/portName"
+        }
+      },
+      "required": [
+        "node",
+        "port"
+      ],
+      "additionalProperties": false
+    },
+    "workflowOutputs": {
+      "title": "Workflow Outputs",
+      "description": "Workflow output declarations keyed by output name.",
+      "type": "object",
+      "default": {},
+      "propertyNames": {
+        "$ref": "#/$defs/inputOrVariableName"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/workflowOutputDefinition"
+      }
+    },
+    "workflowOutputDefinition": {
+      "title": "Workflow Output Definition",
+      "description": "A final or streamed workflow output declaration.",
+      "oneOf": [
+        {
+          "title": "Single Output",
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "single"
+            },
+            "from": {
+              "$ref": "#/$defs/workflowEndpoint"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "mode",
+            "from"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "title": "Collection Output",
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "collection"
+            },
+            "from": {
+              "$ref": "#/$defs/workflowEndpoint"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "mode",
+            "from"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "title": "Stream Output",
+          "type": "object",
+          "properties": {
+            "mode": {
+              "const": "stream"
+            },
+            "channel": {
+              "$ref": "#/$defs/outputChannelName"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "mode",
+            "channel"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "executionPolicy": {
+      "title": "Execution Policy",
+      "description": "A node execution policy declaration.",
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "title": "Timeout",
+          "description": "Optional duration text validated semantically.",
+          "type": "string"
+        },
+        "onError": {
+          "title": "On Error",
+          "description": "The declared error handling preference.",
+          "enum": [
+            "fail",
+            "continue",
+            "stop"
+          ],
+          "default": "fail"
+        },
+        "retry": {
+          "$ref": "#/$defs/retryPolicy"
+        }
+      },
+      "additionalProperties": false
+    },
+    "retryPolicy": {
+      "title": "Retry Policy",
+      "description": "A node retry policy declaration.",
+      "type": "object",
+      "properties": {
+        "maxAttempts": {
+          "title": "Maximum Attempts",
+          "description": "The maximum retry attempt count.",
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "delay": {
+          "title": "Delay",
+          "description": "Optional retry delay text validated semantically.",
+          "type": "string"
+        },
+        "backoff": {
+          "title": "Backoff",
+          "description": "The retry backoff multiplier.",
+          "type": "number",
+          "minimum": 1,
+          "default": 1.0
+        },
+        "maxDelay": {
+          "title": "Maximum Delay",
+          "description": "Optional maximum retry delay text validated semantically.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "designerMetadata": {
+      "title": "Designer Metadata",
+      "description": "Optional visual metadata for workflow authoring surfaces.",
+      "type": "object",
+      "properties": {
+        "positions": {
+          "title": "Positions",
+          "description": "Designer node positions keyed by node ID.",
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "$ref": "#/$defs/nodePosition"
+          }
+        },
+        "sizes": {
+          "title": "Sizes",
+          "description": "Designer node sizes keyed by node ID.",
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "$ref": "#/$defs/nodeSize"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "nodePosition": {
+      "title": "Node Position",
+      "description": "A visual node position.",
+      "type": "object",
+      "properties": {
+        "x": {
+          "title": "X",
+          "description": "The horizontal coordinate.",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "description": "The vertical coordinate.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
+    },
+    "nodeSize": {
+      "title": "Node Size",
+      "description": "A visual node size.",
+      "type": "object",
+      "properties": {
+        "width": {
+          "title": "Width",
+          "description": "The declared visual width.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "title": "Height",
+          "description": "The declared visual height.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

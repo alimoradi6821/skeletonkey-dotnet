@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "null-node-entry",
+  "name": "Null Node Entry",
+  "nodes": [
+    null
+  ],
+  "connections": []
+}

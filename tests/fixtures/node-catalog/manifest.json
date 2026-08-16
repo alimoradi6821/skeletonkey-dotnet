@@ -1,0 +1,21 @@
+{
+  "cases": [
+    {
+      "category": "valid",
+      "file": "valid/minimal.node-catalog.json"
+    },
+    {
+      "category": "schema-invalid",
+      "file": "schema-invalid/missing-definitions.node-catalog.json"
+    },
+    {
+      "category": "semantic-invalid",
+      "file": "semantic-invalid/duplicate-definition.node-catalog.json",
+      "semantic": {
+        "errors": [
+          "SKC1006"
+        ]
+      }
+    }
+  ]
+}

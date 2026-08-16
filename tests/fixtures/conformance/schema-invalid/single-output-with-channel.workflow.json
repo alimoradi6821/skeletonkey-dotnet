@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "single-output-with-channel",
+  "name": "Single output with channel",
+  "nodes": [],
+  "connections": [],
+  "outputs": {
+    "result": {
+      "mode": "single",
+      "from": {
+        "node": "log",
+        "port": "main"
+      },
+      "channel": "records"
+    }
+  }
+}

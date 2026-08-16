@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "invoke-missing-workflow",
+  "name": "Invoke missing workflow",
+  "nodes": [
+    { "id": "invoke", "type": "workflow.invoke", "typeVersion": 1, "parameters": {} }
+  ],
+  "connections": []
+}

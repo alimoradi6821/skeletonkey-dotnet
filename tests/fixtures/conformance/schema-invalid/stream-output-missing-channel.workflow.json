@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "stream-output-missing-channel",
+  "name": "Stream output missing channel",
+  "nodes": [],
+  "connections": [],
+  "outputs": {
+    "records": {
+      "mode": "stream"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.BuiltIns.Runtime</AssemblyName>
+    <RootNamespace>SkeletonKey.BuiltIns.Runtime</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Abstractions\SkeletonKey.Abstractions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Catalog\SkeletonKey.Catalog.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Execution\SkeletonKey.Execution.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Handlers\SkeletonKey.Handlers.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+  </ItemGroup>
+</Project>

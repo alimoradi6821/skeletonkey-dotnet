@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Materialization</AssemblyName>
+    <RootNamespace>SkeletonKey.Materialization</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Binding\SkeletonKey.Binding.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Evaluation\SkeletonKey.Evaluation.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Execution\SkeletonKey.Execution.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Expressions\SkeletonKey.Expressions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Resources\SkeletonKey.Resources.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+  </ItemGroup>
+</Project>

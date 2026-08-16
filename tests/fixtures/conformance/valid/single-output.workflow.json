@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "single-output",
+  "name": "Single output",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "log",
+      "type": "core.log",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "log",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {
+    "result": {
+      "mode": "single",
+      "from": {
+        "node": "log",
+        "port": "main"
+      }
+    }
+  }
+}

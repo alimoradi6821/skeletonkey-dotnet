@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "browser-resource",
+  "name": "Browser Resource",
+  "inputs": {},
+  "variables": {},
+  "resources": {
+    "browser": {
+      "kind": "web.browser",
+      "lifetime": "execution",
+      "access": "exclusive",
+      "required": true,
+      "capabilities": [
+        "web.persistent-profile",
+        "web.headful"
+      ],
+      "constraints": {
+        "engine": "chromium",
+        "profile": "persistent",
+        "visibility": "headful"
+      },
+      "description": "A host-provided browser resource requirement."
+    }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [],
+  "outputs": {}
+}

@@ -1,0 +1,321 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.skeletonkey.dev/node-catalog/0.1/schema.json",
+  "title": "SkeletonKey Node Catalog 0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "specVersion",
+    "id",
+    "version",
+    "definitions"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://schemas.skeletonkey.dev/node-catalog/0.1/schema.json"
+    },
+    "specVersion": {
+      "const": "0.1.0"
+    },
+    "id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "definitions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nodeDefinition"
+      }
+    }
+  },
+  "$defs": {
+    "nodeDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "typeVersion",
+        "stability",
+        "capabilities",
+        "behavior",
+        "deprecation",
+        "parameterExamples",
+        "inputs",
+        "outputs",
+        "dynamicPorts",
+        "resources"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z](?:(?:[A-Za-z0-9]|-(?!-))*[A-Za-z0-9])?(\\.[a-z](?:(?:[A-Za-z0-9]|-(?!-))*[A-Za-z0-9])?)+$"
+        },
+        "typeVersion": {
+          "type": "integer"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "stability": {
+          "enum": [
+            "experimental",
+            "preview",
+            "stable"
+          ]
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "behavior": {
+          "$ref": "#/$defs/behavior"
+        },
+        "deprecation": {
+          "$ref": "#/$defs/deprecation"
+        },
+        "parametersSchema": {
+          "type": "object"
+        },
+        "parameterExamples": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "inputs": {
+          "$ref": "#/$defs/ports"
+        },
+        "outputs": {
+          "$ref": "#/$defs/ports"
+        },
+        "dynamicPorts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dynamicPort"
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/resourceRequirement"
+          }
+        },
+        "locators": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/locatorSlot"
+          }
+        }
+      }
+    },
+    "ports": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/port"
+      }
+    },
+    "port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "direction",
+        "required",
+        "allowsMultiple"
+      ],
+      "properties": {
+        "direction": {
+          "enum": [
+            "input",
+            "output"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "allowsMultiple": {
+          "type": "boolean"
+        },
+        "valueType": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "object"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "dynamicPort": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "direction",
+        "sourcePointer",
+        "idPointer"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "switch-cases"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "input",
+            "output"
+          ]
+        },
+        "sourcePointer": {
+          "type": "string"
+        },
+        "idPointer": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "resourceRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "required",
+        "capabilities"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "locatorSlot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "parameterPointer",
+        "required",
+        "usage",
+        "acceptedCardinalities"
+      ],
+      "properties": {
+        "parameterPointer": {
+          "type": "string",
+          "pattern": "^(/([^/~]|~0|~1)*)+$"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "usage": {
+          "enum": [
+            "single",
+            "collection",
+            "optional-single"
+          ]
+        },
+        "acceptedCardinalities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "one",
+              "zero-or-one",
+              "one-or-more",
+              "many"
+            ]
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "behavior": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "terminal",
+        "maySuspend"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "action",
+            "entry",
+            "terminal",
+            "branch",
+            "loop",
+            "invocation",
+            "interaction"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "maySuspend": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "deprecation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deprecated"
+      ],
+      "properties": {
+        "deprecated": {
+          "type": "boolean"
+        },
+        "sinceVersion": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "replacementType": {
+          "type": "string",
+          "pattern": "^[a-z](?:(?:[A-Za-z0-9]|-(?!-))*[A-Za-z0-9])?(\\.[a-z](?:(?:[A-Za-z0-9]|-(?!-))*[A-Za-z0-9])?)+$"
+        },
+        "replacementVersion": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

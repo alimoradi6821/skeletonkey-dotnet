@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "incoming-connection-to-start",
+  "name": "Incoming Connection To Start",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1
+    },
+    {
+      "id": "log",
+      "type": "core.log",
+      "typeVersion": 1
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "log",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "log",
+        "port": "main"
+      },
+      "to": {
+        "node": "start",
+        "port": "main"
+      }
+    }
+  ]
+}

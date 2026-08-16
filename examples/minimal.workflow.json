@@ -1,0 +1,89 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "minimal-workflow",
+  "name": "Minimal Workflow",
+  "inputs": {},
+  "variables": {},
+  "resources": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "log",
+      "type": "core.log",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "message": "Hello from SkeletonKey",
+        "level": "information"
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "log",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "log",
+        "port": "main"
+      },
+      "to": {
+        "node": "end",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {
+    "result": {
+      "mode": "single",
+      "from": {
+        "node": "log",
+        "port": "main"
+      },
+      "description": "The final example result."
+    }
+  },
+  "designer": {
+    "positions": {
+      "start": {
+        "x": 0,
+        "y": 0
+      },
+      "log": {
+        "x": 240,
+        "y": 0
+      },
+      "end": {
+        "x": 480,
+        "y": 0
+      }
+    },
+    "sizes": {
+      "log": {
+        "width": 180,
+        "height": 80
+      }
+    }
+  }
+}

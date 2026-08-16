@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/node-catalog/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "catalog",
+  "version": "1.0.0",
+  "definitions": [
+    {
+      "type": "core.log",
+      "typeVersion": 1,
+      "stability": "preview",
+      "capabilities": [],
+      "behavior": {
+        "kind": "action",
+        "terminal": false,
+        "maySuspend": false
+      },
+      "deprecation": {
+        "deprecated": false
+      },
+      "parameterExamples": [],
+      "inputs": {},
+      "outputs": {},
+      "dynamicPorts": [],
+      "resources": {}
+    },
+    {
+      "type": "core.log",
+      "typeVersion": 1,
+      "stability": "preview",
+      "capabilities": [],
+      "behavior": {
+        "kind": "action",
+        "terminal": false,
+        "maySuspend": false
+      },
+      "deprecation": {
+        "deprecated": false
+      },
+      "parameterExamples": [],
+      "inputs": {},
+      "outputs": {},
+      "dynamicPorts": [],
+      "resources": {}
+    }
+  ]
+}

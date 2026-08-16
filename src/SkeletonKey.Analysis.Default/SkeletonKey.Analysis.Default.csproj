@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Analysis.Default</AssemblyName>
+    <RootNamespace>SkeletonKey.Analysis.Default</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Analysis\SkeletonKey.Analysis.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Catalog\SkeletonKey.Catalog.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Locators.Runtime\SkeletonKey.Locators.Runtime.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Resources\SkeletonKey.Resources.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Validation\SkeletonKey.Validation.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+  </ItemGroup>
+</Project>

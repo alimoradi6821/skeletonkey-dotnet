@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Catalog.Json</AssemblyName>
+    <RootNamespace>SkeletonKey.Catalog.Json</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Catalog\SkeletonKey.Catalog.csproj" />
+  </ItemGroup>
+</Project>

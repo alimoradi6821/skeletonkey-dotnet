@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Web.Playwright</AssemblyName>
+    <RootNamespace>SkeletonKey.Web.Playwright</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Playwright" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Artifacts\SkeletonKey.Artifacts.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Runtime.Resources\SkeletonKey.Runtime.Resources.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Web.Abstractions\SkeletonKey.Web.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "manual-login",
+  "name": "Manual Login",
+  "inputs": {},
+  "variables": {},
+  "resources": {
+    "interaction": {
+      "kind": "interaction.handler",
+      "lifetime": "invocation",
+      "access": "shared",
+      "required": true,
+      "capabilities": [
+        "interaction.manual-action"
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "request-login",
+      "type": "interaction.request",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "kind": "manual-action",
+        "prompt": "Log into the displayed account, then confirm completion.",
+        "required": true,
+        "timeout": "PT5M"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "request-login",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {}
+}

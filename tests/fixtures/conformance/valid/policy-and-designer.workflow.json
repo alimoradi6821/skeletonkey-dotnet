@@ -1,0 +1,62 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "valid-policy-and-designer",
+  "name": "Valid Policy And Designer",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "policy": {
+        "timeout": "PT30S",
+        "onError": "fail",
+        "retry": {
+          "maxAttempts": 3,
+          "delay": "PT0.5S",
+          "backoff": 1.5,
+          "maxDelay": "PT2M"
+        }
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "end",
+        "port": "main"
+      }
+    }
+  ],
+  "designer": {
+    "positions": {
+      "start": {
+        "x": 0,
+        "y": 0
+      },
+      "end": {
+        "x": 260,
+        "y": 0
+      }
+    },
+    "sizes": {
+      "start": {
+        "width": 160,
+        "height": 80
+      },
+      "end": {
+        "width": 160,
+        "height": 80
+      }
+    }
+  }
+}

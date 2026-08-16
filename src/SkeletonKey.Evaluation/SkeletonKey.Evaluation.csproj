@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Evaluation</AssemblyName>
+    <RootNamespace>SkeletonKey.Evaluation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Abstractions\SkeletonKey.Abstractions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Execution\SkeletonKey.Execution.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Expressions\SkeletonKey.Expressions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+  </ItemGroup>
+</Project>

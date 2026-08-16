@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "duplicate-node-id",
+  "name": "Duplicate Node ID",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1
+    },
+    {
+      "id": "start",
+      "type": "core.log",
+      "typeVersion": 1
+    }
+  ],
+  "connections": []
+}

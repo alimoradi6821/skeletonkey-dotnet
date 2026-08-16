@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "max-delay-less-than-delay",
+  "name": "Max Delay Less Than Delay",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "policy": {
+        "retry": {
+          "delay": "PT2S",
+          "maxDelay": "PT1S"
+        }
+      }
+    }
+  ],
+  "connections": []
+}

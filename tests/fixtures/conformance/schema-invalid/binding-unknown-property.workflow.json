@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "binding-unknown-property",
+  "name": "Binding unknown property",
+  "nodes": [
+    {
+      "id": "invoke",
+      "type": "workflow.invoke",
+      "typeVersion": 1,
+      "parameters": {
+        "workflow": { "id": "child-workflow" },
+        "inputs": {
+          "value": { "$binding": { "source": "input", "name": "account", "unexpected": true } }
+        }
+      }
+    }
+  ],
+  "connections": []
+}

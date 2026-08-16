@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "resource-unknown-property",
+  "name": "Resource Unknown Property",
+  "resources": {
+    "browser": { "kind": "web.browser", "unknown": true }
+  },
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1 }
+  ],
+  "connections": []
+}

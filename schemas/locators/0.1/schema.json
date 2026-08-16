@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.skeletonkey.dev/locators/0.1/schema.json",
+  "title": "SkeletonKey Locator Document 0.1",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "const": "https://schemas.skeletonkey.dev/locators/0.1/schema.json"
+    },
+    "specVersion": {
+      "const": "0.1.0"
+    },
+    "id": {
+      "$ref": "#/$defs/locatorDocumentId"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "locators": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/locatorId"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/locatorDefinition"
+      }
+    }
+  },
+  "required": [
+    "specVersion",
+    "id",
+    "locators"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "locatorDocumentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "locatorId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "locatorDefinition": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "within": {
+          "$ref": "#/$defs/locatorId"
+        },
+        "cardinality": {
+          "enum": [
+            "one",
+            "zero-or-one",
+            "one-or-more",
+            "many"
+          ],
+          "default": "one"
+        },
+        "strategies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/locatorStrategy"
+          }
+        }
+      },
+      "required": [
+        "strategies"
+      ],
+      "additionalProperties": false
+    },
+    "textMatchMode": {
+      "enum": [
+        "exact",
+        "contains"
+      ],
+      "default": "exact"
+    },
+    "locatorStrategy": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/roleStrategy"
+        },
+        {
+          "$ref": "#/$defs/textValueStrategy"
+        },
+        {
+          "$ref": "#/$defs/testIdStrategy"
+        },
+        {
+          "$ref": "#/$defs/selectorStrategy"
+        }
+      ]
+    },
+    "roleStrategy": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "role"
+        },
+        "role": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "match": {
+          "$ref": "#/$defs/textMatchMode"
+        },
+        "caseSensitive": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": [
+        "kind",
+        "role"
+      ],
+      "additionalProperties": false
+    },
+    "textValueStrategy": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "label",
+            "placeholder",
+            "text",
+            "title",
+            "alt-text"
+          ]
+        },
+        "value": {
+          "type": "string"
+        },
+        "match": {
+          "$ref": "#/$defs/textMatchMode"
+        },
+        "caseSensitive": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "testIdStrategy": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "test-id"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "selectorStrategy": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "css",
+            "xpath"
+          ]
+        },
+        "selector": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "selector"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

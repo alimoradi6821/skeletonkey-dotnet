@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Web.Abstractions</AssemblyName>
+    <RootNamespace>SkeletonKey.Web.Abstractions</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Artifacts\SkeletonKey.Artifacts.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Execution\SkeletonKey.Execution.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Resources\SkeletonKey.Resources.csproj" />
+  </ItemGroup>
+</Project>

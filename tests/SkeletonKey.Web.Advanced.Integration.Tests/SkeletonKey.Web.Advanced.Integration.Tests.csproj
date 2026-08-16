@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Web.Advanced.Integration.Tests</AssemblyName>
+    <RootNamespace>SkeletonKey.Web.Advanced.Integration.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SkeletonKey.Artifacts.FileSystem\SkeletonKey.Artifacts.FileSystem.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Runner.Core\SkeletonKey.Runner.Core.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Web.Playwright\SkeletonKey.Web.Playwright.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

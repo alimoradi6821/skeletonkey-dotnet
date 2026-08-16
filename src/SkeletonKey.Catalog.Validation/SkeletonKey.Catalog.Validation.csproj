@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Catalog.Validation</AssemblyName>
+    <RootNamespace>SkeletonKey.Catalog.Validation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Abstractions\SkeletonKey.Abstractions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Catalog\SkeletonKey.Catalog.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Planning.Default</AssemblyName>
+    <RootNamespace>SkeletonKey.Planning.Default</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Analysis\SkeletonKey.Analysis.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Binding\SkeletonKey.Binding.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Catalog\SkeletonKey.Catalog.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Expressions\SkeletonKey.Expressions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Planning\SkeletonKey.Planning.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+  </ItemGroup>
+</Project>

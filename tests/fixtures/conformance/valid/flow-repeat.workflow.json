@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "flow-repeat",
+  "name": "flow-repeat",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "repeat",
+      "type": "flow.repeat",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "count": 3
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "repeat",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "repeat",
+        "port": "completed"
+      },
+      "to": {
+        "node": "end",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {}
+}

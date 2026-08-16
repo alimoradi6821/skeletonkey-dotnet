@@ -1,0 +1,93 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "send-message",
+  "name": "Send Message",
+  "inputs": {
+    "account": {
+      "type": "object",
+      "required": true
+    }
+  },
+  "variables": {},
+  "resources": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "check-account",
+      "type": "workflow.invoke",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "workflow": {
+          "id": "check-account",
+          "version": "1.0.0"
+        },
+        "inputs": {
+          "account": {
+            "$binding": {
+              "source": "input",
+              "name": "account"
+            }
+          }
+        },
+        "streams": {
+          "mode": "forward"
+        }
+      }
+    },
+    {
+      "id": "summarize",
+      "type": "core.log",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "loggedOut": {
+          "$binding": {
+            "source": "node",
+            "node": "check-account",
+            "port": "result",
+            "path": "/outputs/loggedOut"
+          }
+        }
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "check-account",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "check-account",
+        "port": "main"
+      },
+      "to": {
+        "node": "summarize",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {
+    "summary": {
+      "mode": "single",
+      "from": {
+        "node": "summarize",
+        "port": "main"
+      }
+    }
+  }
+}

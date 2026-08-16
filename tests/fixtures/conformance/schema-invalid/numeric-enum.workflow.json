@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "numeric-enum",
+  "name": "Numeric Enum",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "policy": {
+        "onError": 1
+      }
+    }
+  ],
+  "connections": []
+}

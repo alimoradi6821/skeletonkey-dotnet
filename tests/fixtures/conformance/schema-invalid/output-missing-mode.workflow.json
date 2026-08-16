@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "output-missing-mode",
+  "name": "Output missing mode",
+  "nodes": [],
+  "connections": [],
+  "outputs": {
+    "result": {
+      "from": {
+        "node": "log",
+        "port": "main"
+      }
+    }
+  }
+}

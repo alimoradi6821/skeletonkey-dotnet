@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Validation</AssemblyName>
+    <RootNamespace>SkeletonKey.Validation</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Abstractions\SkeletonKey.Abstractions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Binding\SkeletonKey.Binding.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Expressions\SkeletonKey.Expressions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Resources\SkeletonKey.Resources.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+  </ItemGroup>
+</Project>

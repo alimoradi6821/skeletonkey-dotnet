@@ -1,0 +1,64 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/locators/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "bale-contacts",
+  "name": "Bale Contacts",
+  "locators": {
+    "contactForm": {
+      "description": "Contact creation form.",
+      "cardinality": "zero-or-one",
+      "strategies": [
+        {
+          "kind": "role",
+          "role": "form",
+          "name": "Contact",
+          "match": "exact",
+          "caseSensitive": true
+        }
+      ]
+    },
+    "addContactButton": {
+      "description": "Starts contact creation.",
+      "cardinality": "one",
+      "strategies": [
+        {
+          "kind": "role",
+          "role": "button",
+          "name": "Add contact",
+          "match": "exact",
+          "caseSensitive": true
+        },
+        {
+          "kind": "test-id",
+          "value": "add-contact"
+        },
+        {
+          "kind": "css",
+          "selector": "button.add-contact"
+        }
+      ]
+    },
+    "saveButton": {
+      "description": "Saves a contact from inside the contact form.",
+      "within": "contactForm",
+      "cardinality": "one",
+      "strategies": [
+        {
+          "kind": "role",
+          "role": "button",
+          "name": "Save",
+          "match": "exact",
+          "caseSensitive": true
+        },
+        {
+          "kind": "test-id",
+          "value": "save-contact"
+        },
+        {
+          "kind": "css",
+          "selector": "form [data-testid=\u0027save-contact\u0027]"
+        }
+      ]
+    }
+  }
+}

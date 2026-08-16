@@ -1,0 +1,8 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "wrong-property-casing",
+  "name": "Wrong Property Casing",
+  "Nodes": [],
+  "connections": []
+}

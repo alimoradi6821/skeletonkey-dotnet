@@ -1,0 +1,60 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "flow-foreach-parallel",
+  "name": "flow-foreach-parallel",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "loop",
+      "type": "flow.foreach",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "items": [],
+        "execution": {
+          "mode": "parallel",
+          "maxConcurrency": 2
+        }
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "loop",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "loop",
+        "port": "completed"
+      },
+      "to": {
+        "node": "end",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {}
+}

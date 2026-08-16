@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "invoke-resource-mapping",
+  "name": "Invoke Resource Mapping",
+  "resources": {
+    "browser": { "kind": "web.browser" }
+  },
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1 },
+    { "id": "invoke", "type": "workflow.invoke", "typeVersion": 1, "parameters": { "workflow": { "id": "child-workflow" }, "resources": { "browser": { "$resource": { "name": "browser" } } } } }
+  ],
+  "connections": [
+    { "from": { "node": "start", "port": "main" }, "to": { "node": "invoke", "port": "main" } }
+  ]
+}

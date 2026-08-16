@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/locators/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "contacts",
+  "locators": {
+    "target": {
+      "within": "missing",
+      "strategies": [
+        { "kind": "test-id", "value": "target" }
+      ]
+    }
+  }
+}

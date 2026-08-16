@@ -1,0 +1,136 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "process-contacts",
+  "name": "Process Contacts",
+  "inputs": {
+    "contacts": {
+      "type": "array",
+      "required": true
+    }
+  },
+  "variables": {},
+  "resources": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "each-contact",
+      "type": "flow.foreach",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "items": {
+          "$binding": {
+            "source": "input",
+            "name": "contacts"
+          }
+        },
+        "execution": {
+          "mode": "sequential"
+        }
+      }
+    },
+    {
+      "id": "has-contact-name",
+      "type": "flow.if",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "condition": {
+          "$expression": "size(trim(iterations[\u0027each-contact\u0027].item.name)) \u003E 0"
+        }
+      }
+    },
+    {
+      "id": "capture-contact",
+      "type": "core.data",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "value": {
+          "$binding": {
+            "source": "iteration",
+            "iteration": "each-contact",
+            "path": "/item"
+          }
+        }
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "each-contact",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "each-contact",
+        "port": "body"
+      },
+      "to": {
+        "node": "has-contact-name",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "has-contact-name",
+        "port": "true"
+      },
+      "to": {
+        "node": "capture-contact",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "capture-contact",
+        "port": "main"
+      },
+      "to": {
+        "node": "each-contact",
+        "port": "continue"
+      }
+    },
+    {
+      "from": {
+        "node": "has-contact-name",
+        "port": "false"
+      },
+      "to": {
+        "node": "each-contact",
+        "port": "break"
+      }
+    },
+    {
+      "from": {
+        "node": "each-contact",
+        "port": "completed"
+      },
+      "to": {
+        "node": "end",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {}
+}

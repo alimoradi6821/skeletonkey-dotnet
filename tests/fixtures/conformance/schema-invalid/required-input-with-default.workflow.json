@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "required-input-with-default",
+  "name": "Required Input With Default",
+  "inputs": {
+    "username": {
+      "type": "string",
+      "required": true,
+      "default": "Ada"
+    }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1
+    }
+  ],
+  "connections": []
+}

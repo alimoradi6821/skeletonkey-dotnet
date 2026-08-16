@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.ContractSafety.Tests</AssemblyName>
+    <RootNamespace>SkeletonKey.ContractSafety.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SkeletonKey.Analysis\SkeletonKey.Analysis.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Catalog\SkeletonKey.Catalog.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Evaluation\SkeletonKey.Evaluation.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Execution\SkeletonKey.Execution.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Handlers\SkeletonKey.Handlers.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Materialization\SkeletonKey.Materialization.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Planning\SkeletonKey.Planning.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Analysis.Default\SkeletonKey.Analysis.Default.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Planning.Default\SkeletonKey.Planning.Default.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Runtime\SkeletonKey.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Runtime.Default\SkeletonKey.Runtime.Default.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.BuiltIns.Runtime\SkeletonKey.BuiltIns.Runtime.csproj" />
+  </ItemGroup>
+</Project>

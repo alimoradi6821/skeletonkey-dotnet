@@ -1,0 +1,80 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "valid-inputs-and-variables",
+  "name": "Valid Inputs And Variables",
+  "inputs": {
+    "text": {
+      "type": "string",
+      "default": "hello"
+    },
+    "count": {
+      "type": "integer",
+      "default": 3
+    },
+    "ratio": {
+      "type": "number",
+      "default": 1.5
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "settings": {
+      "type": "object",
+      "default": {
+        "mode": "fast"
+      }
+    },
+    "items": {
+      "type": "array",
+      "default": [
+        "a",
+        "b"
+      ]
+    },
+    "optional_null": {
+      "type": "string",
+      "default": null
+    }
+  },
+  "variables": {
+    "text": "value",
+    "maybe": null,
+    "nested": {
+      "array": [
+        1,
+        {
+          "ok": true
+        }
+      ],
+      "object": {
+        "inner": "value"
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "end",
+        "port": "main"
+      }
+    }
+  ]
+}

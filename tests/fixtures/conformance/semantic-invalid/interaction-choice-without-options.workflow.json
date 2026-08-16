@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "interaction-choice-without-options",
+  "name": "Interaction Choice Without Options",
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1 },
+    { "id": "request", "type": "interaction.request", "typeVersion": 1, "parameters": { "kind": "choice", "prompt": "Choose.", "options": [] } }
+  ],
+  "connections": [
+    { "from": { "node": "start", "port": "main" }, "to": { "node": "request", "port": "main" } }
+  ]
+}

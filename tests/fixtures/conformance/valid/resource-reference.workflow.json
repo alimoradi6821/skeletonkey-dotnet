@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "resource-reference",
+  "name": "Resource Reference",
+  "resources": {
+    "browser": { "kind": "web.browser" }
+  },
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1, "parameters": { "browser": { "$resource": { "name": "browser" } } } }
+  ],
+  "connections": []
+}

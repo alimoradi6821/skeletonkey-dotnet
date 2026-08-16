@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "flow-switch-duplicate-case",
+  "name": "flow-switch-duplicate-case",
+  "inputs": {},
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "select",
+      "type": "flow.switch",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "cases": [
+          {
+            "id": "phone",
+            "when": true
+          },
+          {
+            "id": "phone",
+            "when": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "select",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "select",
+        "port": "phone"
+      },
+      "to": {
+        "node": "end",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {}
+}

@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Conformance.Tests</AssemblyName>
+    <RootNamespace>SkeletonKey.Conformance.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="JsonSchema.Net" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SkeletonKey.Catalog.Json\SkeletonKey.Catalog.Json.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Catalog.Validation\SkeletonKey.Catalog.Validation.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Catalog\SkeletonKey.Catalog.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Locators.Json\SkeletonKey.Locators.Json.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Locators.Validation\SkeletonKey.Locators.Validation.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Serialization.Json\SkeletonKey.Serialization.Json.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Validation\SkeletonKey.Validation.csproj" />
+  </ItemGroup>
+</Project>

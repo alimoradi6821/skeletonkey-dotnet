@@ -1,0 +1,14 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "missing-start-node",
+  "name": "Missing Start Node",
+  "nodes": [
+    {
+      "id": "log",
+      "type": "core.log",
+      "typeVersion": 1
+    }
+  ],
+  "connections": []
+}

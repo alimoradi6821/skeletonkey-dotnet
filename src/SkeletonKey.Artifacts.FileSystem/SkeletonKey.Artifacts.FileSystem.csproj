@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Artifacts.FileSystem</AssemblyName>
+    <RootNamespace>SkeletonKey.Artifacts.FileSystem</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Artifacts\SkeletonKey.Artifacts.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Artifacts</AssemblyName>
+    <RootNamespace>SkeletonKey.Artifacts</RootNamespace>
+  </PropertyGroup>
+</Project>

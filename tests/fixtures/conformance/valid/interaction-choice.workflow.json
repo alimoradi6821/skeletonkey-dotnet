@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "interaction-choice",
+  "name": "Interaction Choice",
+  "nodes": [
+    { "id": "start", "type": "core.start", "typeVersion": 1 },
+    { "id": "request", "type": "interaction.request", "typeVersion": 1, "parameters": { "kind": "choice", "prompt": "Choose an account.", "options": [ { "id": "primary", "label": "Primary" }, { "id": "backup", "label": "Backup" } ], "default": "primary", "required": true, "timeout": "PT1M" } }
+  ],
+  "connections": [
+    { "from": { "node": "start", "port": "main" }, "to": { "node": "request", "port": "main" } }
+  ]
+}
