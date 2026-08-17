@@ -9,7 +9,7 @@ namespace SkeletonKey.Runtime;
 /// </summary>
 /// <remarks>
 /// The wrapper preserves the existing workflow result contract while also exposing runtime-owned state snapshots and node results.
-/// It does not imply persistence or durable resume support.
+/// Persistence metadata remains in the host-owned checkpoint store and is not duplicated by this final result wrapper.
 /// </remarks>
 public sealed class WorkflowRuntimeResult
 {

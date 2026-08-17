@@ -17,6 +17,6 @@ Execution stages are:
 11. Runtime state, result, and event update.
 12. Terminal completion.
 
-The runtime does not mutate workflow documents, request inputs, or request variables. It does not provide browser automation, resource resolution, locator resolution, loops, subworkflow invocation, persistence, resume, dependency-injection registration, assembly scanning, plugin discovery, or retry execution.
+The runtime does not mutate workflow documents, request inputs, or request variables. This baseline document predates browser automation, resource resolution, locator resolution, loops, subworkflow invocation, persistence, resume, and retry execution; later versioned specifications define those implemented extensions. Dependency-injection registration, assembly scanning, and plugin discovery remain outside the runtime.
 
 Runtime error codes use the `SKR` prefix. Phase 0-13 defines errors for validation, analysis, planning, missing handlers, identity mismatch, materialization failure, unexpected exceptions, invalid outputs, unavailable dependencies, execution limits, cancellation, unsupported boundaries, invalid state transitions, and no-progress detection.

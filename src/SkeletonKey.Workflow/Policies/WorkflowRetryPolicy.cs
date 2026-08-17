@@ -1,7 +1,7 @@
 namespace SkeletonKey.Workflow.Policies;
 
 /// <summary>
-/// Declares retry settings for future node execution.
+/// Declares retry settings for runtime node execution.
 /// </summary>
 public sealed class WorkflowRetryPolicy
 {

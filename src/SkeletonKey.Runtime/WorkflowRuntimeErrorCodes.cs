@@ -70,4 +70,10 @@ public static class WorkflowRuntimeErrorCodes
 
     /// <summary>An in-memory interaction continuation was rejected.</summary>
     public const string InteractionContinuationRejected = "SKR1022";
+
+    /// <summary>A node handler exceeded its declared execution timeout.</summary>
+    public const string NodeExecutionTimedOut = "SKR1023";
+
+    /// <summary>A node failure stopped execution through its explicit on-error policy.</summary>
+    public const string NodeExecutionStopped = "SKR1024";
 }

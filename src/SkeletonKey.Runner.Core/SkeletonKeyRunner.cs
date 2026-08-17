@@ -1,9 +1,13 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using SkeletonKey.Abstractions.Events;
 using SkeletonKey.Abstractions.Execution;
 using SkeletonKey.Analysis;
 using SkeletonKey.Analysis.Default;
+using SkeletonKey.Artifacts.FileSystem;
 using SkeletonKey.BuiltIns;
 using SkeletonKey.BuiltIns.Runtime;
 using SkeletonKey.Catalog;
@@ -30,6 +34,8 @@ public sealed class SkeletonKeyRunner
     private readonly TextReader _input;
     private readonly TextWriter _output;
     private readonly TextWriter _error;
+    private RunnerOutputFormat _outputFormat;
+    private bool _diagnostics;
 
     /// <summary>Initializes a runner facade over explicit streams.</summary>
     public SkeletonKeyRunner(TextReader input, TextWriter output, TextWriter error)
@@ -52,6 +58,9 @@ public sealed class SkeletonKeyRunner
         {
             string command = args[0];
             var options = RunnerOptions.Parse(args.Skip(1).ToArray());
+            _outputFormat = options.OutputFormat;
+            _diagnostics = options.Diagnostics;
+            await WriteDiagnosticAsync("command-start", command).ConfigureAwait(false);
             return command switch
             {
                 "version" => await VersionAsync(cancellationToken).ConfigureAwait(false),
@@ -59,6 +68,7 @@ public sealed class SkeletonKeyRunner
                 "analyze" => await AnalyzeAsync(options, cancellationToken).ConfigureAwait(false),
                 "plan" => await PlanAsync(options, cancellationToken).ConfigureAwait(false),
                 "run" => await RunAsync(options, cancellationToken).ConfigureAwait(false),
+                "resume" => await ResumeAsync(options, cancellationToken).ConfigureAwait(false),
                 "install-browsers" => await InstallBrowsersAsync(options, cancellationToken).ConfigureAwait(false),
                 _ => await UnknownCommandAsync(command).ConfigureAwait(false),
             };
@@ -72,6 +82,11 @@ public sealed class SkeletonKeyRunner
         {
             await _error.WriteLineAsync(exception.Message).ConfigureAwait(false);
             return RunnerExitCodes.Usage;
+        }
+        catch (WorkflowCheckpointStoreException exception)
+        {
+            await WriteEnvelopeAsync(RunnerEnvelope.Failure(args[0], exception.Message, exception.Code), cancellationToken: CancellationToken.None).ConfigureAwait(false);
+            return RunnerExitCodes.Failed;
         }
         catch (Exception exception)
         {
@@ -123,6 +138,35 @@ public sealed class SkeletonKeyRunner
 
     private async ValueTask<int> RunAsync(RunnerOptions options, CancellationToken cancellationToken)
     {
+        FileSystemWorkflowCheckpointStore? checkpointStore = options.CheckpointDirectory is null ? null : new FileSystemWorkflowCheckpointStore(options.CheckpointDirectory);
+        return await ExecuteWorkflowAsync("run", options, checkpointStore, resumeCheckpoint: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<int> ResumeAsync(RunnerOptions options, CancellationToken cancellationToken)
+    {
+        if (options.CheckpointDirectory is null || options.ExecutionId is null)
+        {
+            throw new RunnerUsageException("resume requires --checkpoint-directory and --execution-id.");
+        }
+
+        FileSystemWorkflowCheckpointStore checkpointStore = new(options.CheckpointDirectory);
+        WorkflowExecutionCheckpoint? checkpoint = await checkpointStore.LoadAsync(options.ExecutionId, cancellationToken).ConfigureAwait(false);
+        if (checkpoint is null)
+        {
+            await WriteEnvelopeAsync(RunnerEnvelope.Failure("resume", "No checkpoint exists for the requested execution identifier.", WorkflowCheckpointErrorCodes.InvalidCheckpoint), cancellationToken).ConfigureAwait(false);
+            return RunnerExitCodes.Failed;
+        }
+
+        return await ExecuteWorkflowAsync("resume", options, checkpointStore, checkpoint, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<int> ExecuteWorkflowAsync(
+        string command,
+        RunnerOptions options,
+        IWorkflowCheckpointStore? checkpointStore,
+        WorkflowExecutionCheckpoint? resumeCheckpoint,
+        CancellationToken cancellationToken)
+    {
         WorkflowDocument workflow = await ReadWorkflowAsync(options, cancellationToken).ConfigureAwait(false);
         IReadOnlyDictionary<string, JsonNode?> inputs = await ReadInputsAsync(options, cancellationToken).ConfigureAwait(false);
         WorkflowNodeDefinitionCatalog catalog = Catalog();
@@ -138,10 +182,32 @@ public sealed class SkeletonKeyRunner
             resourceProviders: [new PlaywrightPageResourceProvider()]);
 
         string executionId = options.ExecutionId ?? "execution";
-        WorkflowRuntimeResult result = await runtime.ExecuteAsync(new WorkflowExecutionRequest(workflow, executionId, "plan:" + workflow.Id, inputs), cancellationToken).ConfigureAwait(false);
+        string planId = ComputePlanId(workflow);
+        BufferedWorkflowEventSink? eventSink = options.OutputFormat == RunnerOutputFormat.Ndjson ? new BufferedWorkflowEventSink() : null;
+        WorkflowRuntimeResult result = await runtime.ExecuteAsync(new WorkflowExecutionRequest(
+            workflow,
+            executionId,
+            planId,
+            inputs,
+            eventSink: eventSink,
+            checkpointStore: checkpointStore,
+            resumeCheckpoint: resumeCheckpoint), cancellationToken).ConfigureAwait(false);
         bool accepted = result.Result.Status == WorkflowExecutionStatus.Succeeded;
-        await WriteEnvelopeAsync(RunnerEnvelope.FromRuntime("run", accepted, result), cancellationToken).ConfigureAwait(false);
+        if (eventSink is not null)
+        {
+            foreach (WorkflowEvent workflowEvent in eventSink.Events)
+            {
+                await WriteNdjsonRecordAsync(new { type = "event", @event = workflowEvent }, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        await WriteEnvelopeAsync(RunnerEnvelope.FromRuntime(command, accepted, result), cancellationToken).ConfigureAwait(false);
         return accepted ? RunnerExitCodes.Success : RunnerExitCodes.Failed;
+    }
+
+    private static string ComputePlanId(WorkflowDocument workflow)
+    {
+        string canonical = new WorkflowJsonSerializer().Serialize(workflow, indented: false);
+        return "plan:sha256:" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(canonical)));
     }
 
     private async ValueTask<int> InstallBrowsersAsync(RunnerOptions options, CancellationToken cancellationToken)
@@ -224,7 +290,66 @@ public sealed class SkeletonKeyRunner
 
     private async ValueTask WriteEnvelopeAsync(RunnerEnvelope envelope, CancellationToken cancellationToken)
     {
-        await _output.WriteLineAsync(JsonSerializer.Serialize(envelope, _jsonOptions).AsMemory(), cancellationToken).ConfigureAwait(false);
+        object value = _outputFormat == RunnerOutputFormat.Ndjson ? new { type = "result", envelope } : envelope;
+        await WriteNdjsonRecordAsync(value, cancellationToken).ConfigureAwait(false);
+        await WriteDiagnosticAsync("command-complete", envelope.Status).ConfigureAwait(false);
+    }
+
+    private async ValueTask WriteNdjsonRecordAsync(object value, CancellationToken cancellationToken)
+    {
+        JsonNode? node = JsonSerializer.SerializeToNode(value, value.GetType(), _jsonOptions);
+        RedactSensitiveValues(node);
+        await _output.WriteLineAsync((node?.ToJsonString(_jsonOptions) ?? "null").AsMemory(), cancellationToken).ConfigureAwait(false);
+    }
+
+    private static void RedactSensitiveValues(JsonNode? node)
+    {
+        if (node is JsonObject obj)
+        {
+            foreach (string key in obj.Select(static pair => pair.Key).ToArray())
+            {
+                if (IsSensitiveKey(key))
+                {
+                    obj[key] = "[REDACTED]";
+                }
+                else
+                {
+                    RedactSensitiveValues(obj[key]);
+                }
+            }
+        }
+        else if (node is JsonArray array)
+        {
+            foreach (JsonNode? item in array)
+            {
+                RedactSensitiveValues(item);
+            }
+        }
+    }
+
+    private static bool IsSensitiveKey(string key)
+    {
+        return key.Contains("password", StringComparison.OrdinalIgnoreCase) ||
+            key.Contains("secret", StringComparison.OrdinalIgnoreCase) ||
+            key.Contains("token", StringComparison.OrdinalIgnoreCase) ||
+            key.Contains("authorization", StringComparison.OrdinalIgnoreCase) ||
+            key.Contains("cookie", StringComparison.OrdinalIgnoreCase) ||
+            key.Contains("storageState", StringComparison.OrdinalIgnoreCase) ||
+            key.Contains("promptText", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async ValueTask WriteDiagnosticAsync(string name, string value)
+    {
+        if (_diagnostics)
+        {
+            await _error.WriteLineAsync($"[{name}] {SanitizeDiagnostic(value)}").ConfigureAwait(false);
+        }
+    }
+
+    private static string SanitizeDiagnostic(string value)
+    {
+        string singleLine = value.Replace('\r', ' ').Replace('\n', ' ');
+        return singleLine.Length <= 256 ? singleLine : singleLine[..256];
     }
 
     private async ValueTask<int> UnknownCommandAsync(string command)
@@ -236,7 +361,7 @@ public sealed class SkeletonKeyRunner
 
     private async ValueTask WriteUsageAsync()
     {
-        await _output.WriteLineAsync("skeletonkey <version|validate|analyze|plan|run|install-browsers> [--file <workflow.json>|-] [--inputs <json>] [--inputs-file <inputs.json>] [--browser <name>]").ConfigureAwait(false);
+        await _output.WriteLineAsync("skeletonkey <version|validate|analyze|plan|run|resume|install-browsers> [--file <workflow.json>|-] [--inputs <json>] [--inputs-file <inputs.json>] [--execution-id <id>] [--checkpoint-directory <path>] [--browser <name>] [--format <json|ndjson>] [--diagnostics]").ConfigureAwait(false);
     }
 
     private static bool IsHelp(string value)
@@ -276,7 +401,13 @@ internal sealed class RunnerOptions
 
     public string? ExecutionId { get; private init; }
 
+    public string? CheckpointDirectory { get; private init; }
+
     public string? Browser { get; private init; }
+
+    public RunnerOutputFormat OutputFormat { get; private init; }
+
+    public bool Diagnostics { get; private init; }
 
     public static RunnerOptions Parse(IReadOnlyList<string> args)
     {
@@ -284,7 +415,10 @@ internal sealed class RunnerOptions
         string? inputsJson = null;
         string? inputsPath = null;
         string? executionId = null;
+        string? checkpointDirectory = null;
         string? browser = null;
+        RunnerOutputFormat outputFormat = RunnerOutputFormat.Json;
+        bool diagnostics = false;
 
         for (int index = 0; index < args.Count; index++)
         {
@@ -314,8 +448,22 @@ internal sealed class RunnerOptions
                 case "--execution-id":
                     executionId = Next();
                     break;
+                case "--checkpoint-directory":
+                    checkpointDirectory = Next();
+                    break;
                 case "--browser":
                     browser = Next();
+                    break;
+                case "--format":
+                    outputFormat = Next() switch
+                    {
+                        "json" => RunnerOutputFormat.Json,
+                        "ndjson" => RunnerOutputFormat.Ndjson,
+                        _ => throw new RunnerUsageException("Format must be json or ndjson."),
+                    };
+                    break;
+                case "--diagnostics":
+                    diagnostics = true;
                     break;
                 default:
                     if (workflowPath is null && !item.StartsWith("-", StringComparison.Ordinal))
@@ -339,8 +487,35 @@ internal sealed class RunnerOptions
             InputsJson = inputsJson,
             InputsPath = inputsPath,
             ExecutionId = executionId,
+            CheckpointDirectory = checkpointDirectory,
             Browser = browser,
+            OutputFormat = outputFormat,
+            Diagnostics = diagnostics,
         };
+    }
+}
+
+/// <summary>Supported machine-readable output formats.</summary>
+public enum RunnerOutputFormat
+{
+    /// <summary>One JSON command envelope.</summary>
+    Json,
+
+    /// <summary>One JSON record per line, including runtime events and the final result.</summary>
+    Ndjson,
+}
+
+internal sealed class BufferedWorkflowEventSink : IWorkflowEventSink
+{
+    private readonly List<WorkflowEvent> _events = [];
+
+    public IReadOnlyList<WorkflowEvent> Events => _events.AsReadOnly();
+
+    public ValueTask PublishAsync(WorkflowEvent workflowEvent, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _events.Add(workflowEvent ?? throw new ArgumentNullException(nameof(workflowEvent)));
+        return ValueTask.CompletedTask;
     }
 }
 

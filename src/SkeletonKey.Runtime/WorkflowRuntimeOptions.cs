@@ -4,7 +4,7 @@ namespace SkeletonKey.Runtime;
 /// Represents immutable host-neutral runtime limits and behavior switches.
 /// </summary>
 /// <remarks>
-/// Options provide deterministic safe defaults and intentionally exclude retry policies, persistence, browser behavior, dependency injection,
+/// Options provide deterministic safe defaults and intentionally exclude workflow-declared policy values, persistence, browser behavior, dependency injection,
 /// host clocks for identity creation, and any host-dependent defaults.
 /// </remarks>
 public sealed class WorkflowRuntimeOptions

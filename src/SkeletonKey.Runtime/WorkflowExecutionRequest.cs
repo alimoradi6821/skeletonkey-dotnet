@@ -26,13 +26,17 @@ public sealed class WorkflowExecutionRequest
     /// <param name="inputs">Optional workflow input values.</param>
     /// <param name="variables">Optional workflow variable overrides or initial values.</param>
     /// <param name="eventSink">Optional event sink; when omitted, runtime events are accepted by a no-op sink.</param>
+    /// <param name="checkpointStore">Optional host-owned durable checkpoint store.</param>
+    /// <param name="resumeCheckpoint">Optional previously loaded checkpoint to resume.</param>
     public WorkflowExecutionRequest(
         WorkflowDocument workflow,
         string executionId,
         string planId,
         IReadOnlyDictionary<string, JsonNode?>? inputs = null,
         IReadOnlyDictionary<string, JsonNode?>? variables = null,
-        IWorkflowEventSink? eventSink = null)
+        IWorkflowEventSink? eventSink = null,
+        IWorkflowCheckpointStore? checkpointStore = null,
+        WorkflowExecutionCheckpoint? resumeCheckpoint = null)
     {
         ArgumentNullException.ThrowIfNull(workflow);
         ArgumentException.ThrowIfNullOrWhiteSpace(executionId);
@@ -44,6 +48,8 @@ public sealed class WorkflowExecutionRequest
         _inputs = CloneJsonDictionary(inputs);
         _variables = CloneJsonDictionary(variables);
         EventSink = eventSink ?? NoOpWorkflowEventSink.Instance;
+        CheckpointStore = checkpointStore;
+        ResumeCheckpoint = resumeCheckpoint;
     }
 
     /// <summary>
@@ -75,6 +81,12 @@ public sealed class WorkflowExecutionRequest
     /// Gets the event sink that receives runtime-owned ordered workflow events.
     /// </summary>
     public IWorkflowEventSink EventSink { get; }
+
+    /// <summary>Gets the optional host-owned durable checkpoint store.</summary>
+    public IWorkflowCheckpointStore? CheckpointStore { get; }
+
+    /// <summary>Gets the optional checkpoint from which execution resumes.</summary>
+    public WorkflowExecutionCheckpoint? ResumeCheckpoint { get; }
 
     private static IReadOnlyDictionary<string, JsonNode?> CloneJsonDictionary(IReadOnlyDictionary<string, JsonNode?>? values)
     {

@@ -131,7 +131,7 @@ public sealed class PublicContractSafetyTests
 
     private static IEnumerable<MemberInfo> PublicMembers(Type type)
     {
-        const BindingFlags Flags = BindingFlags.Instance | BindingFlags.Public;
+        const BindingFlags Flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
         return type.GetProperties(Flags).Cast<MemberInfo>().Concat(type.GetMethods(Flags).Where(static method => !method.IsSpecialName));
     }
 

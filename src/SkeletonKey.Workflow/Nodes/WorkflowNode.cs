@@ -20,7 +20,7 @@ public sealed class WorkflowNode
     /// <param name="description">Optional human-readable node description.</param>
     /// <param name="disabled">Whether this node is declared disabled.</param>
     /// <param name="parameters">The extensible node-specific parameter object.</param>
-    /// <param name="policy">Optional future execution policy declarations.</param>
+    /// <param name="policy">Optional runtime execution policy declarations.</param>
     public WorkflowNode(
         string id,
         string type,
@@ -77,7 +77,7 @@ public sealed class WorkflowNode
     public JsonObject Parameters => (JsonObject)_parameters.DeepClone();
 
     /// <summary>
-    /// Gets optional future execution policy declarations.
+    /// Gets optional runtime execution policy declarations.
     /// </summary>
     public WorkflowExecutionPolicy? Policy { get; }
 }

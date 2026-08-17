@@ -7,8 +7,8 @@ namespace SkeletonKey.Handlers;
 /// Represents the immutable lightweight result returned by a node handler.
 /// </summary>
 /// <remarks>
-/// This contract contains no execution IDs, timestamps, sequence numbers, or metrics. A future runtime converts it into a full node execution result.
-/// Metadata JSON is defensively cloned. Unexpected implementation exceptions are future runtime faults, not values produced by this type.
+/// This contract contains no execution IDs, timestamps, sequence numbers, or metrics. The runtime converts it into a full node execution result.
+/// Metadata JSON is defensively cloned. Unexpected implementation exceptions are runtime faults, not values produced by this type.
 /// </remarks>
 public sealed class NodeHandlerResult
 {

@@ -1,7 +1,7 @@
 namespace SkeletonKey.Workflow.Policies;
 
 /// <summary>
-/// Declares the future error-handling preference for a workflow node.
+/// Declares the runtime error-handling preference for a workflow node.
 /// </summary>
 public enum WorkflowOnError
 {

@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SkeletonKey.Artifacts.FileSystem\SkeletonKey.Artifacts.FileSystem.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Runtime\SkeletonKey.Runtime.csproj" />
   </ItemGroup>
 
   <ItemGroup>

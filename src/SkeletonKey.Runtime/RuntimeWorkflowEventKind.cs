@@ -17,7 +17,7 @@ public enum RuntimeWorkflowEventKind
     /// <summary>The root execution suspended for an in-memory continuation.</summary>
     ExecutionSuspended,
 
-    /// <summary>The root execution resumed after an in-memory continuation.</summary>
+    /// <summary>The root execution resumed after an in-memory continuation or durable safe-boundary checkpoint.</summary>
     ExecutionResumed,
 
     /// <summary>A planned node step became ready.</summary>
@@ -55,4 +55,16 @@ public enum RuntimeWorkflowEventKind
 
     /// <summary>A handler-supplied output observation was accepted and sequenced by the runtime.</summary>
     NodeOutput,
+
+    /// <summary>A failed node attempt scheduled another policy-controlled attempt.</summary>
+    NodeRetryScheduled,
+
+    /// <summary>A policy-controlled retry attempt started after its safe retry boundary.</summary>
+    NodeRetryStarted,
+
+    /// <summary>A node failure was consumed by an explicit continue policy.</summary>
+    NodeErrorContinued,
+
+    /// <summary>A node failure stopped execution through an explicit stop policy.</summary>
+    NodeExecutionStopped,
 }

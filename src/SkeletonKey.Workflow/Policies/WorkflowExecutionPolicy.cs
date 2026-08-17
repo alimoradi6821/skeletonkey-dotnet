@@ -1,7 +1,7 @@
 namespace SkeletonKey.Workflow.Policies;
 
 /// <summary>
-/// Declares future execution preferences for a workflow node.
+/// Declares runtime execution preferences for a workflow node.
 /// </summary>
 public sealed class WorkflowExecutionPolicy
 {

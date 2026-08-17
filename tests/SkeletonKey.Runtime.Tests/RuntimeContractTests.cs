@@ -170,6 +170,34 @@ public sealed class RuntimeContractTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new RuntimeWorkflowEvent("bad", 0, "execution", "workflow", "invocation", null, DateTimeOffset.UtcNow, RuntimeWorkflowEventKind.ExecutionStarted));
     }
 
+    /// <summary>Verifies checkpoint 0.2 retry metadata is immutable and the legacy 0.1 format remains readable.</summary>
+    [Fact]
+    public void CheckpointStepPreservesRetryBoundaryMetadata()
+    {
+        DateTimeOffset notBefore = new(2026, 8, 17, 12, 0, 1, TimeSpan.Zero);
+        WorkflowCheckpointStep step = new(
+            "step:policy",
+            "policy",
+            "demo.policy",
+            WorkflowStepRuntimeStatus.Ready,
+            entryActivated: false,
+            attempt: 2,
+            resultStatus: NodeExecutionStatus.Failed,
+            error: new WorkflowError("TEST-POLICY", "Expected failure."),
+            retryAttempt: 2,
+            retryNotBeforeUtc: notBefore);
+
+        Assert.Equal(2, step.RetryAttempt);
+        Assert.Equal(notBefore, step.RetryNotBeforeUtc);
+        Assert.Equal("0.2", WorkflowExecutionCheckpoint.CurrentFormatVersion);
+        Assert.True(WorkflowExecutionCheckpoint.IsSupportedFormatVersion(WorkflowExecutionCheckpoint.CurrentFormatVersion));
+        Assert.True(WorkflowExecutionCheckpoint.IsSupportedFormatVersion(WorkflowExecutionCheckpoint.LegacyFormatVersion));
+        Assert.False(WorkflowExecutionCheckpoint.IsSupportedFormatVersion("9.9"));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new WorkflowCheckpointStep("step", "node", "demo.node", WorkflowStepRuntimeStatus.Ready, false, retryAttempt: -1));
+        Assert.Throws<ArgumentException>(() => new WorkflowCheckpointStep("step", "node", "demo.node", WorkflowStepRuntimeStatus.Ready, false, retryNotBeforeUtc: notBefore));
+        Assert.Throws<ArgumentException>(() => new WorkflowCheckpointStep("step", "node", "demo.node", WorkflowStepRuntimeStatus.Ready, false, retryAttempt: 1, retryNotBeforeUtc: new DateTimeOffset(2026, 8, 17, 12, 0, 0, TimeSpan.FromHours(1))));
+    }
+
     private sealed class Sink : IWorkflowEventSink
     {
         public ValueTask PublishAsync(WorkflowEvent workflowEvent, CancellationToken cancellationToken = default)

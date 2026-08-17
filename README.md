@@ -4,7 +4,7 @@ SkeletonKey is an open-source automation framework under active development.
 
 Current status:
 - Pre-alpha
-- Repository and architecture foundation only
+- Executable pre-alpha runtime and Windows Runner foundation
 - Immutable graph workflow document model exists
 - Strict workflow JSON serialization exists
 - Semantic workflow validation exists
@@ -65,23 +65,36 @@ Current status:
 - Playwright-backed `web.page` resources exist
 - Essential Web handlers exist
 - A real Chromium Workflow smoke example exists
+- Advanced Web automation supports multiple pages, popups, nested frames, uploads, downloads, dialogs, cookies, storage-state transfer, and advanced waits
+- Filesystem artifacts are confined to a host-owned root and use opaque references with SHA-256 metadata
+- The `skeletonkey` Runner provides version, validation, analysis, planning, execution, and browser-install commands
+- Runner output supports a single JSON envelope or event/result NDJSON records; optional bounded diagnostics are isolated on stderr
+- Windows publish scripts emit a package manifest and SHA-256 checksums
+- Ctrl+C is translated into cooperative Runner cancellation
 - Browser installation is an explicit step through `build\install-playwright-browsers.ps1`
+- Versioned durable execution checkpoints exist through a provider-neutral host store contract
+- Atomic integrity-protected filesystem checkpoint persistence exists
+- Safe-boundary process-restart resume preserves completed node outputs and activation/event counters
+- The Runner provides `resume` and opt-in `--checkpoint-directory` execution persistence
+- Runtime-owned handler timeout, retry, bounded exponential backoff, and `onError` execution policies exist
+- Retry attempts use distinct node identities, ordered events, and individual terminal results
+- Checkpoint format 0.2 preserves safe retry boundaries without replaying the persisted failed attempt
 - Strict JSON parsing, schema validation, and semantic validation are separate layers
 - Loop execution is implemented for built-in loop boundaries
 - Subworkflow invocation execution is implemented through explicit repository contracts
 - Cross-workflow dependency validation is not implemented yet
-- Frames, popups, uploads, downloads, dialogs, and network interception are not implemented yet
+- Network interception is not implemented yet
 - Desktop automation is not implemented yet
-- Execution-state persistence is not implemented yet
-- Persistence and resume are not implemented yet
+- Interrupted running nodes require explicit recovery and are never automatically replayed
+- Non-terminal live browser/resource-handle resume is not implemented yet
 - Human interaction is supported through explicit non-durable host handlers or in-memory session continuations
 - Catalog discovery and plugin loading are not implemented yet
 - Node catalog JSON Schema and conformance fixtures exist
 - Browser automation is implemented for the essential `web.page` path only
 - Playwright integration is implemented for page-owned browser/context/page resources
 - No FlaUI integration yet
-- Parallel scheduling and retry execution are not implemented yet
-- Plugin discovery and CLI are not implemented yet
+- Parallel and distributed scheduling are not implemented yet
+- Plugin discovery is not implemented yet
 
 Planned direction:
 - Graph-based JSON workflow language
@@ -103,6 +116,15 @@ Test:
 dotnet test SkeletonKey.sln
 ```
 
+Phase 0-18 verification on clean Windows:
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build\verify-phase-018.ps1
+```
+
+The verification script performs restore, Release build/test (including execution-policy and retry-resume coverage), formatting verification, checkpoint run/resume smoke testing, advanced Chromium smoke testing, package manifest/checksum generation, framework-dependent DLL smoke testing, and self-contained `win-x64` apphost smoke testing. Do not weaken CET, CFG, or Exploit Protection to make an apphost pass.
+
+Detailed acceptance rules are documented in [Phase 0-18 Verification](docs/development/phase-018-verification.md).
+
 Minimal deserialize and validate example:
 ```csharp
 var serializer = new WorkflowJsonSerializer();
@@ -123,6 +145,7 @@ if (!result.IsValid)
 The workflow specification is unstable before version 1.0.
 
 Language assets:
+- [Runtime Execution Policies 0.1](docs/specifications/runtime-execution-policies-0.1.md)
 - [Workflow 0.1 JSON Schema](schemas/workflow/0.1/schema.json)
 - [Workflow Expressions 0.1](docs/specifications/workflow-expressions-0.1.md)
 - [Workflow Expression Evaluation 0.1](docs/specifications/workflow-expression-evaluation-0.1.md)
@@ -131,6 +154,7 @@ Language assets:
 - [Workflow Value Materialization 0.1](docs/specifications/workflow-value-materialization-0.1.md)
 - [Node Parameter Materialization 0.1](docs/specifications/node-parameter-materialization-0.1.md)
 - [Workflow Runtime 0.1](docs/specifications/workflow-runtime-0.1.md)
+- [Durable Workflow Checkpoints 0.1](docs/specifications/durable-workflow-checkpoints-0.1.md)
 - [Runtime State Transitions 0.1](docs/specifications/runtime-state-transitions-0.1.md)
 - [Runtime Scheduling 0.1](docs/specifications/runtime-scheduling-0.1.md)
 - [Runtime Output Propagation 0.1](docs/specifications/runtime-output-propagation-0.1.md)

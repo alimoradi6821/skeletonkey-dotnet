@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+
 namespace SkeletonKey.Serialization.Json.Tests.StrictParsing;
 
 /// <summary>
@@ -166,7 +168,7 @@ public sealed class StrictParsingTests
     [InlineData("connections")]
     public void RejectsMissingRequiredRootProperty(string propertyName)
     {
-        string json = """
+        JsonObject json = JsonNode.Parse("""
             {
               "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
               "specVersion": "0.1.0",
@@ -175,12 +177,11 @@ public sealed class StrictParsingTests
               "nodes": [],
               "connections": []
             }
-            """;
+            """)!.AsObject();
 
-        json = json.Replace($"  \"{propertyName}\": {ValueForProperty(propertyName)},\r\n", string.Empty, StringComparison.Ordinal)
-            .Replace($"  \"{propertyName}\": {ValueForProperty(propertyName)}\r\n", string.Empty, StringComparison.Ordinal);
+        Assert.True(json.Remove(propertyName));
 
-        AssertInvalid(json);
+        AssertInvalid(json.ToJsonString());
     }
 
     /// <summary>
@@ -301,19 +302,5 @@ public sealed class StrictParsingTests
     private void AssertInvalid(string json)
     {
         Assert.Throws<WorkflowSerializationException>(() => _serializer.Deserialize(json));
-    }
-
-    private static string ValueForProperty(string propertyName)
-    {
-        return propertyName switch
-        {
-            "$schema" => "\"https://schemas.skeletonkey.dev/workflow/0.1/schema.json\"",
-            "specVersion" => "\"0.1.0\"",
-            "id" => "\"minimal\"",
-            "name" => "\"Minimal workflow\"",
-            "nodes" => "[]",
-            "connections" => "[]",
-            _ => throw new ArgumentOutOfRangeException(nameof(propertyName), propertyName, null),
-        };
     }
 }
