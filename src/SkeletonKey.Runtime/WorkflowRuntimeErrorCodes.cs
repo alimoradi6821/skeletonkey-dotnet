@@ -76,4 +76,7 @@ public static class WorkflowRuntimeErrorCodes
 
     /// <summary>A node failure stopped execution through its explicit on-error policy.</summary>
     public const string NodeExecutionStopped = "SKR1024";
+
+    /// <summary>Cross-workflow invocation dependency analysis failed before execution state was created.</summary>
+    public const string WorkflowInvocationAnalysisFailed = "SKR1025";
 }

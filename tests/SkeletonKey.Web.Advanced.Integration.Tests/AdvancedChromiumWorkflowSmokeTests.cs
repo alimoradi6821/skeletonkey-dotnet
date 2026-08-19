@@ -31,6 +31,43 @@ namespace SkeletonKey.Web.Advanced.Integration.Tests;
 /// </summary>
 public sealed class AdvancedChromiumWorkflowSmokeTests
 {
+    /// <summary>Verifies a safe checkpoint reconstructs the active Chromium page before remaining nodes execute.</summary>
+    [Fact]
+    public async Task ChromiumPageIsReconstructedDuringDurableResumeWhenEnabled()
+    {
+        if (!string.Equals(Environment.GetEnvironmentVariable("SKELETONKEY_PLAYWRIGHT_ADVANCED_SMOKE"), "1", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        LocatorDocument locators = new(
+            id: "phase-24-recovery",
+            locators: new Dictionary<string, LocatorDefinition>(StringComparer.Ordinal)
+            {
+                ["message"] = new(strategies: [new("css", selector: "#message")]),
+            });
+        LocatorPlanResolver resolver = new(new ImmutableLocatorDocumentRepository([locators]));
+        WorkflowNodeDefinitionCatalog catalog = new([.. BuiltInWorkflowNodeCatalog.Catalog.Definitions, .. WebBuiltInWorkflowNodeCatalog.Catalog.Definitions]);
+        IReadOnlyList<INodeHandler> handlers = [.. BuiltInRuntimeHandlers.Create(), .. WebBuiltInRuntimeHandlers.Create()];
+        WorkflowDocument workflow = RecoveryWorkflow();
+        FailingCheckpointStore firstStore = new(failFromSave: 6);
+
+        WorkflowRuntimeResult interrupted = await RecoveryRuntime(catalog, handlers, resolver).ExecuteAsync(
+            new WorkflowExecutionRequest(workflow, "phase-24-recovery", "phase-24-plan", checkpointStore: firstStore));
+
+        Assert.Equal(WorkflowExecutionStatus.Failed, interrupted.Result.Status);
+        WorkflowExecutionCheckpoint safe = Assert.IsType<WorkflowExecutionCheckpoint>(firstStore.Current);
+        Assert.True(Assert.Single(safe.Resources).IsResumable);
+
+        FailingCheckpointStore resumedStore = new(safe);
+        WorkflowRuntimeResult resumed = await RecoveryRuntime(catalog, handlers, resolver).ExecuteAsync(
+            new WorkflowExecutionRequest(workflow, "phase-24-recovery", "phase-24-plan", checkpointStore: resumedStore, resumeCheckpoint: safe));
+
+        Assert.True(resumed.Result.Status == WorkflowExecutionStatus.Succeeded, FailureMessage(resumed));
+        Assert.Equal("phase-24-restored", Output(resumed, "read", "result"));
+        Assert.True(resumedStore.Current!.IsTerminal);
+    }
+
     /// <summary>
     /// Verifies nested-frame upload and download use Workflow JSON, Locator slots, handlers, and Playwright.
     /// </summary>
@@ -122,6 +159,7 @@ public sealed class AdvancedChromiumWorkflowSmokeTests
                     ["maximumFiles"] = 1,
                     ["maximumAggregateBytes"] = 1024,
                 })),
+                Node("waitUploadText", "web.wait", FrameParameters("uploadOutput", new JsonObject { ["state"] = "visible" })),
                 Node("uploadText", "web.getText", FrameParameters("uploadOutput")),
                 Node("download", "web.clickAndWaitForDownload", FrameParameters("download", new JsonObject { ["maximumBytes"] = 1024 })),
                 new("return", "core.return", 1, parameters: new JsonObject { ["outcome"] = new JsonObject { ["kind"] = "success", ["code"] = "done" } }),
@@ -130,10 +168,87 @@ public sealed class AdvancedChromiumWorkflowSmokeTests
             [
                 Connect("start", "navigate", "main"),
                 Connect("navigate", "upload", "continue"),
-                Connect("upload", "uploadText", "continue"),
+                Connect("upload", "waitUploadText", "continue"),
+                Connect("waitUploadText", "uploadText", "continue"),
                 Connect("uploadText", "download", "continue"),
                 Connect("download", "return", "continue"),
             ]);
+    }
+
+    private static WorkflowDocument RecoveryWorkflow()
+    {
+        JsonObject pageBinding = new() { ["$resource"] = new JsonObject { ["name"] = "page" } };
+        return new WorkflowDocument(
+            id: "phase-24-browser-recovery",
+            name: "Phase 24 Browser Recovery",
+            resources: new Dictionary<string, WorkflowResourceDefinition>(StringComparer.Ordinal)
+            {
+                ["page"] = new(
+                    StandardWorkflowResourceKinds.WebPage,
+                    capabilities:
+                    [
+                        StandardWorkflowResourceCapabilities.WebNavigation,
+                        StandardWorkflowResourceCapabilities.WebText,
+                        StandardWorkflowResourceCapabilities.WebLocators,
+                    ],
+                    constraints: new JsonObject
+                    {
+                        ["engine"] = "chromium",
+                        ["visibility"] = "headless",
+                        ["profile"] = "ephemeral",
+                        ["defaultTimeoutMilliseconds"] = 10000,
+                    }),
+            },
+            nodes:
+            [
+                new("start", "core.start", 1),
+                new("navigate", "web.navigate", 1, parameters: new JsonObject
+                {
+                    ["page"] = pageBinding.DeepClone(),
+                    ["url"] = DataUrl("<html><body><div id=\"message\">phase-24-restored</div></body></html>"),
+                }),
+                new("read", "web.getText", 1, parameters: new JsonObject
+                {
+                    ["page"] = pageBinding.DeepClone(),
+                    ["target"] = new JsonObject
+                    {
+                        ["$locator"] = new JsonObject
+                        {
+                            ["catalog"] = "phase-24-recovery",
+                            ["version"] = "0.1.0",
+                            ["id"] = "message",
+                        },
+                    },
+                }),
+                new("return", "core.return", 1, parameters: new JsonObject
+                {
+                    ["outcome"] = new JsonObject { ["kind"] = "success", ["code"] = "done" },
+                }),
+            ],
+            connections:
+            [
+                Connect("start", "navigate", "main"),
+                Connect("navigate", "read", "continue"),
+                Connect("read", "return", "continue"),
+            ]);
+    }
+
+    private static DefaultWorkflowRuntime RecoveryRuntime(
+        WorkflowNodeDefinitionCatalog catalog,
+        IReadOnlyList<INodeHandler> handlers,
+        LocatorPlanResolver resolver)
+    {
+        DefaultWorkflowAnalyzer analyzer = new(locatorResolver: resolver);
+        return new DefaultWorkflowRuntime(
+            new WorkflowSemanticValidator(),
+            analyzer,
+            new DefaultWorkflowExecutionPlanner(),
+            catalog,
+            new ImmutableNodeHandlerResolver(handlers),
+            new NodeParameterMaterializer(),
+            options: new WorkflowRuntimeOptions(maximumExecutedNodeAttempts: 100),
+            resourceProviders: [new PlaywrightPageResourceProvider()],
+            locatorResolver: resolver);
     }
 
     private static WorkflowNode Node(string id, string type, JsonObject parameters)
@@ -192,12 +307,13 @@ public sealed class AdvancedChromiumWorkflowSmokeTests
         string inner = """
             <html><body>
             <input id="upload" type="file">
-            <div id="upload-output"></div>
+            <div id="upload-output" hidden></div>
             <a id="download" download="CON.txt" href="data:text/plain,download-body">Download</a>
             <script>
             document.getElementById('upload').addEventListener('change', async event => {
               const file = event.target.files[0];
               document.getElementById('upload-output').textContent = file.name + ':' + await file.text();
+              document.getElementById('upload-output').hidden = false;
             });
             </script>
             </body></html>
@@ -244,5 +360,43 @@ public sealed class AdvancedChromiumWorkflowSmokeTests
     private static string Sha256(string value)
     {
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
+    }
+
+    private sealed class FailingCheckpointStore : IWorkflowCheckpointStore
+    {
+        private readonly int? _failFromSave;
+        private int _saves;
+
+        public FailingCheckpointStore(int? failFromSave = null)
+        {
+            _failFromSave = failFromSave;
+        }
+
+        public FailingCheckpointStore(WorkflowExecutionCheckpoint initial)
+        {
+            Current = initial;
+        }
+
+        public WorkflowExecutionCheckpoint? Current { get; private set; }
+
+        public ValueTask<WorkflowExecutionCheckpoint?> LoadAsync(string executionId, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(Current);
+        }
+
+        public ValueTask SaveAsync(WorkflowExecutionCheckpoint checkpoint, long expectedRevision, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _saves++;
+            if (_failFromSave is not null && _saves >= _failFromSave.Value)
+            {
+                throw new WorkflowCheckpointStoreException(WorkflowCheckpointErrorCodes.StoreFailure, "Simulated process stop.");
+            }
+
+            Assert.Equal(Current?.Revision ?? 0, expectedRevision);
+            Current = checkpoint;
+            return ValueTask.CompletedTask;
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace SkeletonKey.Web.Playwright;
 /// <summary>
 /// Owns a Playwright page together with its internal browser, context, and Playwright lifetime.
 /// </summary>
-public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance
+public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, IWorkflowRuntimeResourceCheckpointParticipant
 {
     private readonly IPlaywright _playwright;
     private readonly IBrowser? _browser;
@@ -34,9 +34,22 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance
     /// <summary>
     /// Creates a Playwright page resource.
     /// </summary>
-    public static async ValueTask<PlaywrightPageResource> CreateAsync(WorkflowRuntimeResourceRequest request, IPlaywright playwright, PlaywrightPageConstraints constraints, PlaywrightPageProviderOptions options, IReadOnlyList<string> capabilities, CancellationToken cancellationToken)
+    public static async ValueTask<PlaywrightPageResource> CreateAsync(
+        WorkflowRuntimeResourceRequest request,
+        IPlaywright playwright,
+        PlaywrightPageConstraints constraints,
+        PlaywrightPageProviderOptions options,
+        IReadOnlyList<string> capabilities,
+        CancellationToken cancellationToken,
+        WorkflowRuntimeResourceCheckpointState? checkpointState = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        PlaywrightPageCheckpointState? recovery = checkpointState is null ? null : PlaywrightPageCheckpointState.Parse(checkpointState);
+        if (recovery is not null && constraints.Persistent)
+        {
+            throw new ArgumentException("Persistent Playwright contexts do not support checkpoint reconstruction.", nameof(checkpointState));
+        }
+
         IBrowserType browserType = constraints.Engine switch
         {
             "firefox" => playwright.Firefox,
@@ -48,6 +61,8 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance
         {
             Locale = constraints.Locale,
             UserAgent = constraints.UserAgent,
+            ServiceWorkers = constraints.NetworkPolicy is null ? null : ServiceWorkerPolicy.Block,
+            StorageState = recovery?.StorageState,
         };
         if (constraints.ViewportWidth is not null && constraints.ViewportHeight is not null)
         {
@@ -66,6 +81,7 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance
                     Locale = constraints.Locale,
                     UserAgent = constraints.UserAgent,
                     ViewportSize = contextOptions.ViewportSize,
+                    ServiceWorkers = constraints.NetworkPolicy is null ? null : ServiceWorkerPolicy.Block,
                 }).ConfigureAwait(false);
         }
         else
@@ -75,8 +91,19 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance
         }
 
         context.SetDefaultTimeout(constraints.DefaultTimeoutMilliseconds);
+        PlaywrightNetworkInterceptor? networkInterceptor = constraints.NetworkPolicy is null ? null : new PlaywrightNetworkInterceptor(constraints.NetworkPolicy);
+        if (networkInterceptor is not null)
+        {
+            await networkInterceptor.AttachAsync(context, cancellationToken).ConfigureAwait(false);
+        }
+
         IPage page = context.Pages.Count > 0 ? context.Pages[0] : await context.NewPageAsync().ConfigureAwait(false);
-        PlaywrightPageAdapter adapter = new(browser, context, contextOptions, page, options.NavigationPolicy, options.TestIdAttribute, constraints.DefaultTimeoutMilliseconds);
+        PlaywrightPageAdapter adapter = new(browser, context, contextOptions, page, options.NavigationPolicy, options.TestIdAttribute, constraints.DefaultTimeoutMilliseconds, networkInterceptor);
+        if (recovery is not null)
+        {
+            await adapter.RestoreCheckpointStateAsync(recovery, cancellationToken).ConfigureAwait(false);
+        }
+
         return new PlaywrightPageResource(request.ResourceName, request.Definition.Access, playwright, browser, capabilities, adapter, options.ArtifactStore);
     }
 
@@ -99,6 +126,12 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance
     public INodeResourceHandle CreateHandle()
     {
         return new PlaywrightPageResourceHandle(ResourceName, Kind, InstanceId, Capabilities, _adapter, _artifactStore);
+    }
+
+    /// <inheritdoc />
+    public ValueTask<WorkflowRuntimeResourceCheckpointState?> CaptureCheckpointStateAsync(CancellationToken cancellationToken = default)
+    {
+        return _adapter.CaptureCheckpointStateAsync(cancellationToken);
     }
 
     /// <inheritdoc />

@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using SkeletonKey.Execution;
 using SkeletonKey.Workflow.Resources;
 
@@ -8,6 +9,20 @@ namespace SkeletonKey.Runtime.Resources.Tests;
 /// </summary>
 public sealed class ResourceAccessorTests
 {
+    /// <summary>Verifies provider state owns its input and never exposes mutable internal JSON.</summary>
+    [Fact]
+    public void ResourceCheckpointStateDefensivelyClonesPayload()
+    {
+        JsonObject source = new() { ["value"] = 42 };
+        WorkflowRuntimeResourceCheckpointState state = new("0.1", source);
+
+        source["value"] = 7;
+        JsonObject firstRead = state.Payload;
+        firstRead["value"] = 9;
+
+        Assert.Equal(42, state.Payload["value"]!.GetValue<int>());
+    }
+
     /// <summary>
     /// Verifies node resource accessors expose bindings and typed adapters through leases.
     /// </summary>

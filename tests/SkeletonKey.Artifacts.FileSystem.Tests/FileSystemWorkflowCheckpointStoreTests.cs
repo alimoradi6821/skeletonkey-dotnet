@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using SkeletonKey.Abstractions.Execution;
 using SkeletonKey.Runtime;
+using SkeletonKey.Runtime.Resources;
 
 namespace SkeletonKey.Artifacts.FileSystem.Tests;
 
@@ -24,7 +25,65 @@ public sealed class FileSystemWorkflowCheckpointStoreTests
             Assert.True(loaded.IsTerminal);
             Assert.Equal(WorkflowExecutionStatus.Succeeded, loaded.TerminalResult!.Status);
             Assert.Equal(42, loaded.Steps[0].Outputs[0].Values[0]!.GetValue<int>());
+            Assert.Empty(loaded.Resources);
             Assert.Single(Directory.GetFiles(root, "checkpoint-*.json", SearchOption.TopDirectoryOnly));
+        }
+        finally
+        {
+            DeleteRoot(root);
+        }
+    }
+
+    /// <summary>Verifies provider-owned resource recovery state round-trips through format 0.3.</summary>
+    [Fact]
+    public async Task SavesAndLoadsRuntimeResourceState()
+    {
+        string root = TemporaryRoot();
+        try
+        {
+            WorkflowExecutionCheckpoint source = Checkpoint(1, terminal: false);
+            WorkflowExecutionCheckpoint checkpoint = new(
+                source.FormatVersion,
+                source.ExecutionId,
+                source.WorkflowId,
+                source.WorkflowSpecVersion,
+                source.PlanId,
+                source.RequestFingerprint,
+                source.Revision,
+                source.SavedAtUtc,
+                source.IsTerminal,
+                source.Steps,
+                source.NodeActivationOrdinals,
+                source.ExecutedAttempts,
+                source.RuntimeActivations,
+                source.Invocations,
+                source.EventSequence,
+                source.RecordsEmitted,
+                source.ElapsedDurationMilliseconds,
+                source.TerminalStatus,
+                source.Outcome,
+                source.Error,
+                source.TerminalResult,
+                source.NodeResults,
+                source.NodeSnapshots,
+                resources:
+                [
+                    new WorkflowCheckpointResource(
+                        "page",
+                        "web.page",
+                        isResumable: true,
+                        state: new WorkflowRuntimeResourceCheckpointState("0.1", new JsonObject { ["activePageId"] = "primary" })),
+                ]);
+            FileSystemWorkflowCheckpointStore store = new(root);
+
+            await store.SaveAsync(checkpoint, expectedRevision: 0);
+            WorkflowExecutionCheckpoint loaded = Assert.IsType<WorkflowExecutionCheckpoint>(await store.LoadAsync("execution"));
+
+            WorkflowCheckpointResource resource = Assert.Single(loaded.Resources);
+            Assert.Equal("page", resource.ResourceName);
+            Assert.Equal("web.page", resource.Kind);
+            Assert.True(resource.IsResumable);
+            Assert.Equal("primary", resource.State!.Payload["activePageId"]!.GetValue<string>());
         }
         finally
         {

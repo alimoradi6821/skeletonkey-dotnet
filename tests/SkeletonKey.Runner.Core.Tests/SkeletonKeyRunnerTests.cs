@@ -162,6 +162,49 @@ public sealed class SkeletonKeyRunnerTests
         }
     }
 
+    /// <summary>Verifies analyze reports a structured missing child workflow dependency.</summary>
+    [Fact]
+    public async Task AnalyzeRejectsMissingWorkflowDependency()
+    {
+        string workflow = File.ReadAllText(Path.Combine(RepositoryRoot(), "tests", "fixtures", "conformance", "valid", "invoke-workflow-forward-streams.workflow.json"));
+        StringWriter output = new();
+
+        int exitCode = await new SkeletonKeyRunner(new StringReader(workflow), output, TextWriter.Null).ExecuteAsync(["analyze", "--file", "-"]);
+
+        JsonNode envelope = JsonNode.Parse(output.ToString())!;
+        Assert.Equal(RunnerExitCodes.Failed, exitCode);
+        Assert.Equal("blocked", envelope["status"]!.GetValue<string>());
+        Assert.Equal("SKD1001", envelope["issues"]![0]!["code"]!.GetValue<string>());
+    }
+
+    /// <summary>Verifies run loads an exact versioned child workflow from the explicit workflow directory.</summary>
+    [Fact]
+    public async Task RunLoadsVersionedWorkflowDependencyDirectory()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "skeletonkey-runner-workflows", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            string rootPath = Path.Combine(RepositoryRoot(), "tests", "fixtures", "conformance", "valid", "invoke-workflow-forward-streams.workflow.json");
+            string child = File.ReadAllText(Path.Combine(RepositoryRoot(), "tests", "fixtures", "conformance", "valid", "core-return.workflow.json"))
+                .Replace("\"id\": \"core-return\"", "\"id\": \"child-workflow\"", StringComparison.Ordinal);
+            await File.WriteAllTextAsync(Path.Combine(directory, "child-workflow@1.0.0.workflow.json"), child);
+            StringWriter output = new();
+
+            int exitCode = await new SkeletonKeyRunner(TextReader.Null, output, TextWriter.Null).ExecuteAsync([
+                "run", "--file", rootPath, "--workflow-directory", directory,
+            ]);
+
+            JsonNode envelope = JsonNode.Parse(output.ToString())!;
+            Assert.Equal(RunnerExitCodes.Success, exitCode);
+            Assert.True(envelope["accepted"]!.GetValue<bool>());
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static string RepositoryRoot()
     {
         DirectoryInfo current = new(AppContext.BaseDirectory);

@@ -18,6 +18,7 @@ using SkeletonKey.Runtime.Invocation;
 using SkeletonKey.Validation;
 using SkeletonKey.Workflow.Connections;
 using SkeletonKey.Workflow.Documents;
+using SkeletonKey.Workflow.Inputs;
 using SkeletonKey.Workflow.Nodes;
 
 namespace SkeletonKey.Runtime.Default.Tests;
@@ -281,9 +282,13 @@ public sealed class DefaultWorkflowRuntimeTests
     [Fact]
     public async Task ExecutesWorkflowInvokeFromRepository()
     {
-        WorkflowDocument child = Workflow([Start(), Return("child-done")], [Connect("start", "main", "child-done", "main")]);
+        WorkflowDocument child = new(
+            id: "child-workflow",
+            name: "Child Workflow",
+            nodes: [Start(), Return("child-done")],
+            connections: [Connect("start", "main", "child-done", "main")]);
         WorkflowDocument parent = Workflow(
-            [Start(), new("invoke", "workflow.invoke", 1, parameters: new JsonObject { ["workflow"] = new JsonObject { ["id"] = "workflow" } }), Return("done")],
+            [Start(), new("invoke", "workflow.invoke", 1, parameters: new JsonObject { ["workflow"] = new JsonObject { ["id"] = "child-workflow" } }), Return("done")],
             [Connect("start", "main", "invoke", "main"), Connect("invoke", "result", "done", "main")]);
         DefaultWorkflowRuntime runtime = new(
             new WorkflowSemanticValidator(),
@@ -298,6 +303,84 @@ public sealed class DefaultWorkflowRuntimeTests
         Assert.Equal(WorkflowExecutionStatus.Succeeded, result.Result.Status);
         JsonObject invokeResult = Assert.IsType<JsonObject>(result.NodeResults.Single(static node => node.NodeId == "invoke").Outputs["result"]);
         Assert.Equal("Succeeded", invokeResult["status"]!.GetValue<string>());
+    }
+
+    /// <summary>Verifies reachable invocation dependencies require a repository during runtime preflight.</summary>
+    [Fact]
+    public async Task RejectsReachableInvocationWithoutRepositoryBeforeStateCreation()
+    {
+        WorkflowDocument workflow = Workflow(
+            [Start(), new("invoke", "workflow.invoke", 1, parameters: new JsonObject { ["workflow"] = new JsonObject { ["id"] = "child" } })],
+            [Connect("start", "main", "invoke", "main")]);
+
+        WorkflowRuntimeResult result = await new DefaultWorkflowRuntime().ExecuteAsync(Request(workflow));
+
+        Assert.Equal(WorkflowExecutionStatus.Failed, result.Result.Status);
+        Assert.Equal(WorkflowRuntimeErrorCodes.WorkflowInvocationAnalysisFailed, result.Result.Error!.Code);
+        Assert.Empty(result.NodeResults);
+    }
+
+    /// <summary>Verifies invocation recursion is rejected before any node execution begins.</summary>
+    [Fact]
+    public async Task RejectsInvocationCycleBeforeStateCreation()
+    {
+        WorkflowDocument root = new(
+            id: "root",
+            name: "Root",
+            nodes: [Start(), new("to-child", "workflow.invoke", 1, parameters: new JsonObject { ["workflow"] = new JsonObject { ["id"] = "child" } })],
+            connections: [Connect("start", "main", "to-child", "main")]);
+        WorkflowDocument child = new(
+            id: "child",
+            name: "Child",
+            nodes: [Start(), new("to-root", "workflow.invoke", 1, parameters: new JsonObject { ["workflow"] = new JsonObject { ["id"] = "root" } })],
+            connections: [Connect("start", "main", "to-root", "main")]);
+        DefaultWorkflowRuntime runtime = new(
+            new WorkflowSemanticValidator(),
+            new DefaultWorkflowAnalyzer(),
+            new DefaultWorkflowExecutionPlanner(),
+            BuiltInWorkflowNodeCatalog.Catalog,
+            BuiltInRuntimeHandlers.CreateResolver(),
+            workflowRepository: ImmutableWorkflowRepository.FromDocuments(root, child));
+
+        WorkflowRuntimeResult result = await runtime.ExecuteAsync(Request(root));
+
+        Assert.Equal(WorkflowRuntimeErrorCodes.WorkflowInvocationAnalysisFailed, result.Result.Error!.Code);
+        Assert.Contains(WorkflowInvocationAnalysisCodes.InvocationCycle, result.Result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(result.NodeResults);
+    }
+
+    /// <summary>Verifies incompatible static child inputs are rejected during runtime preflight.</summary>
+    [Fact]
+    public async Task RejectsIncompatibleChildInputBeforeStateCreation()
+    {
+        WorkflowDocument child = new(
+            id: "child",
+            name: "Child",
+            inputs: new Dictionary<string, WorkflowInputDefinition>(StringComparer.Ordinal)
+            {
+                ["count"] = new(WorkflowInputType.Integer, required: true),
+            },
+            nodes: [Start()]);
+        WorkflowDocument parent = Workflow(
+            [Start(), new("invoke", "workflow.invoke", 1, parameters: new JsonObject
+            {
+                ["workflow"] = new JsonObject { ["id"] = "child" },
+                ["inputs"] = new JsonObject { ["count"] = "not-an-integer" },
+            })],
+            [Connect("start", "main", "invoke", "main")]);
+        DefaultWorkflowRuntime runtime = new(
+            new WorkflowSemanticValidator(),
+            new DefaultWorkflowAnalyzer(),
+            new DefaultWorkflowExecutionPlanner(),
+            BuiltInWorkflowNodeCatalog.Catalog,
+            BuiltInRuntimeHandlers.CreateResolver(),
+            workflowRepository: ImmutableWorkflowRepository.FromDocuments(child));
+
+        WorkflowRuntimeResult result = await runtime.ExecuteAsync(Request(parent));
+
+        Assert.Equal(WorkflowRuntimeErrorCodes.WorkflowInvocationAnalysisFailed, result.Result.Error!.Code);
+        Assert.Contains(WorkflowInvocationAnalysisCodes.ChildInputTypeMismatch, result.Result.Error.Message, StringComparison.Ordinal);
+        Assert.Empty(result.NodeResults);
     }
 
     /// <summary>

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Desktop.Abstractions</AssemblyName>
+    <RootNamespace>SkeletonKey.Desktop.Abstractions</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
+  </ItemGroup>
+</Project>

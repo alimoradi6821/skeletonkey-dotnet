@@ -23,7 +23,7 @@ public sealed class RunnerCommandSmokeTests
             RedirectStandardError = true,
             WorkingDirectory = root,
         };
-        start.ArgumentList.Add(Path.Combine(root, "src", "SkeletonKey.Runner", "bin", "Release", "net10.0", "skeletonkey.dll"));
+        start.ArgumentList.Add(Path.Combine(root, "src", "SkeletonKey.Runner", "bin", "Release", "net10.0-windows", "skeletonkey.dll"));
         start.ArgumentList.Add("version");
 
         using Process process = Process.Start(start) ?? throw new InvalidOperationException("Failed to start runner.");

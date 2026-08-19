@@ -79,22 +79,32 @@ Current status:
 - Runtime-owned handler timeout, retry, bounded exponential backoff, and `onError` execution policies exist
 - Retry attempts use distinct node identities, ordered events, and individual terminal results
 - Checkpoint format 0.2 preserves safe retry boundaries without replaying the persisted failed attempt
+- Checkpoint format 0.3 carries provider-versioned runtime-resource reconstruction state
+- Ephemeral Playwright resources can restore bounded storage state, page identities, active page, and open-page URLs before resume continues
+- Unsupported resource states fail closed instead of silently creating an empty replacement
+- Bounded in-process scheduling executes eligible independent handler steps concurrently
+- `flow.foreach` honors bounded parallel execution for eligible single-handler loop bodies
+- Runtime events remain serialized and result collections remain plan ordered during parallel execution
 - Strict JSON parsing, schema validation, and semantic validation are separate layers
 - Loop execution is implemented for built-in loop boundaries
 - Subworkflow invocation execution is implemented through explicit repository contracts
-- Cross-workflow dependency validation is not implemented yet
-- Network interception is not implemented yet
-- Desktop automation is not implemented yet
+- Reachable cross-workflow dependency validation is implemented with exact-version resolution, input and stream compatibility checks, cycle detection, and bounded depth
+- The Runner loads explicit local child workflow repositories through `--workflow-directory`
+- Bounded Playwright network interception supports deterministic allow, block, request-header modification, and synthetic response fulfillment policies
+- Explicit local plugin packages can contribute node definitions, exact handlers, and runtime resource providers through hash-verified closed manifests
+- The Runner provides `plugins` inspection and repeatable `--plugin-directory` composition without global assembly scanning
+- Windows desktop automation is implemented through an explicit FlaUI UIA3-backed `desktop.application` resource
+- Essential `desktop.click`, `desktop.fill`, `desktop.press`, `desktop.getText`, and `desktop.getCount` handlers exist
+- The Runner loads bounded explicit Locator Catalog directories through `--locator-directory`
 - Interrupted running nodes require explicit recovery and are never automatically replayed
-- Non-terminal live browser/resource-handle resume is not implemented yet
+- Persistent Playwright profiles, pending browser dialogs, and desktop application handles are not resumable
 - Human interaction is supported through explicit non-durable host handlers or in-memory session continuations
-- Catalog discovery and plugin loading are not implemented yet
+- Remote plugin discovery, package registries, dependency injection, and sandboxed plugin execution are not implemented yet
 - Node catalog JSON Schema and conformance fixtures exist
 - Browser automation is implemented for the essential `web.page` path only
 - Playwright integration is implemented for page-owned browser/context/page resources
-- No FlaUI integration yet
-- Parallel and distributed scheduling are not implemented yet
-- Plugin discovery is not implemented yet
+- FlaUI integration currently covers the essential UI Automation action, form, text, and count path only
+- Durable parallel-frontier and distributed scheduling are not implemented yet
 
 Planned direction:
 - Graph-based JSON workflow language
@@ -116,14 +126,14 @@ Test:
 dotnet test SkeletonKey.sln
 ```
 
-Phase 0-18 verification on clean Windows:
+Phase 0-24 verification in an interactive Windows session:
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build\verify-phase-018.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build\verify-phase-024.ps1
 ```
 
-The verification script performs restore, Release build/test (including execution-policy and retry-resume coverage), formatting verification, checkpoint run/resume smoke testing, advanced Chromium smoke testing, package manifest/checksum generation, framework-dependent DLL smoke testing, and self-contained `win-x64` apphost smoke testing. Do not weaken CET, CFG, or Exploit Protection to make an apphost pass.
+The verification script performs restore, Release build/test, formatting verification, explicit hash-verified plugin discovery and execution smoke testing, versioned child workflow analysis/execution smoke testing, checkpoint run/resume smoke testing, advanced Chromium and durable page-reconstruction smoke testing, real Notepad desktop automation, package manifest/checksum generation, framework-dependent DLL smoke testing, and self-contained `win-x64` apphost smoke testing. Do not weaken CET, CFG, or Exploit Protection to make an apphost pass.
 
-Detailed acceptance rules are documented in [Phase 0-18 Verification](docs/development/phase-018-verification.md).
+Detailed acceptance rules are documented in [Phase 0-24 Verification](docs/development/phase-024-verification.md).
 
 Minimal deserialize and validate example:
 ```csharp
@@ -145,6 +155,11 @@ if (!result.IsValid)
 The workflow specification is unstable before version 1.0.
 
 Language assets:
+- [Desktop Automation 0.1](docs/specifications/desktop-automation-0.1.md)
+- [Local Plugin Package 0.1](docs/specifications/local-plugin-package-0.1.md)
+- [Web Network Interception 0.1](docs/specifications/web-network-interception-0.1.md)
+- [Workflow Invocation Analysis 0.1](docs/specifications/workflow-invocation-analysis-0.1.md)
+- [Runtime Parallel Scheduling 0.1](docs/specifications/runtime-parallel-scheduling-0.1.md)
 - [Runtime Execution Policies 0.1](docs/specifications/runtime-execution-policies-0.1.md)
 - [Workflow 0.1 JSON Schema](schemas/workflow/0.1/schema.json)
 - [Workflow Expressions 0.1](docs/specifications/workflow-expressions-0.1.md)

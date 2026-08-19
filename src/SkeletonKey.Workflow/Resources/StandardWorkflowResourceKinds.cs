@@ -14,6 +14,9 @@ public static class StandardWorkflowResourceKinds
     /// <summary>Identifies a web page resource requirement.</summary>
     public const string WebPage = "web.page";
 
+    /// <summary>Identifies a Windows desktop application resource requirement.</summary>
+    public const string DesktopApplication = "desktop.application";
+
     /// <summary>Identifies a human interaction handler resource requirement.</summary>
     public const string InteractionHandler = "interaction.handler";
 }

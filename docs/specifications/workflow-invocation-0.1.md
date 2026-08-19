@@ -2,7 +2,7 @@
 
 Workflow invocation contracts reserve the built-in node type `workflow.invoke` with `typeVersion = 1`.
 
-This phase defines declarations only. It does not load, resolve, execute, or validate referenced workflow documents.
+The base contract defines declarations. Phase 0-14 added execution through an explicit repository, and Phase 0-20 added reachable cross-workflow dependency validation.
 
 ## Workflow Reference
 
@@ -33,7 +33,7 @@ Canonical parameter order is:
 
 Invocation inputs are workflow values. They can contain literal JSON, nested arrays, nested objects, `$binding` wrappers, `$expression` wrappers, and `$literal` wrappers.
 
-The current semantic validator checks local binding references and expression references. It does not evaluate inputs or validate child input names, child required inputs, or child input types.
+The semantic validator checks local binding and expression references. Cross-workflow analysis validates child input names, required inputs, and statically known input types after repository resolution. Dynamic values are validated when materialized.
 
 ## Fixed Result Port
 
@@ -59,7 +59,7 @@ Invocation stream policy modes are:
 - `suppress`: child streams are not forwarded beyond the invocation boundary.
 - `map`: child stream channels are renamed into parent stream channels.
 
-Mapped target channels must be declared by stream outputs in the parent workflow. Child source channel existence is deferred until referenced workflows can be resolved.
+Mapped target channels must be declared by stream outputs in the parent workflow. Cross-workflow analysis verifies source channels against stream outputs declared by the resolved child.
 
 ## Identity
 
@@ -71,11 +71,15 @@ Mapped target channels must be declared by stream outputs in the parent workflow
 
 ## Recursion Boundary
 
-Direct or indirect recursion is not rejected only because a workflow references itself. No recursion executes in this phase. Future runtimes must enforce bounded invocation depth and may add dependency analysis or security policy.
+Direct and indirect recursion is rejected by cross-workflow analysis. Both analysis and runtime use an explicit maximum invocation depth.
 
 ## Deferred Validation
 
-Single-document validation cannot verify referenced workflow existence, version availability, child required inputs, unknown child input names, child type compatibility, child output names, child stream source channels, recursion cycles, maximum invocation depth, or runtime capabilities.
+Single-document validation cannot verify referenced documents. Phase 0-20 performs repository-backed checks for existence, exact version availability, resolved identity, child required and unknown inputs, static child input compatibility, child stream source channels, cycles, and maximum invocation depth. Child output value types, child resource compatibility, and runtime provider capabilities remain deferred.
+
+## Phase 0-20 Addendum
+
+The normative cross-workflow rules and stable issue codes are defined in [Workflow Invocation Analysis 0.1](workflow-invocation-analysis-0.1.md).
 ## Phase 0-7D Addendum
 
 `workflow.invoke` parameters may include `resources`, a closed mapping from child workflow resource names to parent `$resource` wrappers. Mapping is explicit; child workflows do not inherit parent resources automatically and compatibility is deferred.

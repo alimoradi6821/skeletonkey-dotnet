@@ -22,6 +22,7 @@ public sealed class WorkflowRuntimeOptions
     /// <param name="maximumRuntimeActivations">The maximum number of runtime step activations in one execution.</param>
     /// <param name="maximumInvocationDepth">The maximum nested workflow invocation depth.</param>
     /// <param name="maximumInvocations">The maximum number of workflow invocations in one root execution.</param>
+    /// <param name="maximumParallelSteps">The maximum number of independent handler steps or foreach iterations executed concurrently.</param>
     public WorkflowRuntimeOptions(
         int maximumExecutedNodeAttempts = 10_000,
         int maximumReadySteps = 10_000,
@@ -32,7 +33,8 @@ public sealed class WorkflowRuntimeOptions
         int maximumNestedLoopDepth = 128,
         int maximumRuntimeActivations = 100_000,
         int maximumInvocationDepth = 64,
-        int maximumInvocations = 10_000)
+        int maximumInvocations = 10_000,
+        int maximumParallelSteps = 4)
     {
         if (maximumExecutedNodeAttempts < 1)
         {
@@ -74,6 +76,11 @@ public sealed class WorkflowRuntimeOptions
             throw new ArgumentOutOfRangeException(nameof(maximumInvocations), maximumInvocations, "The invocation limit must be positive.");
         }
 
+        if (maximumParallelSteps < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumParallelSteps), maximumParallelSteps, "The parallel-step limit must be positive.");
+        }
+
         MaximumExecutedNodeAttempts = maximumExecutedNodeAttempts;
         MaximumReadySteps = maximumReadySteps;
         MaximumStoredNodeResults = maximumStoredNodeResults;
@@ -84,6 +91,7 @@ public sealed class WorkflowRuntimeOptions
         MaximumRuntimeActivations = maximumRuntimeActivations;
         MaximumInvocationDepth = maximumInvocationDepth;
         MaximumInvocations = maximumInvocations;
+        MaximumParallelSteps = maximumParallelSteps;
     }
 
     /// <summary>
@@ -135,4 +143,9 @@ public sealed class WorkflowRuntimeOptions
     /// Gets the maximum number of workflow invocations in one root execution.
     /// </summary>
     public int MaximumInvocations { get; }
+
+    /// <summary>
+    /// Gets the maximum number of independent handler steps or foreach iterations executed concurrently.
+    /// </summary>
+    public int MaximumParallelSteps { get; }
 }

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <AssemblyName>SkeletonKey.Desktop.FlaUI</AssemblyName>
+    <RootNamespace>SkeletonKey.Desktop.FlaUI</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FlaUI.UIA3" />
+    <PackageReference Include="System.Drawing.Common" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Desktop.Abstractions\SkeletonKey.Desktop.Abstractions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Runtime.Resources\SkeletonKey.Runtime.Resources.csproj" />
+  </ItemGroup>
+</Project>

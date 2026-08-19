@@ -1,3 +1,4 @@
+using SkeletonKey.Desktop.FlaUI;
 using SkeletonKey.Runner.Core;
 
 using CancellationTokenSource shutdown = new();
@@ -10,7 +11,11 @@ ConsoleCancelEventHandler cancelHandler = (_, eventArgs) =>
 Console.CancelKeyPress += cancelHandler;
 try
 {
-    return await new SkeletonKeyRunner(Console.In, Console.Out, Console.Error)
+    return await new SkeletonKeyRunner(
+        Console.In,
+        Console.Out,
+        Console.Error,
+        [new FlaUiApplicationResourceProvider()])
         .ExecuteAsync(args, shutdown.Token)
         .ConfigureAwait(false);
 }

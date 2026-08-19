@@ -50,6 +50,24 @@ public static class StandardWorkflowResourceCapabilities
     /// <summary>Requires screenshot capture.</summary>
     public const string WebScreenshot = "web.screenshot";
 
+    /// <summary>Requires bounded request interception and synthetic response support.</summary>
+    public const string WebNetworkInterception = "web.network-interception";
+
+    /// <summary>Requires Windows desktop application lifecycle support.</summary>
+    public const string DesktopApplicationLifecycle = "desktop.application-lifecycle";
+
+    /// <summary>Requires desktop UI Automation locator resolution.</summary>
+    public const string DesktopLocators = "desktop.locators";
+
+    /// <summary>Requires desktop element actions.</summary>
+    public const string DesktopActions = "desktop.actions";
+
+    /// <summary>Requires desktop form interaction.</summary>
+    public const string DesktopForms = "desktop.forms";
+
+    /// <summary>Requires desktop text extraction.</summary>
+    public const string DesktopText = "desktop.text";
+
     /// <summary>Requires confirmation interactions.</summary>
     public const string InteractionConfirmation = "interaction.confirmation";
 

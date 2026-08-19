@@ -1,12 +1,12 @@
 # Durable Workflow Checkpoints 0.1
 
-Phase 0-17 adds optional durable execution checkpoints and process-restart resume at deterministic safe boundaries. The host supplies `IWorkflowCheckpointStore`; workflow documents never choose checkpoint paths.
+Phase 0-17 adds optional durable execution checkpoints and process-restart resume at deterministic safe boundaries. Phase 18 extends retry metadata, and Phase 24 adds provider-owned runtime-resource reconstruction. The host supplies `IWorkflowCheckpointStore`; workflow documents never choose checkpoint paths.
 
 ## Contract
 
 A checkpoint contains:
 
-- format version `0.1`;
+- format version `0.3` (`0.1` and `0.2` remain readable);
 - execution, workflow, workflow-specification, and plan identities;
 - a SHA-256 fingerprint of inputs and variable overrides;
 - a monotonically increasing revision and host-clock timestamp;
@@ -15,10 +15,11 @@ A checkpoint contains:
 - terminal node-result and lifecycle-snapshot history in deterministic execution order, including repeated loop activations;
 - execution attempt, activation, invocation, event-sequence, streamed-record, and duration counters;
 - accumulated outcome/error state and an immutable final result for terminal checkpoints.
+- ordered live-resource entries containing resource name, kind, resumability, and an immutable provider-versioned JSON state payload.
 
 The filesystem store hashes execution IDs before using them as filenames, confines files to one host-owned root, verifies a SHA-256 payload checksum, serializes concurrent writers through an exclusive lock, rejects stale revisions, and replaces an existing checkpoint atomically.
 
-Checkpoint payloads may contain workflow inputs and node outputs indirectly through fingerprints and persisted output values. The filesystem format provides integrity, not encryption. Hosts must place the checkpoint root on appropriately access-controlled or encrypted storage and apply their own retention policy.
+Checkpoint payloads may contain workflow inputs and node outputs indirectly through fingerprints and persisted output values. Resource payloads can additionally contain browser cookies and origin storage. The filesystem format provides integrity, not encryption. Hosts must place the checkpoint root on appropriately access-controlled or encrypted storage and apply their own retention policy.
 
 ## Runtime ordering and recovery
 
@@ -29,6 +30,8 @@ The runtime persists a `Running` checkpoint before invoking a node handler. It p
 - a crash after a handler may have begun leaves that step as `Running` and resume fails with `SKR3006` instead of risking a duplicate side effect;
 - terminal checkpoint resume returns the original immutable result without invoking handlers;
 - workflow/plan/input mismatches fail before execution.
+- live resources are reconstructed before the next remaining step is scheduled;
+- a previously activated resource without a resumable snapshot or recovery provider fails closed instead of being silently recreated empty.
 
 `SKR3006` requires a future node-specific recovery policy or a deliberate new execution identity. Phase 0-17 does not guess whether an interrupted external side effect committed.
 
@@ -60,7 +63,10 @@ The same workflow content, inputs, variable overrides, execution ID, and checkpo
 | `SKR3006` | Process stopped while a node was running; explicit recovery required |
 | `SKR3007` | Persisted step set differs from the current plan |
 | `SKR3008` | Non-terminal resume requires unsupported live resource recovery |
+| `SKR3009` | Runtime resource checkpoint capture or reconstruction failed |
 
 ## Explicit exclusions
 
-Checkpoint format 0.1 does not persist live browser/resource handles, pending in-memory interaction continuations, handler-local memory, or arbitrary external transactions. Non-terminal resume of workflows declaring runtime resources fails with `SKR3008`. Phase 0-18 extends the payload to format 0.2 with safe retry-attempt and not-before metadata while retaining 0.1 read compatibility. Parallel/distributed execution, node-specific compensation, and database checkpoint providers remain future work.
+Checkpoint format 0.2 adds safe retry-attempt and not-before metadata. Format 0.3 adds resource checkpoint entries and keeps 0.1/0.2 read compatibility. Legacy non-terminal checkpoints that already used runtime resources fail with `SKR3008` because they contain no reconstruction state.
+
+Phase 24 reconstructs ephemeral Playwright pages only when no dialog is pending. It does not persist raw browser objects, persistent-profile ownership, desktop application handles, pending in-memory interaction continuations, handler-local memory, interrupted external operations, or arbitrary external transactions. Page recovery imports bounded storage state and re-navigates captured open-page URLs under the configured navigation policy. Parallel/distributed execution, node-specific compensation, and database checkpoint providers remain future work.

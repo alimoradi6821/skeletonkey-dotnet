@@ -26,4 +26,7 @@ public static class WorkflowCheckpointErrorCodes
 
     /// <summary>The workflow uses runtime resources whose live handles cannot be resumed.</summary>
     public const string ResourceResumeNotSupported = "SKR3008";
+
+    /// <summary>A resumable runtime resource could not be captured or reconstructed.</summary>
+    public const string ResourceRecoveryFailed = "SKR3009";
 }

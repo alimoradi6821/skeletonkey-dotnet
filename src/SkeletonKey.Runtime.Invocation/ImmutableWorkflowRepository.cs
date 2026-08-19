@@ -33,7 +33,7 @@ public sealed class ImmutableWorkflowRepository : IWorkflowRepository
         ArgumentNullException.ThrowIfNull(reference);
         cancellationToken.ThrowIfCancellationRequested();
         string key = reference.Version is null ? reference.Id : reference.Id + "@" + reference.Version;
-        if (_workflows.TryGetValue(key, out WorkflowDocument? versioned) || _workflows.TryGetValue(reference.Id, out versioned))
+        if (_workflows.TryGetValue(key, out WorkflowDocument? versioned))
         {
             return ValueTask.FromResult(WorkflowRepositoryLookupResult.Success(versioned));
         }

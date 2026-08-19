@@ -8,7 +8,7 @@ namespace SkeletonKey.Web.Playwright;
 /// <summary>
 /// Creates Playwright-backed runtime resources for the provider-neutral <c>web.page</c> kind.
 /// </summary>
-public sealed class PlaywrightPageResourceProvider : IWorkflowRuntimeResourceProvider
+public sealed class PlaywrightPageResourceProvider : IWorkflowRuntimeResourceRecoveryProvider
 {
     private readonly PlaywrightPageProviderOptions _options;
 
@@ -33,10 +33,29 @@ public sealed class PlaywrightPageResourceProvider : IWorkflowRuntimeResourcePro
         StandardWorkflowResourceCapabilities.WebAttributes,
         StandardWorkflowResourceCapabilities.WebForms,
         StandardWorkflowResourceCapabilities.WebScreenshot,
+        StandardWorkflowResourceCapabilities.WebNetworkInterception,
     ]);
 
     /// <inheritdoc />
     public async ValueTask<IWorkflowRuntimeResourceInstance> CreateAsync(WorkflowRuntimeResourceRequest request, CancellationToken cancellationToken = default)
+    {
+        return await CreateCoreAsync(request, checkpointState: null, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<IWorkflowRuntimeResourceInstance> RestoreAsync(
+        WorkflowRuntimeResourceRequest request,
+        WorkflowRuntimeResourceCheckpointState state,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        return await CreateCoreAsync(request, state, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<IWorkflowRuntimeResourceInstance> CreateCoreAsync(
+        WorkflowRuntimeResourceRequest request,
+        WorkflowRuntimeResourceCheckpointState? checkpointState,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
@@ -46,22 +65,26 @@ public sealed class PlaywrightPageResourceProvider : IWorkflowRuntimeResourcePro
         }
 
         var constraints = PlaywrightPageConstraints.Parse(request.Definition.Constraints);
+        IPlaywright? playwright = null;
         try
         {
-            IPlaywright playwright = await Microsoft.Playwright.Playwright.CreateAsync().ConfigureAwait(false);
-            PlaywrightPageResource resource = await PlaywrightPageResource.CreateAsync(request, playwright, constraints, _options, Capabilities, cancellationToken).ConfigureAwait(false);
+            playwright = await Microsoft.Playwright.Playwright.CreateAsync().ConfigureAwait(false);
+            PlaywrightPageResource resource = await PlaywrightPageResource.CreateAsync(request, playwright, constraints, _options, Capabilities, cancellationToken, checkpointState).ConfigureAwait(false);
             return resource;
         }
         catch (ArgumentException)
         {
+            playwright?.Dispose();
             throw;
         }
         catch (OperationCanceledException)
         {
+            playwright?.Dispose();
             throw;
         }
         catch (Exception exception)
         {
+            playwright?.Dispose();
             throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.BrowserLaunchFailed, "Browser launch failed.", "create"), exception);
         }
     }

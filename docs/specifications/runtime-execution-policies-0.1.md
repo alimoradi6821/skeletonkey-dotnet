@@ -34,4 +34,4 @@ Checkpoint format 0.2 persists `RetryAttempt` and `RetryNotBeforeUtc`. For a top
 
 Repeated loop-body handlers honor timeout, retry, backoff, and on-error behavior. Their retries remain inside the enclosing loop activation; because the loop step is already `Running`, a process interruption still requires explicit loop recovery under `SKR3006`.
 
-Loop orchestration, child-workflow invocation orchestration, and suspended in-memory interaction continuations are runtime boundaries rather than exact handler calls and do not gain automatic retries in this version. Parallel, distributed, compensation, jitter, and durable resource-handle recovery remain out of scope.
+Loop orchestration, child-workflow invocation orchestration, and suspended in-memory interaction continuations are runtime boundaries rather than exact handler calls and do not gain automatic retries in this version. Distributed scheduling, compensation, and jitter remain out of scope. Phase 24 separately adds recovery for providers that can capture bounded reconstructable resource state.

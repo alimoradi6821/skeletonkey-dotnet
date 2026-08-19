@@ -1,6 +1,7 @@
 using Microsoft.Playwright;
 using SkeletonKey.Artifacts;
 using SkeletonKey.Locators;
+using SkeletonKey.Runtime.Resources;
 using SkeletonKey.Web.Abstractions;
 
 namespace SkeletonKey.Web.Playwright;
@@ -17,7 +18,9 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
     private readonly Dictionary<string, DialogSlot> _dialogs = new(StringComparer.Ordinal);
     private readonly HashSet<string> _stalePageIds = new(StringComparer.Ordinal);
     private readonly HashSet<string> _staleDialogIds = new(StringComparer.Ordinal);
+    private readonly List<string> _temporaryUploadDirectories = [];
     private readonly IWebNavigationPolicy _navigationPolicy;
+    private readonly PlaywrightNetworkInterceptor? _networkInterceptor;
     private readonly string _testIdAttribute;
     private readonly int _defaultTimeoutMilliseconds;
     private IBrowserContext _context;
@@ -30,11 +33,17 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
     /// Initializes a Playwright page adapter.
     /// </summary>
     public PlaywrightPageAdapter(IBrowser? browser, IBrowserContext context, BrowserNewContextOptions contextOptions, IPage page, IWebNavigationPolicy navigationPolicy, string testIdAttribute, int defaultTimeoutMilliseconds)
+        : this(browser, context, contextOptions, page, navigationPolicy, testIdAttribute, defaultTimeoutMilliseconds, null)
+    {
+    }
+
+    internal PlaywrightPageAdapter(IBrowser? browser, IBrowserContext context, BrowserNewContextOptions contextOptions, IPage page, IWebNavigationPolicy navigationPolicy, string testIdAttribute, int defaultTimeoutMilliseconds, PlaywrightNetworkInterceptor? networkInterceptor)
     {
         _browser = browser;
         _context = context;
         _contextOptions = contextOptions;
         _navigationPolicy = navigationPolicy;
+        _networkInterceptor = networkInterceptor;
         _testIdAttribute = testIdAttribute;
         _defaultTimeoutMilliseconds = defaultTimeoutMilliseconds;
         _pages[_primaryPageId] = new PageSlot(_primaryPageId, page, _contextGeneration);
@@ -55,7 +64,116 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
         }
 
         _dialogs.Clear();
-        await _context.CloseAsync().ConfigureAwait(false);
+        try
+        {
+            await _context.CloseAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            foreach (string directory in _temporaryUploadDirectories)
+            {
+                TryDeleteDirectory(directory);
+            }
+
+            _temporaryUploadDirectories.Clear();
+        }
+    }
+
+    /// <summary>Captures reconstructable browser-context state at a runtime safe boundary.</summary>
+    internal async ValueTask<WorkflowRuntimeResourceCheckpointState?> CaptureCheckpointStateAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (_browser is null ||
+            _dialogs.Count > 0 ||
+            _pages.Count > PlaywrightPageCheckpointState.MaximumPages ||
+            _stalePageIds.Count > PlaywrightPageCheckpointState.MaximumPages ||
+            _staleDialogIds.Count > PlaywrightPageCheckpointState.MaximumPages)
+        {
+            return null;
+        }
+
+        string storageState = await _context.StorageStateAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (System.Text.Encoding.UTF8.GetByteCount(storageState) > PlaywrightPageCheckpointState.MaximumStorageStateBytes ||
+            _pages.Values.Any(static page => !page.IsClosed && (page.Page.Url.Length > PlaywrightPageCheckpointState.MaximumUrlLength || !Uri.TryCreate(page.Page.Url, UriKind.Absolute, out _))))
+        {
+            return null;
+        }
+
+        PlaywrightCheckpointPage[] pages = _pages.Values
+            .OrderBy(static page => page.Order, StringComparer.Ordinal)
+            .Select(static page => new PlaywrightCheckpointPage(page.Id, page.IsClosed ? "about:blank" : page.Page.Url, page.IsClosed))
+            .ToArray();
+        return new PlaywrightPageCheckpointState(
+            storageState,
+            _activePageId,
+            _nextPageNumber,
+            _nextDialogNumber,
+            pages,
+            _stalePageIds.OrderBy(static id => id, StringComparer.Ordinal).ToArray(),
+            _staleDialogIds.OrderBy(static id => id, StringComparer.Ordinal).ToArray()).ToResourceState();
+    }
+
+    /// <summary>Restores page identities and URLs after storage state has been applied to a new context.</summary>
+    internal async ValueTask RestoreCheckpointStateAsync(PlaywrightPageCheckpointState state, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (_pages.Count != 1 || !_pages.TryGetValue(_primaryPageId, out PageSlot? initialPrimary))
+        {
+            throw new InvalidOperationException("Playwright recovery requires a fresh browser context.");
+        }
+
+        _pages.Clear();
+        _dialogs.Clear();
+        _stalePageIds.Clear();
+        _stalePageIds.UnionWith(state.StalePageIds);
+        _staleDialogIds.Clear();
+        _staleDialogIds.UnionWith(state.StaleDialogIds);
+        _contextGeneration = 1;
+        _nextPageNumber = state.NextPageNumber;
+        _nextDialogNumber = state.NextDialogNumber;
+
+        bool primaryOpen = false;
+        foreach (PlaywrightCheckpointPage saved in state.Pages)
+        {
+            if (saved.IsClosed)
+            {
+                _pages[saved.Id] = new PageSlot(saved.Id, initialPrimary.Page, _contextGeneration, IsClosed: true);
+                continue;
+            }
+
+            IPage page = string.Equals(saved.Id, _primaryPageId, StringComparison.Ordinal)
+                ? initialPrimary.Page
+                : await _context.NewPageAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+            primaryOpen |= string.Equals(saved.Id, _primaryPageId, StringComparison.Ordinal);
+            WebOperationError? policyError = _navigationPolicy.ValidateNavigation(saved.Url);
+            if (policyError is not null)
+            {
+                throw new WebAutomationException(policyError);
+            }
+
+            if (!string.Equals(saved.Url, "about:blank", StringComparison.OrdinalIgnoreCase))
+            {
+                IResponse? response = await page.GotoAsync(saved.Url, new PageGotoOptions
+                {
+                    Timeout = BoundedTimeout(_defaultTimeoutMilliseconds),
+                    WaitUntil = WaitUntilState.Load,
+                }).WaitAsync(cancellationToken).ConfigureAwait(false);
+                if (response is not null && !response.Ok)
+                {
+                    throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.NavigationFailed, "Checkpoint page reconstruction navigation failed.", "restore"));
+                }
+            }
+
+            _pages[saved.Id] = new PageSlot(saved.Id, page, _contextGeneration);
+        }
+
+        if (!primaryOpen)
+        {
+            await initialPrimary.Page.CloseAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        _activePageId = state.ActivePageId;
     }
 
     /// <inheritdoc />
@@ -312,6 +430,7 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
         ILocator target = await ResolveSingleAsync(locator, request.TimeoutMilliseconds, request.ElementIndex, "uploadFiles", cancellationToken, request.TargetContext).ConfigureAwait(false);
         string temporaryDirectory = Path.Combine(Path.GetTempPath(), "skeletonkey-upload-" + Guid.NewGuid().ToString("N"));
         List<string> temporaryFiles = [];
+        bool retainTemporaryDirectory = false;
         try
         {
             Directory.CreateDirectory(temporaryDirectory);
@@ -328,6 +447,8 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
             }
 
             await target.SetInputFilesAsync([.. temporaryFiles], new LocatorSetInputFilesOptions { Timeout = BoundedTimeout(request.TimeoutMilliseconds) }).WaitAsync(cancellationToken).ConfigureAwait(false);
+            _temporaryUploadDirectories.Add(temporaryDirectory);
+            retainTemporaryDirectory = true;
         }
         catch (WorkflowArtifactException exception)
         {
@@ -339,7 +460,10 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
         }
         finally
         {
-            TryDeleteDirectory(temporaryDirectory);
+            if (!retainTemporaryDirectory)
+            {
+                TryDeleteDirectory(temporaryDirectory);
+            }
         }
     }
 
@@ -544,6 +668,10 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
             options.StorageState = storageState;
             newContext = await _browser.NewContextAsync(options).WaitAsync(cancellationToken).ConfigureAwait(false);
             newContext.SetDefaultTimeout(_defaultTimeoutMilliseconds);
+            if (_networkInterceptor is not null)
+            {
+                await _networkInterceptor.AttachAsync(newContext, cancellationToken).ConfigureAwait(false);
+            }
         }
         catch (PlaywrightException exception)
         {
@@ -998,6 +1126,7 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
             Locale = source.Locale,
             UserAgent = source.UserAgent,
             ViewportSize = source.ViewportSize,
+            ServiceWorkers = source.ServiceWorkers,
         };
     }
 

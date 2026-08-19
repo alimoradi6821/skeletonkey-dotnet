@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -37,12 +38,12 @@ using SkeletonKey.Workflow.Resources;
 namespace SkeletonKey.Runtime.Default;
 
 /// <summary>
-/// Executes validated, analyzed, and planned workflows with deterministic sequential dependency scheduling.
+/// Executes validated, analyzed, and planned workflows with deterministic dependency scheduling and bounded handler concurrency.
 /// </summary>
 /// <remarks>
 /// The runtime consumes an execution plan instead of reinterpreting raw graph semantics. It owns state transitions, event sequencing, exact handler
 /// resolution, materialized parameter preparation, control and data propagation, cancellation normalization, final result aggregation, and optional
-/// durable safe-boundary checkpoints, and workflow-declared timeout, retry, and on-error policies. It does not implement parallel scheduling, live resource-handle recovery, dependency injection,
+/// durable safe-boundary checkpoints, resumable resource reconstruction, workflow-declared timeout, retry, and on-error policies, and bounded parallel handler scheduling. It does not implement distributed scheduling, desktop-handle recovery, dependency injection,
 /// plugin discovery, or assembly scanning.
 /// </remarks>
 public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
@@ -123,7 +124,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
     }
 
     /// <inheritdoc />
-    public ValueTask<IWorkflowExecutionSession> StartAsync(WorkflowExecutionRequest request, CancellationToken cancellationToken = default)
+    public async ValueTask<IWorkflowExecutionSession> StartAsync(WorkflowExecutionRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -137,37 +138,81 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 null,
                 WorkflowExecutionStatus.Cancelled,
                 error: new WorkflowError(WorkflowRuntimeErrorCodes.ExecutionCancelled, "Execution was cancelled."));
-            return ValueTask.FromResult<IWorkflowExecutionSession>(new CompletedWorkflowExecutionSession(request.ExecutionId, new WorkflowRuntimeResult(cancelled)));
+            return new CompletedWorkflowExecutionSession(request.ExecutionId, new WorkflowRuntimeResult(cancelled));
         }
 
         WorkflowValidationResult validation = _validator.Validate(request.Workflow);
         if (!validation.IsValid)
         {
-            return ValueTask.FromResult<IWorkflowExecutionSession>(new CompletedWorkflowExecutionSession(request.ExecutionId, FailureBeforeState(request, invocationId, WorkflowRuntimeErrorCodes.SemanticValidationFailed, "Semantic validation failed.")));
+            return new CompletedWorkflowExecutionSession(request.ExecutionId, FailureBeforeState(request, invocationId, WorkflowRuntimeErrorCodes.SemanticValidationFailed, "Semantic validation failed."));
+        }
+
+        if (HasReachableInvocation(request.Workflow))
+        {
+            if (_workflowRepository is null)
+            {
+                return new CompletedWorkflowExecutionSession(request.ExecutionId, FailureBeforeState(
+                    request,
+                    invocationId,
+                    WorkflowRuntimeErrorCodes.WorkflowInvocationAnalysisFailed,
+                    "Cross-workflow invocation analysis requires a workflow repository."));
+            }
+
+            WorkflowInvocationAnalysisResult invocationAnalysis;
+            try
+            {
+                invocationAnalysis = await new WorkflowInvocationGraphAnalyzer().AnalyzeAsync(
+                    request.Workflow,
+                    _workflowRepository,
+                    new WorkflowInvocationAnalysisOptions(_options.MaximumInvocationDepth),
+                    cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                WorkflowExecutionResult cancelled = new(
+                    request.ExecutionId,
+                    request.Workflow.Id,
+                    invocationId,
+                    null,
+                    WorkflowExecutionStatus.Cancelled,
+                    error: new WorkflowError(WorkflowRuntimeErrorCodes.ExecutionCancelled, "Execution was cancelled."));
+                return new CompletedWorkflowExecutionSession(request.ExecutionId, new WorkflowRuntimeResult(cancelled));
+            }
+
+            if (!invocationAnalysis.IsValid)
+            {
+                WorkflowInvocationAnalysisIssue issue = invocationAnalysis.Issues[0];
+                return new CompletedWorkflowExecutionSession(request.ExecutionId, FailureBeforeState(
+                    request,
+                    invocationId,
+                    WorkflowRuntimeErrorCodes.WorkflowInvocationAnalysisFailed,
+                    issue.Code + ": " + issue.Message,
+                    issue.NodeId));
+            }
         }
 
         WorkflowAnalysisResult analysis = _analyzer.Analyze(request.Workflow, _catalog);
         if (!analysis.CanPlanExecution)
         {
-            return ValueTask.FromResult<IWorkflowExecutionSession>(new CompletedWorkflowExecutionSession(request.ExecutionId, FailureBeforeState(request, invocationId, WorkflowRuntimeErrorCodes.CatalogAnalysisFailed, "Catalog-aware analysis failed.")));
+            return new CompletedWorkflowExecutionSession(request.ExecutionId, FailureBeforeState(request, invocationId, WorkflowRuntimeErrorCodes.CatalogAnalysisFailed, "Catalog-aware analysis failed."));
         }
 
         WorkflowExecutionPlanResult planning = _planner.Plan(request.Workflow, analysis);
         if (!planning.IsReady || planning.Plan is null)
         {
-            return ValueTask.FromResult<IWorkflowExecutionSession>(new CompletedWorkflowExecutionSession(request.ExecutionId, FailureBeforeState(request, invocationId, WorkflowRuntimeErrorCodes.PlanningFailed, "Execution planning failed.")));
+            return new CompletedWorkflowExecutionSession(request.ExecutionId, FailureBeforeState(request, invocationId, WorkflowRuntimeErrorCodes.PlanningFailed, "Execution planning failed."));
         }
 
         WorkflowError? checkpointError = ValidateResumeCheckpoint(request, planning.Plan);
         if (checkpointError is not null)
         {
-            return ValueTask.FromResult<IWorkflowExecutionSession>(new CompletedWorkflowExecutionSession(request.ExecutionId, FailureBeforeState(request, invocationId, checkpointError.Code, checkpointError.Message, checkpointError.NodeId)));
+            return new CompletedWorkflowExecutionSession(request.ExecutionId, FailureBeforeState(request, invocationId, checkpointError.Code, checkpointError.Message, checkpointError.NodeId));
         }
 
         DefaultWorkflowExecutionSession session = new(request.ExecutionId, _clock);
         ExecutionSession execution = new(request, invocationId, planning.Plan, analysis, _validator, _analyzer, _planner, _catalog, _clock, _options, _workflowRepository, _resourceProviders, _locatorResolver, _delay, session);
         session.Start(execution.ExecuteAsync(_handlerResolver, _parameterMaterializer, cancellationToken));
-        return ValueTask.FromResult<IWorkflowExecutionSession>(session);
+        return session;
     }
 
     /// <inheritdoc />
@@ -189,7 +234,37 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         return new WorkflowRuntimeResult(result);
     }
 
-    private static WorkflowError? ValidateResumeCheckpoint(WorkflowExecutionRequest request, WorkflowExecutionPlan plan)
+    private static bool HasReachableInvocation(WorkflowDocument workflow)
+    {
+        var nodes = workflow.Nodes.ToDictionary(static node => node.Id, StringComparer.Ordinal);
+        HashSet<string> visited = new(StringComparer.Ordinal);
+        Queue<string> pending = new(workflow.Nodes
+            .Where(static node => !node.Disabled && string.Equals(node.Type, "core.start", StringComparison.Ordinal))
+            .Select(static node => node.Id));
+        while (pending.TryDequeue(out string? nodeId))
+        {
+            if (!visited.Add(nodeId) || !nodes.TryGetValue(nodeId, out WorkflowNode? node) || node.Disabled)
+            {
+                continue;
+            }
+
+            if (string.Equals(node.Type, "workflow.invoke", StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            foreach (string target in workflow.Connections
+                .Where(connection => string.Equals(connection.From.Node, nodeId, StringComparison.Ordinal))
+                .Select(static connection => connection.To.Node))
+            {
+                pending.Enqueue(target);
+            }
+        }
+
+        return false;
+    }
+
+    private WorkflowError? ValidateResumeCheckpoint(WorkflowExecutionRequest request, WorkflowExecutionPlan plan)
     {
         WorkflowExecutionCheckpoint? checkpoint = request.ResumeCheckpoint;
         if (checkpoint is null)
@@ -253,9 +328,55 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             return new WorkflowError(WorkflowCheckpointErrorCodes.InvalidCheckpoint, "A non-terminal resume requires a checkpoint store.");
         }
 
-        if (!checkpoint.IsTerminal && request.Workflow.Resources.Count > 0)
+        if (!checkpoint.IsTerminal && request.Workflow.Resources.Count > 0 &&
+            !string.Equals(checkpoint.FormatVersion, WorkflowExecutionCheckpoint.CurrentFormatVersion, StringComparison.Ordinal))
         {
-            return new WorkflowError(WorkflowCheckpointErrorCodes.ResourceResumeNotSupported, "Live runtime resource handles cannot be restored from this checkpoint version.");
+            return new WorkflowError(WorkflowCheckpointErrorCodes.ResourceResumeNotSupported, "This checkpoint version does not contain reconstructable runtime resource state.");
+        }
+
+        if (string.Equals(checkpoint.FormatVersion, WorkflowExecutionCheckpoint.CurrentFormatVersion, StringComparison.Ordinal))
+        {
+            if (checkpoint.Resources.Select(static resource => resource.ResourceName).Distinct(StringComparer.Ordinal).Count() != checkpoint.Resources.Count)
+            {
+                return new WorkflowError(WorkflowCheckpointErrorCodes.InvalidCheckpoint, "The checkpoint contains duplicate runtime resource entries.");
+            }
+
+            foreach (WorkflowCheckpointResource resource in checkpoint.Resources)
+            {
+                if (!request.Workflow.Resources.TryGetValue(resource.ResourceName, out WorkflowResourceDefinition? definition) ||
+                    !string.Equals(definition.Kind, resource.Kind, StringComparison.Ordinal))
+                {
+                    return new WorkflowError(WorkflowCheckpointErrorCodes.InvalidCheckpoint, "A checkpoint resource does not match the workflow declaration.");
+                }
+
+                if (!checkpoint.IsTerminal)
+                {
+                    if (!resource.IsResumable || resource.State is null)
+                    {
+                        return new WorkflowError(WorkflowCheckpointErrorCodes.ResourceResumeNotSupported, "A live runtime resource did not provide reconstructable checkpoint state.");
+                    }
+
+                    if (!_resourceProviders.TryGetValue(resource.Kind, out IWorkflowRuntimeResourceProvider? provider) ||
+                        provider is not IWorkflowRuntimeResourceRecoveryProvider)
+                    {
+                        return new WorkflowError(WorkflowCheckpointErrorCodes.ResourceResumeNotSupported, "The runtime resource provider does not support checkpoint recovery.");
+                    }
+                }
+            }
+
+            if (!checkpoint.IsTerminal)
+            {
+                HashSet<string> requiredResources = checkpoint.Steps
+                    .Select((step, index) => new { Step = step, PlanStep = plan.Steps[index] })
+                    .Where(static item => (item.Step.Status is WorkflowStepRuntimeStatus.Succeeded or WorkflowStepRuntimeStatus.Failed) || item.Step.RetryAttempt > 0)
+                    .SelectMany(static item => item.PlanStep.Resources)
+                    .Select(static use => use.ResourceName)
+                    .ToHashSet(StringComparer.Ordinal);
+                if (requiredResources.Any(resourceName => !checkpoint.Resources.Any(resource => string.Equals(resource.ResourceName, resourceName, StringComparison.Ordinal))))
+                {
+                    return new WorkflowError(WorkflowCheckpointErrorCodes.InvalidCheckpoint, "The checkpoint is missing state for a previously activated runtime resource.");
+                }
+            }
         }
 
         if (checkpoint.IsTerminal && (checkpoint.TerminalResult is null ||
@@ -499,12 +620,14 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         private readonly Dictionary<string, StepState> _steps;
         private readonly Dictionary<string, WorkflowExecutionPlanStep> _stepsById;
         private readonly Dictionary<string, int> _stepOrder;
+        private readonly Dictionary<string, int> _stepOrderByNodeId;
         private readonly IReadOnlyDictionary<string, WorkflowNode> _nodesById;
         private readonly Dictionary<string, WorkflowNodeAnalysis> _analysisByNode;
-        private readonly Dictionary<string, NodePortValueMap> _completedNodeOutputs = new(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, NodePortValueMap> _completedNodeOutputs = new(StringComparer.Ordinal);
         private readonly Dictionary<string, int> _nodeActivationOrdinals = new(StringComparer.Ordinal);
         private readonly List<NodeExecutionResult> _nodeResults = [];
         private readonly List<NodeExecutionStateSnapshot> _nodeSnapshots = [];
+        private readonly object _mutationGate = new();
         private readonly EventCoordinator _events;
         private readonly string _requestFingerprint;
         private readonly Stopwatch _stopwatch = new();
@@ -513,6 +636,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         private WorkflowOutcome? _terminalOutcome;
         private WorkflowError? _terminalError;
         private WorkflowExecutionStatus _terminalStatus = WorkflowExecutionStatus.Succeeded;
+        private int _terminalErrorOrder = int.MaxValue;
         private int _executedAttempts;
         private int _activations;
         private int _invocations = 1;
@@ -555,6 +679,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             _events = new EventCoordinator(request, invocationId, clock, request.ResumeCheckpoint?.EventSequence ?? 0, request.ResumeCheckpoint?.RecordsEmitted ?? 0);
             _stepsById = plan.Steps.ToDictionary(static step => step.StepId, StringComparer.Ordinal);
             _stepOrder = plan.Steps.Select(static (step, index) => new { step.StepId, index }).ToDictionary(static item => item.StepId, static item => item.index, StringComparer.Ordinal);
+            _stepOrderByNodeId = plan.Steps.Select(static (step, index) => new { step.NodeId, index }).ToDictionary(static item => item.NodeId, static item => item.index, StringComparer.Ordinal);
             _steps = plan.Steps.ToDictionary(static step => step.StepId, static step => new StepState(step), StringComparer.Ordinal);
             _nodesById = request.Workflow.Nodes.Count == 0
                 ? _emptyNodeMap
@@ -591,6 +716,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 else
                 {
                     RestoreCheckpointState(_request.ResumeCheckpoint);
+                    await RestoreRuntimeResourcesAsync(_request.ResumeCheckpoint, cancellationToken).ConfigureAwait(false);
                     await EmitAsync(RuntimeWorkflowEventKind.ExecutionResumed, "Execution resumed from a durable checkpoint.", cancellationToken: cancellationToken).ConfigureAwait(false);
                 }
 
@@ -601,12 +727,12 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                     cancellationToken.ThrowIfCancellationRequested();
                     UpdateReadySteps();
 
-                    StepState? ready = _steps.Values
+                    StepState[] ready = _steps.Values
                         .Where(static step => step.Status == WorkflowStepRuntimeStatus.Ready)
                         .OrderBy(step => _stepOrder[step.Step.StepId])
-                        .FirstOrDefault();
+                        .ToArray();
 
-                    if (ready is null)
+                    if (ready.Length == 0)
                     {
                         if (_steps.Values.Any(static step => step.Status == WorkflowStepRuntimeStatus.Pending))
                         {
@@ -616,7 +742,16 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                         break;
                     }
 
-                    await ExecuteStepAsync(ready, handlerResolver, parameterMaterializer, cancellationToken).ConfigureAwait(false);
+                    StepState[] batch = SelectReadyBatch(ready);
+                    if (batch.Length == 1)
+                    {
+                        await ExecuteStepAsync(batch[0], handlerResolver, parameterMaterializer, cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await Task.WhenAll(batch.Select(step => ExecuteStepAsync(step, handlerResolver, parameterMaterializer, cancellationToken).AsTask())).ConfigureAwait(false);
+                    }
+
                     await SaveCheckpointAsync(terminalResult: null, cancellationToken).ConfigureAwait(false);
                 }
             }
@@ -665,7 +800,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 invocation = _stateStore.GetInvocation(_invocationId);
             }
 
-            return new WorkflowRuntimeResult(result, execution, invocation, _nodeResults, _nodeSnapshots);
+            return new WorkflowRuntimeResult(result, execution, invocation, OrderedNodeResults(), OrderedNodeSnapshots());
         }
 
         private async ValueTask DisposeRuntimeResourcesAsync()
@@ -688,6 +823,46 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             {
                 _terminalStatus = WorkflowExecutionStatus.Failed;
                 _terminalError = new WorkflowError(WorkflowRuntimeErrorCodes.RuntimeResourceProviderInvalid, "Runtime resource cleanup failed.");
+            }
+        }
+
+        private async ValueTask RestoreRuntimeResourcesAsync(WorkflowExecutionCheckpoint checkpoint, CancellationToken cancellationToken)
+        {
+            foreach (WorkflowCheckpointResource saved in checkpoint.Resources.OrderBy(static resource => resource.ResourceName, StringComparer.Ordinal))
+            {
+                if (saved.State is null ||
+                    !_request.Workflow.Resources.TryGetValue(saved.ResourceName, out WorkflowResourceDefinition? definition) ||
+                    !_resourceProviders.TryGetValue(saved.Kind, out IWorkflowRuntimeResourceProvider? provider) ||
+                    provider is not IWorkflowRuntimeResourceRecoveryProvider recoveryProvider)
+                {
+                    throw new WorkflowCheckpointStoreException(WorkflowCheckpointErrorCodes.ResourceResumeNotSupported, "A live runtime resource cannot be reconstructed.");
+                }
+
+                try
+                {
+                    WorkflowRuntimeResourceRequest resourceRequest = new(_request.ExecutionId, _invocationId, _request.Workflow.Id, saved.ResourceName, definition);
+                    IWorkflowRuntimeResourceInstance instance = await recoveryProvider.RestoreAsync(resourceRequest, saved.State, cancellationToken).ConfigureAwait(false);
+                    if (!string.Equals(instance.ResourceName, saved.ResourceName, StringComparison.Ordinal) ||
+                        !string.Equals(instance.Kind, saved.Kind, StringComparison.Ordinal))
+                    {
+                        await instance.DisposeAsync().ConfigureAwait(false);
+                        throw new InvalidOperationException("Runtime resource recovery returned an instance with the wrong identity.");
+                    }
+
+                    _resourcesByName.Add(saved.ResourceName, instance);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (WorkflowCheckpointStoreException)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    throw new WorkflowCheckpointStoreException(WorkflowCheckpointErrorCodes.ResourceRecoveryFailed, "Runtime resource reconstruction failed.", exception);
+                }
             }
         }
 
@@ -718,6 +893,27 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                     step.Status = WorkflowStepRuntimeStatus.Ready;
                 }
             }
+        }
+
+        private StepState[] SelectReadyBatch(IReadOnlyList<StepState> ready)
+        {
+            if (_request.CheckpointStore is not null || _options.MaximumParallelSteps == 1 || !CanExecuteInParallel(ready[0].Step))
+            {
+                return [ready[0]];
+            }
+
+            return ready
+                .TakeWhile(step => CanExecuteInParallel(step.Step))
+                .Take(_options.MaximumParallelSteps)
+                .ToArray();
+        }
+
+        private static bool CanExecuteInParallel(WorkflowExecutionPlanStep step)
+        {
+            return (step.Kind is WorkflowExecutionPlanStepKind.Control or WorkflowExecutionPlanStepKind.Action) &&
+                step.Resources.Count == 0 &&
+                !step.MaySuspend &&
+                !step.Terminal;
         }
 
         private bool IsReady(StepState step)
@@ -767,7 +963,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         {
             cancellationToken.ThrowIfCancellationRequested();
             bool resumedRetry = step.Status == WorkflowStepRuntimeStatus.Ready && step.RetryAttempt > 0;
-            if (!resumedRetry && ++_activations > _options.MaximumRuntimeActivations)
+            if (!resumedRetry && Interlocked.Increment(ref _activations) > _options.MaximumRuntimeActivations)
             {
                 Fail(WorkflowRuntimeErrorCodes.ExecutionLimitExceeded, "Runtime activation limit was exceeded.", step.Step.NodeId);
                 return;
@@ -857,7 +1053,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
                 NodeExecutionRequest nodeRequest = new(attempt.Identity, prepared.Parameters.MaterializedParameters, step.ActivatedControlInputs.ToArray(), BuildDataInputs(step), new Dictionary<string, WorkflowIterationContext>(StringComparer.Ordinal));
                 INodeResourceAccessor resourceAccessor = await PrepareResourceAccessorAsync(step.Step, prepared.Parameters.ResourceBindings, cancellationToken).ConfigureAwait(false);
-                if (_terminalError is not null)
+                if (step.Step.Resources.Count > 0 && _terminalError is not null)
                 {
                     WorkflowError error = _terminalError!;
                     _terminalError = null;
@@ -935,7 +1131,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 _completedNodeOutputs[node.Id] = step.Outputs;
                 StoreNodeResult(attempt.NodeExecutionId, result);
                 _stateStore.TransitionNode(attempt.NodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
-                _nodeSnapshots.Add(_stateStore.GetNode(attempt.NodeExecutionId));
+                StoreNodeSnapshot(attempt.NodeExecutionId);
                 await EmitAsync(RuntimeWorkflowEventKind.NodeCompleted, "Node completed.", node.Id, cancellationToken).ConfigureAwait(false);
 
                 if (node.Type == "core.return")
@@ -949,7 +1145,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
         private async ValueTask<NodeAttempt?> StartNodeAttemptAsync(StepState step, WorkflowNode node, int retryAttempt, CancellationToken cancellationToken)
         {
-            if (++_executedAttempts > _options.MaximumExecutedNodeAttempts)
+            if (Interlocked.Increment(ref _executedAttempts) > _options.MaximumExecutedNodeAttempts)
             {
                 Fail(WorkflowRuntimeErrorCodes.ExecutionLimitExceeded, "Executed node attempt limit was exceeded.", step.Step.NodeId);
                 return null;
@@ -1091,23 +1287,20 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             if (onError == WorkflowOnError.Continue)
             {
                 PropagateContinueControl(step);
-                _terminalStatus = WorkflowExecutionStatus.Succeeded;
-                _terminalError = null;
                 _events.PublishAsync(RuntimeWorkflowEventKind.NodeErrorContinued, "Node failure continued by policy.", node.Id, ErrorData(error), cancellationToken).AsTask().GetAwaiter().GetResult();
                 return;
             }
 
-            _terminalStatus = WorkflowExecutionStatus.Failed;
             if (onError == WorkflowOnError.Stop)
             {
-                _terminalError = new WorkflowError(WorkflowRuntimeErrorCodes.NodeExecutionStopped, "Node failure stopped execution by policy.", node.Id);
+                SetTerminalFailure(step.Step.StepId, new WorkflowError(WorkflowRuntimeErrorCodes.NodeExecutionStopped, "Node failure stopped execution by policy.", node.Id));
                 JsonObject data = ErrorData(error);
                 data["originalCode"] = error.Code;
                 _events.PublishAsync(RuntimeWorkflowEventKind.NodeExecutionStopped, "Node failure stopped execution by policy.", node.Id, data, cancellationToken).AsTask().GetAwaiter().GetResult();
                 return;
             }
 
-            _terminalError = error;
+            SetTerminalFailure(step.Step.StepId, error);
         }
 
         private void PropagateContinueControl(StepState step)
@@ -1184,7 +1377,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             _completedNodeOutputs[node.Id] = step.Outputs;
             StoreNodeResult(nodeExecutionId, result);
             _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
-            _nodeSnapshots.Add(_stateStore.GetNode(nodeExecutionId));
+            StoreNodeSnapshot(nodeExecutionId);
             await EmitAsync(RuntimeWorkflowEventKind.NodeCompleted, "Node completed.", node.Id, cancellationToken).ConfigureAwait(false);
         }
 
@@ -1219,29 +1412,54 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 return;
             }
 
-            foreach (WorkflowIterationContext iteration in iterations)
+            int parallelism = GetForEachParallelism(node, parameters);
+            if (parallelism > 1 && IsSingleStepParallelLoopBody(step.Step))
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                LoopSignal signal = await ExecuteLoopBodyAsync(step.Step, iteration, handlerResolver, parameterMaterializer, cancellationToken).ConfigureAwait(false);
-                if (signal == LoopSignal.Break)
+                for (int offset = 0; offset < iterations.Count; offset += parallelism)
                 {
-                    break;
-                }
+                    cancellationToken.ThrowIfCancellationRequested();
+                    WorkflowIterationContext[] batch = iterations.Skip(offset).Take(parallelism).ToArray();
+                    LoopSignal[] signals = await Task.WhenAll(batch.Select(iteration =>
+                        ExecuteLoopBodyAsync(step.Step, iteration, handlerResolver, parameterMaterializer, cancellationToken).AsTask())).ConfigureAwait(false);
+                    LoopSignal signal = signals.FirstOrDefault(static item => item != LoopSignal.Continue);
+                    if (signal == LoopSignal.NoProgress)
+                    {
+                        CompleteFailedStep(step, nodeExecutionId, identity, WorkflowRuntimeErrorCodes.LoopNoProgress, "Loop body reached a no-progress state.", cancellationToken);
+                        return;
+                    }
 
-                if (signal == LoopSignal.Terminal)
-                {
-                    break;
+                    if (signal is LoopSignal.Break or LoopSignal.Terminal || _terminalError is not null || IsTerminalReturnCompleted())
+                    {
+                        break;
+                    }
                 }
-
-                if (signal == LoopSignal.NoProgress)
+            }
+            else
+            {
+                foreach (WorkflowIterationContext iteration in iterations)
                 {
-                    CompleteFailedStep(step, nodeExecutionId, identity, WorkflowRuntimeErrorCodes.LoopNoProgress, "Loop body reached a no-progress state.", cancellationToken);
-                    return;
-                }
+                    cancellationToken.ThrowIfCancellationRequested();
+                    LoopSignal signal = await ExecuteLoopBodyAsync(step.Step, iteration, handlerResolver, parameterMaterializer, cancellationToken).ConfigureAwait(false);
+                    if (signal == LoopSignal.Break)
+                    {
+                        break;
+                    }
 
-                if (_terminalError is not null || IsTerminalReturnCompleted())
-                {
-                    break;
+                    if (signal == LoopSignal.Terminal)
+                    {
+                        break;
+                    }
+
+                    if (signal == LoopSignal.NoProgress)
+                    {
+                        CompleteFailedStep(step, nodeExecutionId, identity, WorkflowRuntimeErrorCodes.LoopNoProgress, "Loop body reached a no-progress state.", cancellationToken);
+                        return;
+                    }
+
+                    if (_terminalError is not null || IsTerminalReturnCompleted())
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -1253,8 +1471,57 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             step.Status = WorkflowStepRuntimeStatus.Succeeded;
             StoreNodeResult(nodeExecutionId, result);
             _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
-            _nodeSnapshots.Add(_stateStore.GetNode(nodeExecutionId));
+            StoreNodeSnapshot(nodeExecutionId);
             await EmitAsync(RuntimeWorkflowEventKind.NodeCompleted, "Node completed.", node.Id, cancellationToken).ConfigureAwait(false);
+        }
+
+        private int GetForEachParallelism(WorkflowNode node, JsonObject parameters)
+        {
+            if (_request.CheckpointStore is not null ||
+                !string.Equals(node.Type, "flow.foreach", StringComparison.Ordinal) ||
+                parameters["execution"] is not JsonObject execution ||
+                execution["mode"]?.GetValueKind() != JsonValueKind.String ||
+                !string.Equals(execution["mode"]!.GetValue<string>(), "parallel", StringComparison.Ordinal) ||
+                !TryGetLong(execution["maxConcurrency"], out long declared) ||
+                declared < 2)
+            {
+                return 1;
+            }
+
+            return (int)Math.Min(declared, _options.MaximumParallelSteps);
+        }
+
+        private bool IsSingleStepParallelLoopBody(WorkflowExecutionPlanStep loopStep)
+        {
+            WorkflowExecutionPlanDependency[] bodyEdges = _plan.Dependencies
+                .Where(dependency => dependency.Kind == WorkflowExecutionPlanDependencyKind.Control &&
+                    dependency.StepId == loopStep.StepId &&
+                    string.Equals(dependency.SourcePort, "body", StringComparison.Ordinal) &&
+                    dependency.TargetStepId is not null)
+                .ToArray();
+            if (bodyEdges.Length == 0)
+            {
+                return true;
+            }
+
+            foreach (WorkflowExecutionPlanDependency edge in bodyEdges)
+            {
+                WorkflowExecutionPlanStep bodyStep = _stepsById[edge.TargetStepId!];
+                if (!CanExecuteInParallel(bodyStep))
+                {
+                    return false;
+                }
+
+                WorkflowExecutionPlanDependency[] outgoing = _plan.Dependencies
+                    .Where(dependency => dependency.Kind == WorkflowExecutionPlanDependencyKind.Control && dependency.StepId == bodyStep.StepId)
+                    .ToArray();
+                if (outgoing.Length == 0 || outgoing.Any(dependency => !string.Equals(dependency.TargetStepId, loopStep.StepId, StringComparison.Ordinal)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private IReadOnlyList<WorkflowIterationContext> BuildLoopIterations(WorkflowNode node, JsonObject parameters, NodeExecutionIdentity identity)
@@ -1403,7 +1670,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             NodeParameterMaterializer parameterMaterializer,
             CancellationToken cancellationToken)
         {
-            if (++_activations > _options.MaximumRuntimeActivations)
+            if (Interlocked.Increment(ref _activations) > _options.MaximumRuntimeActivations)
             {
                 Fail(WorkflowRuntimeErrorCodes.ExecutionLimitExceeded, "Runtime activation limit was exceeded.", planStep.NodeId);
                 return null;
@@ -1414,7 +1681,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             int maximumAttempts = policy?.Retry?.MaxAttempts ?? 1;
             for (int retryAttempt = 1; retryAttempt <= maximumAttempts; retryAttempt++)
             {
-                if (++_executedAttempts > _options.MaximumExecutedNodeAttempts)
+                if (Interlocked.Increment(ref _executedAttempts) > _options.MaximumExecutedNodeAttempts)
                 {
                     Fail(WorkflowRuntimeErrorCodes.ExecutionLimitExceeded, "Executed node attempt limit was exceeded.", planStep.NodeId);
                     return null;
@@ -1462,7 +1729,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 }
 
                 INodeResourceAccessor resourceAccessor = await PrepareResourceAccessorAsync(planStep, prepared.Parameters.ResourceBindings, cancellationToken).ConfigureAwait(false);
-                if (_terminalError is not null)
+                if (planStep.Resources.Count > 0 && _terminalError is not null)
                 {
                     WorkflowError error = _terminalError!;
                     _terminalError = null;
@@ -1535,7 +1802,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 _completedNodeOutputs[node.Id] = state.Outputs;
                 StoreNodeResult(nodeExecutionId, result);
                 _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
-                _nodeSnapshots.Add(_stateStore.GetNode(nodeExecutionId));
+                StoreNodeSnapshot(nodeExecutionId);
                 await EmitAsync(RuntimeWorkflowEventKind.NodeCompleted, "Node completed.", node.Id, cancellationToken).ConfigureAwait(false);
                 if (node.Type == "core.return")
                 {
@@ -1574,8 +1841,6 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             WorkflowOnError onError = node.Policy?.OnError ?? WorkflowOnError.Fail;
             if (onError == WorkflowOnError.Continue)
             {
-                _terminalStatus = WorkflowExecutionStatus.Succeeded;
-                _terminalError = null;
                 _events.PublishAsync(RuntimeWorkflowEventKind.NodeErrorContinued, "Node failure continued by policy.", node.Id, ErrorData(error), cancellationToken).AsTask().GetAwaiter().GetResult();
                 WorkflowNodeAnalysis analysis = _analysisByNode[planStep.NodeId];
                 bool hasNext = analysis.EffectivePorts.Any(static port =>
@@ -1585,17 +1850,16 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 return hasNext ? new NodeHandlerOutputs(["next"]) : new NodeHandlerOutputs();
             }
 
-            _terminalStatus = WorkflowExecutionStatus.Failed;
             if (onError == WorkflowOnError.Stop)
             {
-                _terminalError = new WorkflowError(WorkflowRuntimeErrorCodes.NodeExecutionStopped, "Node failure stopped execution by policy.", node.Id);
+                SetTerminalFailure(planStep.StepId, new WorkflowError(WorkflowRuntimeErrorCodes.NodeExecutionStopped, "Node failure stopped execution by policy.", node.Id));
                 JsonObject data = ErrorData(error);
                 data["originalCode"] = error.Code;
                 _events.PublishAsync(RuntimeWorkflowEventKind.NodeExecutionStopped, "Node failure stopped execution by policy.", node.Id, data, cancellationToken).AsTask().GetAwaiter().GetResult();
             }
             else
             {
-                _terminalError = error;
+                SetTerminalFailure(planStep.StepId, error);
             }
 
             return null;
@@ -1673,7 +1937,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             _completedNodeOutputs[node.Id] = step.Outputs;
             StoreNodeResult(nodeExecutionId, result);
             _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
-            _nodeSnapshots.Add(_stateStore.GetNode(nodeExecutionId));
+            StoreNodeSnapshot(nodeExecutionId);
             await EmitAsync(RuntimeWorkflowEventKind.NodeCompleted, "Node completed.", node.Id, cancellationToken).ConfigureAwait(false);
         }
 
@@ -1966,10 +2230,13 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
         private int NextActivationOrdinal(string nodeId)
         {
-            _nodeActivationOrdinals.TryGetValue(nodeId, out int current);
-            int next = current + 1;
-            _nodeActivationOrdinals[nodeId] = next;
-            return next;
+            lock (_mutationGate)
+            {
+                _nodeActivationOrdinals.TryGetValue(nodeId, out int current);
+                int next = current + 1;
+                _nodeActivationOrdinals[nodeId] = next;
+                return next;
+            }
         }
 
         private void CompleteActivationFailure(WorkflowExecutionPlanStep step, string nodeExecutionId, NodeExecutionIdentity identity, string code, string message, CancellationToken cancellationToken)
@@ -1995,7 +2262,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
             StoreNodeResult(nodeExecutionId, result);
             _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
-            _nodeSnapshots.Add(_stateStore.GetNode(nodeExecutionId));
+            StoreNodeSnapshot(nodeExecutionId);
             _events.PublishAsync(RuntimeWorkflowEventKind.NodeFailed, "Node failed.", identity.NodeId, data: ErrorData(error), cancellationToken: cancellationToken).AsTask().GetAwaiter().GetResult();
         }
 
@@ -2012,7 +2279,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             StoreNodeResult(nodeExecutionId, result);
             _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Cancelling, _clock.UtcNow);
             _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
-            _nodeSnapshots.Add(_stateStore.GetNode(nodeExecutionId));
+            StoreNodeSnapshot(nodeExecutionId);
         }
 
         private WorkflowError? ValidateOutputs(StepState step, NodeHandlerOutputs outputs)
@@ -2054,7 +2321,10 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 {
                     if (dependency.TargetStepId is not null && _steps.TryGetValue(dependency.TargetStepId, out StepState? target) && dependency.TargetPort is not null)
                     {
-                        target.ActivatedControlInputs.Add(dependency.TargetPort);
+                        lock (_mutationGate)
+                        {
+                            target.ActivatedControlInputs.Add(dependency.TargetPort);
+                        }
                     }
                 }
             }
@@ -2079,7 +2349,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             step.Result = result;
             StoreNodeResult(nodeExecutionId, result);
             _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
-            _nodeSnapshots.Add(_stateStore.GetNode(nodeExecutionId));
+            StoreNodeSnapshot(nodeExecutionId);
             _events.PublishAsync(RuntimeWorkflowEventKind.NodeFailed, "Node failed.", identity.NodeId, data: ErrorData(error), cancellationToken: cancellationToken).AsTask().GetAwaiter().GetResult();
         }
 
@@ -2092,7 +2362,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             StoreNodeResult(nodeExecutionId, result);
             _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Cancelling, _clock.UtcNow);
             _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
-            _nodeSnapshots.Add(_stateStore.GetNode(nodeExecutionId));
+            StoreNodeSnapshot(nodeExecutionId);
         }
 
         private async ValueTask MarkCancellationAsync(CancellationToken cancellationToken)
@@ -2237,6 +2507,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                     state.RetryAttempt,
                     state.RetryNotBeforeUtc);
             }).ToArray();
+            IReadOnlyList<WorkflowCheckpointResource> resources = await CaptureRuntimeResourcesAsync(cancellationToken).ConfigureAwait(false);
             WorkflowExecutionCheckpoint checkpoint = new(
                 WorkflowExecutionCheckpoint.CurrentFormatVersion,
                 _request.ExecutionId,
@@ -2260,7 +2531,8 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 _terminalError,
                 terminalResult,
                 _nodeResults,
-                _nodeSnapshots);
+                _nodeSnapshots,
+                resources);
             try
             {
                 await _request.CheckpointStore.SaveAsync(checkpoint, _checkpointRevision, cancellationToken).ConfigureAwait(false);
@@ -2279,6 +2551,34 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             }
 
             _checkpointRevision = nextRevision;
+        }
+
+        private async ValueTask<IReadOnlyList<WorkflowCheckpointResource>> CaptureRuntimeResourcesAsync(CancellationToken cancellationToken)
+        {
+            List<WorkflowCheckpointResource> resources = [];
+            foreach (IWorkflowRuntimeResourceInstance instance in _resourcesByName.Values.OrderBy(static resource => resource.ResourceName, StringComparer.Ordinal))
+            {
+                WorkflowRuntimeResourceCheckpointState? state = null;
+                if (instance is IWorkflowRuntimeResourceCheckpointParticipant participant)
+                {
+                    try
+                    {
+                        state = await participant.CaptureCheckpointStateAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception exception)
+                    {
+                        throw new WorkflowCheckpointStoreException(WorkflowCheckpointErrorCodes.ResourceRecoveryFailed, "Runtime resource checkpoint capture failed.", exception);
+                    }
+                }
+
+                resources.Add(new WorkflowCheckpointResource(instance.ResourceName, instance.Kind, state is not null, state));
+            }
+
+            return resources;
         }
 
         private static IReadOnlyDictionary<string, JsonNode?> ProjectCheckpointOutputs(IReadOnlyList<WorkflowCheckpointPortValue> outputs)
@@ -2324,14 +2624,62 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
         private void StoreNodeResult(string nodeExecutionId, NodeExecutionResult result)
         {
-            if (_nodeResults.Count < _options.MaximumStoredNodeResults)
+            lock (_mutationGate)
             {
-                _nodeResults.Add(result);
+                if (_nodeResults.Count < _options.MaximumStoredNodeResults)
+                {
+                    _nodeResults.Add(result);
+                }
+                else
+                {
+                    _terminalStatus = WorkflowExecutionStatus.Failed;
+                    _terminalError = new WorkflowError(WorkflowRuntimeErrorCodes.ExecutionLimitExceeded, "Stored node result limit was exceeded.");
+                }
             }
-            else
+        }
+
+        private void StoreNodeSnapshot(string nodeExecutionId)
+        {
+            NodeExecutionStateSnapshot snapshot = _stateStore.GetNode(nodeExecutionId);
+            lock (_mutationGate)
             {
-                _terminalStatus = WorkflowExecutionStatus.Failed;
-                _terminalError = new WorkflowError(WorkflowRuntimeErrorCodes.ExecutionLimitExceeded, "Stored node result limit was exceeded.");
+                _nodeSnapshots.Add(snapshot);
+            }
+        }
+
+        private IReadOnlyList<NodeExecutionResult> OrderedNodeResults()
+        {
+            lock (_mutationGate)
+            {
+                return _nodeResults
+                    .OrderBy(result => _stepOrderByNodeId[result.NodeId])
+                    .ThenBy(static result => result.Attempt)
+                    .ToArray();
+            }
+        }
+
+        private IReadOnlyList<NodeExecutionStateSnapshot> OrderedNodeSnapshots()
+        {
+            lock (_mutationGate)
+            {
+                return _nodeSnapshots
+                    .OrderBy(snapshot => _stepOrder[snapshot.Identity.StepId])
+                    .ThenBy(static snapshot => snapshot.Identity.Attempt)
+                    .ToArray();
+            }
+        }
+
+        private void SetTerminalFailure(string stepId, WorkflowError error)
+        {
+            int order = _stepOrder[stepId];
+            lock (_mutationGate)
+            {
+                if (_terminalError is null || order < _terminalErrorOrder)
+                {
+                    _terminalStatus = WorkflowExecutionStatus.Failed;
+                    _terminalError = error;
+                    _terminalErrorOrder = order;
+                }
             }
         }
 
@@ -2342,8 +2690,11 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
         private void Fail(string code, string message, string? nodeId = null)
         {
-            _terminalStatus = WorkflowExecutionStatus.Failed;
-            _terminalError = new WorkflowError(code, message, nodeId);
+            lock (_mutationGate)
+            {
+                _terminalStatus = WorkflowExecutionStatus.Failed;
+                _terminalError = new WorkflowError(code, message, nodeId);
+            }
         }
 
         private ValueTask EmitAsync(RuntimeWorkflowEventKind kind, string message, string? nodeId = null, CancellationToken cancellationToken = default)
@@ -2712,6 +3063,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         private readonly WorkflowExecutionRequest _request;
         private readonly string _invocationId;
         private readonly IWorkflowClock _clock;
+        private Task _publishTail = Task.CompletedTask;
         private long _sequence;
         private long _recordsEmitted;
 
@@ -2732,11 +3084,10 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
         public ValueTask PublishAsync(RuntimeWorkflowEventKind kind, string message, string? nodeId = null, JsonObject? data = null, CancellationToken cancellationToken = default)
         {
-            RuntimeWorkflowEvent workflowEvent;
             lock (_gate)
             {
                 long sequence = ++_sequence;
-                workflowEvent = new RuntimeWorkflowEvent(
+                RuntimeWorkflowEvent workflowEvent = new(
                     $"event:{_request.ExecutionId}:{sequence.ToString(System.Globalization.CultureInfo.InvariantCulture)}",
                     sequence,
                     _request.ExecutionId,
@@ -2748,9 +3099,23 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                     message,
                     nodeId,
                     data);
+
+                _publishTail = PublishAfterAsync(_publishTail, workflowEvent, cancellationToken);
+                return new ValueTask(_publishTail);
+            }
+        }
+
+        private async Task PublishAfterAsync(Task previous, RuntimeWorkflowEvent workflowEvent, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await previous.ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
             }
 
-            return _request.EventSink.PublishAsync(workflowEvent, cancellationToken);
+            await _request.EventSink.PublishAsync(workflowEvent, cancellationToken).ConfigureAwait(false);
         }
 
         public long RecordsEmitted => Interlocked.Read(ref _recordsEmitted);

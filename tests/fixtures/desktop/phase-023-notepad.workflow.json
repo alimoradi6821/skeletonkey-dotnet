@@ -1,0 +1,121 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "phase-023-notepad",
+  "name": "Phase 23 Notepad Smoke",
+  "inputs": {},
+  "variables": {},
+  "resources": {
+    "notepad": {
+      "kind": "desktop.application",
+      "lifetime": "execution",
+      "access": "exclusive",
+      "required": true,
+      "capabilities": [
+        "desktop.application-lifecycle",
+        "desktop.locators",
+        "desktop.actions",
+        "desktop.forms",
+        "desktop.text"
+      ],
+      "constraints": {
+        "mode": "launch",
+        "executable": "notepad.exe",
+        "closeOnDispose": true,
+        "mainWindowTimeoutMilliseconds": 30000,
+        "defaultTimeoutMilliseconds": 30000
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "parameters": {}
+    },
+    {
+      "id": "fill-editor",
+      "type": "desktop.fill",
+      "typeVersion": 1,
+      "parameters": {
+        "application": {
+          "$resource": {
+            "name": "notepad"
+          }
+        },
+        "target": {
+          "$locator": {
+            "catalog": "phase-023-notepad",
+            "version": "0.1.0",
+            "id": "editor"
+          }
+        },
+        "value": "SkeletonKey Phase 23 desktop smoke"
+      }
+    },
+    {
+      "id": "read-editor",
+      "type": "desktop.getText",
+      "typeVersion": 1,
+      "parameters": {
+        "application": {
+          "$resource": {
+            "name": "notepad"
+          }
+        },
+        "target": {
+          "$locator": {
+            "catalog": "phase-023-notepad",
+            "version": "0.1.0",
+            "id": "editor"
+          }
+        }
+      }
+    },
+    {
+      "id": "return",
+      "type": "core.return",
+      "typeVersion": 1,
+      "parameters": {
+        "outcome": {
+          "kind": "success",
+          "code": "desktop-smoke-complete"
+        }
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "fill-editor",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "fill-editor",
+        "port": "continue"
+      },
+      "to": {
+        "node": "read-editor",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "read-editor",
+        "port": "continue"
+      },
+      "to": {
+        "node": "return",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {}
+}

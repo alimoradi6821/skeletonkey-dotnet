@@ -8,7 +8,10 @@ namespace SkeletonKey.Runtime;
 public sealed class WorkflowExecutionCheckpoint
 {
     /// <summary>The checkpoint contract version implemented by this runtime.</summary>
-    public const string CurrentFormatVersion = "0.2";
+    public const string CurrentFormatVersion = "0.3";
+
+    /// <summary>The legacy checkpoint contract version accepted for safe migration.</summary>
+    public const string PreviousFormatVersion = "0.2";
 
     /// <summary>The previous checkpoint contract version accepted for safe migration.</summary>
     public const string LegacyFormatVersion = "0.1";
@@ -17,6 +20,7 @@ public sealed class WorkflowExecutionCheckpoint
     private readonly IReadOnlyDictionary<string, int> _nodeActivationOrdinals;
     private readonly IReadOnlyList<NodeExecutionResult> _nodeResults;
     private readonly IReadOnlyList<NodeExecutionStateSnapshot> _nodeSnapshots;
+    private readonly IReadOnlyList<WorkflowCheckpointResource> _resources;
 
     /// <summary>Initializes an immutable execution checkpoint.</summary>
     public WorkflowExecutionCheckpoint(
@@ -42,7 +46,8 @@ public sealed class WorkflowExecutionCheckpoint
         WorkflowError? error = null,
         WorkflowExecutionResult? terminalResult = null,
         IReadOnlyList<NodeExecutionResult>? nodeResults = null,
-        IReadOnlyList<NodeExecutionStateSnapshot>? nodeSnapshots = null)
+        IReadOnlyList<NodeExecutionStateSnapshot>? nodeSnapshots = null,
+        IReadOnlyList<WorkflowCheckpointResource>? resources = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(formatVersion);
         ArgumentException.ThrowIfNullOrWhiteSpace(executionId);
@@ -95,6 +100,7 @@ public sealed class WorkflowExecutionCheckpoint
         TerminalResult = terminalResult;
         _nodeResults = Array.AsReadOnly([.. (nodeResults ?? Array.AsReadOnly(Array.Empty<NodeExecutionResult>()))]);
         _nodeSnapshots = Array.AsReadOnly([.. (nodeSnapshots ?? Array.AsReadOnly(Array.Empty<NodeExecutionStateSnapshot>()))]);
+        _resources = Array.AsReadOnly([.. (resources ?? Array.AsReadOnly(Array.Empty<WorkflowCheckpointResource>()))]);
     }
 
     /// <summary>Gets the checkpoint format version.</summary>
@@ -166,10 +172,14 @@ public sealed class WorkflowExecutionCheckpoint
     /// <summary>Gets terminal node lifecycle snapshots in deterministic execution order.</summary>
     public IReadOnlyList<NodeExecutionStateSnapshot> NodeSnapshots => new ReadOnlyCollection<NodeExecutionStateSnapshot>([.. _nodeSnapshots]);
 
+    /// <summary>Gets resources that were live at this checkpoint boundary.</summary>
+    public IReadOnlyList<WorkflowCheckpointResource> Resources => new ReadOnlyCollection<WorkflowCheckpointResource>([.. _resources]);
+
     /// <summary>Returns whether the runtime can load and migrate the supplied checkpoint format.</summary>
     public static bool IsSupportedFormatVersion(string formatVersion)
     {
         return string.Equals(formatVersion, CurrentFormatVersion, StringComparison.Ordinal) ||
+            string.Equals(formatVersion, PreviousFormatVersion, StringComparison.Ordinal) ||
             string.Equals(formatVersion, LegacyFormatVersion, StringComparison.Ordinal);
     }
 }

@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <AssemblyName>SkeletonKey.Runner.Integration.Tests</AssemblyName>
     <RootNamespace>SkeletonKey.Runner.Integration.Tests</RootNamespace>
     <IsPackable>false</IsPackable>

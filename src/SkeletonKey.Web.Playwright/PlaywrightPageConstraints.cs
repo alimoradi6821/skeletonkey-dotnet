@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using SkeletonKey.Web.Abstractions;
 
 namespace SkeletonKey.Web.Playwright;
 
@@ -35,6 +36,9 @@ public sealed record PlaywrightPageConstraints
     /// <summary>Gets the default operation timeout in milliseconds.</summary>
     public int DefaultTimeoutMilliseconds { get; init; } = 30000;
 
+    /// <summary>Gets the optional bounded network interception policy.</summary>
+    public WebNetworkInterceptionPolicy? NetworkPolicy { get; init; }
+
     /// <summary>
     /// Parses provider-neutral resource constraint JSON.
     /// </summary>
@@ -59,6 +63,7 @@ public sealed record PlaywrightPageConstraints
                 "locale" => result with { Locale = ReadString(property.Value, property.Key) },
                 "userAgent" => result with { UserAgent = ReadString(property.Value, property.Key) },
                 "defaultTimeoutMilliseconds" => result with { DefaultTimeoutMilliseconds = ReadBoundedTimeout(property.Value, property.Key) },
+                "network" => result with { NetworkPolicy = PlaywrightNetworkPolicyParser.Parse(property.Value) },
                 _ => throw new ArgumentException("Unknown browser resource constraint is not allowed."),
             };
         }
@@ -78,18 +83,7 @@ public sealed record PlaywrightPageConstraints
 
     private PlaywrightPageConstraints WithEngine(string engine)
     {
-        return new PlaywrightPageConstraints
-        {
-            Engine = engine,
-            Headless = Headless,
-            Persistent = Persistent,
-            UserDataDirectory = UserDataDirectory,
-            ViewportWidth = ViewportWidth,
-            ViewportHeight = ViewportHeight,
-            Locale = Locale,
-            UserAgent = UserAgent,
-            DefaultTimeoutMilliseconds = DefaultTimeoutMilliseconds,
-        };
+        return this with { Engine = engine };
     }
 
     private PlaywrightPageConstraints WithVisibility(string visibility)
