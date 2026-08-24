@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/locators/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "phase-028-browser-soak",
+  "locators": {
+    "heading": {
+      "strategies": [
+        {
+          "kind": "css",
+          "selector": "#heading"
+        }
+      ]
+    }
+  }
+}

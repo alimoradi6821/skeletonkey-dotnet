@@ -91,6 +91,27 @@ public sealed class FileSystemWorkflowCheckpointStoreTests
         }
     }
 
+    /// <summary>Verifies an unavailable checkpoint root fails with the stable store-failure code.</summary>
+    [Fact]
+    [Trait("Category", "Phase30GA")]
+    public void UnavailableCheckpointRootUsesStableStoreFailureCode()
+    {
+        string parent = TemporaryRoot();
+        Directory.CreateDirectory(parent);
+        string root = Path.Combine(parent, "blocked-root");
+        File.WriteAllText(root, "blocked");
+        try
+        {
+            WorkflowCheckpointStoreException exception = Assert.Throws<WorkflowCheckpointStoreException>(() => new FileSystemWorkflowCheckpointStore(root));
+
+            Assert.Equal(WorkflowCheckpointErrorCodes.StoreFailure, exception.Code);
+        }
+        finally
+        {
+            DeleteRoot(parent);
+        }
+    }
+
     /// <summary>Verifies optimistic revision conflicts do not overwrite the current checkpoint.</summary>
     [Fact]
     public async Task RejectsRevisionConflictWithoutOverwrite()

@@ -1,0 +1,15 @@
+items:
+- name: Home
+  href: index.md
+- name: Getting Started
+  href: getting-started.md
+- name: Configuration
+  href: configuration/
+- name: Architecture Decisions
+  href: architecture/
+- name: Specifications
+  href: specifications/
+- name: Development and Release
+  href: development/
+- name: API Reference
+  href: api/

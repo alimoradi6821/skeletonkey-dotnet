@@ -1,0 +1,37 @@
+name: Phase 29 Agent Canary Gate
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 3 * * 2"
+
+permissions:
+  contents: read
+
+jobs:
+  windows-agent-canary:
+    runs-on: windows-2022
+    timeout-minutes: 150
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.302"
+
+      - name: Run Phase 29 clean-machine gate
+        shell: pwsh
+        run: ./build/verify-clean-machine-phase-029.ps1
+
+      - name: Upload Agent and canary artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-029-agent-canary
+          if-no-files-found: warn
+          path: |
+            artifacts/agent/**
+            artifacts/canary/**
+            artifacts/soak/**

@@ -1,0 +1,129 @@
+items:
+- name: Specifications Overview
+  href: index.md
+- name: "Built-in Node Catalog 0.1"
+  href: built-in-node-catalog-0.1.md
+- name: "Compatibility Policy 0.1"
+  href: compatibility-policy-0.1.md
+- name: "Conformance Suite 0.1"
+  href: conformance-suite-0.1.md
+- name: "Control Port Conventions 0.1"
+  href: control-port-conventions-0.1.md
+- name: "Default Execution Planner 0.1"
+  href: default-execution-planner-0.1.md
+- name: "Default Workflow Analyzer 0.1"
+  href: default-workflow-analyzer-0.1.md
+- name: "Desktop Automation 0.1"
+  href: desktop-automation-0.1.md
+- name: "Durable Workflow Checkpoints 0.1"
+  href: durable-workflow-checkpoints-0.1.md
+- name: "Effective Node Ports 0.1"
+  href: effective-node-ports-0.1.md
+- name: "Essential Built-In Handlers 0.1"
+  href: essential-built-in-handlers-0.1.md
+- name: "Essential Web Handlers 0.1"
+  href: essential-web-handlers-0.1.md
+- name: "Execution Lifecycle State 0.1"
+  href: execution-lifecycle-state-0.1.md
+- name: "Execution Plan Boundaries 0.1"
+  href: execution-plan-boundaries-0.1.md
+- name: "Execution Plan Dependencies 0.1"
+  href: execution-plan-dependencies-0.1.md
+- name: "Execution Planning 0.1"
+  href: execution-planning-0.1.md
+- name: "Execution Results and Events 0.1"
+  href: execution-results-and-events-0.1.md
+- name: "Local Plugin Package 0.1"
+  href: local-plugin-package-0.1.md
+- name: "Locator Document 0.1"
+  href: locator-document-0.1.md
+- name: "Locator Strategies 0.1"
+  href: locator-strategies-0.1.md
+- name: "Node Capabilities and Behavior 0.1"
+  href: node-capabilities-and-behavior-0.1.md
+- name: "Node Catalog 0.1"
+  href: node-catalog-0.1.md
+- name: "Node Definition 0.1"
+  href: node-definition-0.1.md
+- name: "Node Execution Context 0.1"
+  href: node-execution-context-0.1.md
+- name: "Node Execution Request 0.1"
+  href: node-execution-request-0.1.md
+- name: "Node Handler Contracts 0.1"
+  href: node-handler-contracts-0.1.md
+- name: "Node Locator Slots 0.1"
+  href: node-locator-slots-0.1.md
+- name: "Node Parameter Materialization 0.1"
+  href: node-parameter-materialization-0.1.md
+- name: "Node Ports 0.1"
+  href: node-ports-0.1.md
+- name: "Node Runtime Resource Access 0.1"
+  href: node-runtime-resource-access-0.1.md
+- name: "Playwright Page Provider 0.1"
+  href: playwright-page-provider-0.1.md
+- name: "Runtime Events 0.1"
+  href: runtime-events-0.1.md
+- name: "Runtime Execution Policies 0.1"
+  href: runtime-execution-policies-0.1.md
+- name: "Runtime Locator Resolution 0.1"
+  href: runtime-locator-resolution-0.1.md
+- name: "Runtime Loop, Invocation, Resource, and Interaction 0.1"
+  href: runtime-loop-invocation-resource-interaction-0.1.md
+- name: "Runtime Output Propagation 0.1"
+  href: runtime-output-propagation-0.1.md
+- name: "Runtime Parallel Scheduling 0.1"
+  href: runtime-parallel-scheduling-0.1.md
+- name: "Runtime Scheduling 0.1"
+  href: runtime-scheduling-0.1.md
+- name: "Runtime State Transitions 0.1"
+  href: runtime-state-transitions-0.1.md
+- name: "Validation Error Codes 0.1"
+  href: validation-error-codes-0.1.md
+- name: "Web Locator Fallback 0.1"
+  href: web-locator-fallback-0.1.md
+- name: "Web Navigation Policy 0.1"
+  href: web-navigation-policy-0.1.md
+- name: "Web Network Interception 0.1"
+  href: web-network-interception-0.1.md
+- name: "Web Page Resource 0.1"
+  href: web-page-resource-0.1.md
+- name: "Workflow Analysis 0.1"
+  href: workflow-analysis-0.1.md
+- name: "Workflow Binding Resolution 0.1"
+  href: workflow-binding-resolution-0.1.md
+- name: "Workflow Control Flow 0.1"
+  href: workflow-control-flow-0.1.md
+- name: "Workflow Data Binding 0.1"
+  href: workflow-data-binding-0.1.md
+- name: "Workflow Document Model 0.1"
+  href: workflow-document-model-0.1.md
+- name: "Workflow Expression Evaluation 0.1"
+  href: workflow-expression-evaluation-0.1.md
+- name: "Workflow Expressions 0.1"
+  href: workflow-expressions-0.1.md
+- name: "Workflow Human Interaction 0.1"
+  href: workflow-human-interaction-0.1.md
+- name: "Workflow Invocation 0.1"
+  href: workflow-invocation-0.1.md
+- name: "Workflow Invocation Analysis 0.1"
+  href: workflow-invocation-analysis-0.1.md
+- name: "Workflow Iteration 0.1"
+  href: workflow-iteration-0.1.md
+- name: "Workflow JSON Format 0.1"
+  href: workflow-json-format-0.1.md
+- name: "Workflow JSON Schema 0.1"
+  href: workflow-json-schema-0.1.md
+- name: "Workflow Outputs 0.1"
+  href: workflow-outputs-0.1.md
+- name: "Workflow Resource Analysis 0.1"
+  href: workflow-resource-analysis-0.1.md
+- name: "Workflow Resources 0.1"
+  href: workflow-resources-0.1.md
+- name: "Workflow Runtime 0.1"
+  href: workflow-runtime-0.1.md
+- name: "Workflow Semantic Validation 0.1"
+  href: workflow-validation-0.1.md
+- name: "Workflow Value Materialization 0.1"
+  href: workflow-value-materialization-0.1.md
+- name: "Workflow Value Resolution Context 0.1"
+  href: workflow-value-resolution-context-0.1.md

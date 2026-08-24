@@ -84,6 +84,91 @@ public sealed class ChromiumSmokeWorkflowTests
         Assert.Equal(["start", "navigate", "fill", "press", "select", "check", "click", "wait", "text", "attr", "count", "shot", "return"], result.NodeResults.Where(static node => node.Status == NodeExecutionStatus.Succeeded).Select(static node => node.NodeId));
     }
 
+    /// <summary>
+    /// Verifies a browser-backed workflow can terminate with the structural core.end node used by declarative workflows.
+    /// </summary>
+    [Fact]
+    public async Task ChromiumWorkflowCanTerminateWithCoreEndWhenEnabled()
+    {
+        if (!string.Equals(Environment.GetEnvironmentVariable("SKELETONKEY_PLAYWRIGHT_SMOKE"), "1", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        LocatorDocument locators = new(
+            id: "end-smoke",
+            locators: new Dictionary<string, LocatorDefinition>(StringComparer.Ordinal)
+            {
+                ["heading"] = new(strategies: [new("css", selector: "#heading")]),
+            });
+        LocatorPlanResolver resolver = new(new ImmutableLocatorDocumentRepository([locators]));
+        WorkflowNodeDefinitionCatalog catalog = new([.. BuiltInWorkflowNodeCatalog.Catalog.Definitions, .. WebBuiltInWorkflowNodeCatalog.Catalog.Definitions]);
+        IReadOnlyList<INodeHandler> handlers = [.. BuiltInRuntimeHandlers.Create(), .. WebBuiltInRuntimeHandlers.Create()];
+        WorkflowDocument workflow = EndWorkflow();
+        WorkflowValidationResult validation = new WorkflowSemanticValidator().Validate(workflow);
+        Assert.True(validation.IsValid, string.Join(Environment.NewLine, validation.Errors.Select(static issue => $"{issue.Code} {issue.Path}: {issue.Message}")));
+
+        DefaultWorkflowAnalyzer analyzer = new(locatorResolver: resolver);
+        WorkflowAnalysisResult analysis = analyzer.Analyze(workflow, catalog);
+        Assert.True(analysis.CanPlanExecution, string.Join(Environment.NewLine, analysis.Errors.Select(static issue => $"{issue.Code} {issue.Path} {issue.NodeId}: {issue.Message}")));
+
+        DefaultWorkflowRuntime runtime = new(
+            new WorkflowSemanticValidator(),
+            analyzer,
+            new DefaultWorkflowExecutionPlanner(),
+            catalog,
+            new ImmutableNodeHandlerResolver(handlers),
+            new NodeParameterMaterializer(),
+            resourceProviders: [new PlaywrightPageResourceProvider()],
+            locatorResolver: resolver);
+
+        WorkflowRuntimeResult result = await runtime.ExecuteAsync(new WorkflowExecutionRequest(workflow, "end-smoke-execution", "end-smoke-plan"));
+
+        Assert.Equal(WorkflowExecutionStatus.Succeeded, result.Result.Status);
+        Assert.Null(result.Result.Error);
+        Assert.Null(result.Result.Outcome);
+        Assert.Equal("SkeletonKey", Output(result, "text", "result"));
+        Assert.Equal(["start", "navigate", "text", "end"], result.NodeResults.Where(static node => node.Status == NodeExecutionStatus.Succeeded).Select(static node => node.NodeId));
+    }
+
+    private static WorkflowDocument EndWorkflow()
+    {
+        const string html = "<html><body><h1 id='heading'>SkeletonKey</h1></body></html>";
+        string url = "data:text/html," + Uri.EscapeDataString(html);
+        return new(
+            id: "web-end-smoke",
+            name: "Web End Smoke",
+            resources: new Dictionary<string, WorkflowResourceDefinition>(StringComparer.Ordinal)
+            {
+                ["page"] = new(
+                    StandardWorkflowResourceKinds.WebPage,
+                    capabilities:
+                    [
+                        StandardWorkflowResourceCapabilities.WebNavigation,
+                        StandardWorkflowResourceCapabilities.WebLocators,
+                        StandardWorkflowResourceCapabilities.WebText,
+                    ],
+                    constraints: new JsonObject { ["engine"] = "chromium", ["visibility"] = "headless", ["profile"] = "ephemeral", ["defaultTimeoutMilliseconds"] = 10000 }),
+            },
+            nodes:
+            [
+                new("start", "core.start", 1),
+                Node("navigate", "web.navigate", new JsonObject { ["url"] = url }),
+                Node("text", "web.getText", new JsonObject { ["target"] = new JsonObject { ["$locator"] = new JsonObject { ["catalog"] = "end-smoke", ["version"] = "0.1.0", ["id"] = "heading" } } }),
+                new("end", "core.end", 1),
+            ],
+            connections:
+            [
+                Connect("start", "navigate", "main"),
+                Connect("navigate", "text", "continue"),
+                Connect("text", "end", "continue"),
+            ],
+            outputs: new Dictionary<string, SkeletonKey.Workflow.Outputs.WorkflowOutputDefinition>(StringComparer.Ordinal)
+            {
+                ["heading"] = new(SkeletonKey.Workflow.Outputs.WorkflowOutputMode.Single, new WorkflowEndpoint("text", "result")),
+            });
+    }
+
     private static WorkflowDocument Workflow()
     {
         return new(

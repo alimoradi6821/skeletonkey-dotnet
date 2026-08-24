@@ -366,7 +366,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
             if (!checkpoint.IsTerminal)
             {
-                HashSet<string> requiredResources = checkpoint.Steps
+                var requiredResources = checkpoint.Steps
                     .Select((step, index) => new { Step = step, PlanStep = plan.Steps[index] })
                     .Where(static item => (item.Step.Status is WorkflowStepRuntimeStatus.Succeeded or WorkflowStepRuntimeStatus.Failed) || item.Step.RetryAttempt > 0)
                     .SelectMany(static item => item.PlanStep.Resources)

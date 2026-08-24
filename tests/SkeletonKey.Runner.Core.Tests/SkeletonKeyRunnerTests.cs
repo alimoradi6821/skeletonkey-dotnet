@@ -22,6 +22,11 @@ public sealed class SkeletonKeyRunnerTests
         Assert.Equal(RunnerExitCodes.Success, exitCode);
         Assert.True(envelope["accepted"]!.GetValue<bool>());
         Assert.Equal("net10.0", envelope["result"]!["targetFramework"]!.GetValue<string>());
+        string informationalVersion = envelope["result"]!["informationalVersion"]!.GetValue<string>();
+        Assert.True(
+            string.Equals(informationalVersion, "0.1.0", StringComparison.Ordinal) ||
+            informationalVersion.StartsWith("0.1.0+", StringComparison.Ordinal),
+            $"Expected GA informational version 0.1.0[+metadata], found '{informationalVersion}'.");
     }
 
     /// <summary>
@@ -152,6 +157,43 @@ public sealed class SkeletonKeyRunnerTests
             JsonNode envelope = JsonNode.Parse(output.ToString())!;
             Assert.Equal(RunnerExitCodes.Failed, exitCode);
             Assert.Equal(WorkflowCheckpointErrorCodes.InvalidCheckpoint, envelope["issues"]![0]!["code"]!.GetValue<string>());
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    /// <summary>Verifies resume rejects an integrity-tampered checkpoint with the stable checkpoint error code.</summary>
+    [Fact]
+    public async Task ResumeRejectsTamperedCheckpoint()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "skeletonkey-runner-checkpoints", Guid.NewGuid().ToString("N"));
+        string workflow = Path.Combine(RepositoryRoot(), "tests", "fixtures", "conformance", "valid", "core-return.workflow.json");
+        try
+        {
+            int runExitCode = await new SkeletonKeyRunner(TextReader.Null, TextWriter.Null, TextWriter.Null).ExecuteAsync([
+                "run", "--file", workflow, "--execution-id", "tampered-checkpoint", "--checkpoint-directory", root,
+            ]);
+            Assert.Equal(RunnerExitCodes.Success, runExitCode);
+
+            string checkpointPath = Assert.Single(Directory.GetFiles(root, "checkpoint-*.json", SearchOption.TopDirectoryOnly));
+            JsonObject envelope = Assert.IsType<JsonObject>(JsonNode.Parse(await File.ReadAllTextAsync(checkpointPath)));
+            envelope["sha256"] = new string('0', 64);
+            await File.WriteAllTextAsync(checkpointPath, envelope.ToJsonString());
+
+            StringWriter output = new();
+            int resumeExitCode = await new SkeletonKeyRunner(TextReader.Null, output, TextWriter.Null).ExecuteAsync([
+                "resume", "--file", workflow, "--execution-id", "tampered-checkpoint", "--checkpoint-directory", root,
+            ]);
+
+            JsonNode result = JsonNode.Parse(output.ToString())!;
+            Assert.Equal(RunnerExitCodes.Failed, resumeExitCode);
+            Assert.False(result["accepted"]!.GetValue<bool>());
+            Assert.Equal(WorkflowCheckpointErrorCodes.InvalidCheckpoint, result["issues"]![0]!["code"]!.GetValue<string>());
         }
         finally
         {

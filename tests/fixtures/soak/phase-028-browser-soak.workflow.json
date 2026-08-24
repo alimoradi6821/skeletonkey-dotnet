@@ -1,0 +1,118 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "phase-028-browser-soak",
+  "name": "Phase 28 Browser Lifecycle Soak",
+  "inputs": {},
+  "variables": {},
+  "resources": {
+    "page": {
+      "kind": "web.page",
+      "lifetime": "execution",
+      "access": "exclusive",
+      "required": true,
+      "capabilities": [
+        "web.navigation",
+        "web.locators",
+        "web.text"
+      ],
+      "constraints": {
+        "engine": "chromium",
+        "profile": "ephemeral",
+        "visibility": "headless",
+        "defaultTimeoutMilliseconds": 10000
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "navigate",
+      "type": "web.navigate",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": {
+          "$resource": {
+            "name": "page"
+          }
+        },
+        "url": "data:text/html,%3Chtml%3E%3Cbody%3E%3Ch1%20id%3D%22heading%22%3ESkeletonKey%20Phase%2028%3C%2Fh1%3E%3C%2Fbody%3E%3C%2Fhtml%3E"
+      }
+    },
+    {
+      "id": "read",
+      "type": "web.getText",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": {
+          "$resource": {
+            "name": "page"
+          }
+        },
+        "target": {
+          "$locator": {
+            "catalog": "phase-028-browser-soak",
+            "version": "0.1.0",
+            "id": "heading"
+          }
+        }
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "navigate",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "navigate",
+        "port": "continue"
+      },
+      "to": {
+        "node": "read",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "read",
+        "port": "continue"
+      },
+      "to": {
+        "node": "end",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {
+    "heading": {
+      "mode": "single",
+      "from": {
+        "node": "read",
+        "port": "result"
+      }
+    }
+  }
+}

@@ -23,7 +23,14 @@ public sealed class FileSystemWorkflowArtifactStore : IWorkflowArtifactStore
         ArgumentNullException.ThrowIfNull(options);
         _rootDirectory = CanonicalizeRoot(options.RootDirectory);
         _maximumArtifactBytes = options.MaximumArtifactBytes;
-        Directory.CreateDirectory(_rootDirectory);
+        try
+        {
+            Directory.CreateDirectory(_rootDirectory);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            throw new WorkflowArtifactException(WorkflowArtifactErrorCodes.ArtifactPersistenceFailed, "Artifact root could not be created.", exception);
+        }
     }
 
     /// <inheritdoc />
@@ -37,7 +44,6 @@ public sealed class FileSystemWorkflowArtifactStore : IWorkflowArtifactStore
         string artifactId = CreateArtifactId();
         string filename = SanitizeFilename(request.Filename);
         string artifactDirectory = ArtifactDirectory(artifactId);
-        Directory.CreateDirectory(artifactDirectory);
         string contentPath = Path.Combine(artifactDirectory, "content" + Path.GetExtension(filename));
         string temporaryPath = Path.Combine(artifactDirectory, "content.tmp");
         string metadataPath = Path.Combine(artifactDirectory, "metadata.json");
@@ -45,6 +51,7 @@ public sealed class FileSystemWorkflowArtifactStore : IWorkflowArtifactStore
 
         try
         {
+            Directory.CreateDirectory(artifactDirectory);
             await using FileStream output = new(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
             using var hash = SHA256.Create();
             byte[] buffer = new byte[81920];
@@ -79,13 +86,24 @@ public sealed class FileSystemWorkflowArtifactStore : IWorkflowArtifactStore
             File.Move(metadataTemporaryPath, metadataPath);
             return reference;
         }
+        catch (WorkflowArtifactException)
+        {
+            CleanupPartialArtifact(temporaryPath, contentPath, metadataTemporaryPath, metadataPath, artifactDirectory);
+            throw;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            CleanupPartialArtifact(temporaryPath, contentPath, metadataTemporaryPath, metadataPath, artifactDirectory);
+            throw;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            CleanupPartialArtifact(temporaryPath, contentPath, metadataTemporaryPath, metadataPath, artifactDirectory);
+            throw new WorkflowArtifactException(WorkflowArtifactErrorCodes.ArtifactPersistenceFailed, "Artifact persistence failed.", exception);
+        }
         catch
         {
-            TryDeleteFile(temporaryPath);
-            TryDeleteFile(contentPath);
-            TryDeleteFile(metadataTemporaryPath);
-            TryDeleteFile(metadataPath);
-            TryDeleteDirectory(artifactDirectory);
+            CleanupPartialArtifact(temporaryPath, contentPath, metadataTemporaryPath, metadataPath, artifactDirectory);
             throw;
         }
     }
@@ -237,6 +255,20 @@ public sealed class FileSystemWorkflowArtifactStore : IWorkflowArtifactStore
     {
         string upper = value.ToUpperInvariant();
         return upper is "CON" or "PRN" or "AUX" or "NUL" or "COM1" or "COM2" or "COM3" or "COM4" or "COM5" or "COM6" or "COM7" or "COM8" or "COM9" or "LPT1" or "LPT2" or "LPT3" or "LPT4" or "LPT5" or "LPT6" or "LPT7" or "LPT8" or "LPT9";
+    }
+
+    private static void CleanupPartialArtifact(
+        string temporaryPath,
+        string contentPath,
+        string metadataTemporaryPath,
+        string metadataPath,
+        string artifactDirectory)
+    {
+        TryDeleteFile(temporaryPath);
+        TryDeleteFile(contentPath);
+        TryDeleteFile(metadataTemporaryPath);
+        TryDeleteFile(metadataPath);
+        TryDeleteDirectory(artifactDirectory);
     }
 
     private static void TryDeleteFile(string path)

@@ -1,0 +1,56 @@
+name: Documentation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".config/dotnet-tools.json"
+      - "docs/**"
+      - "src/**"
+      - "build/verify-docs.ps1"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - "global.json"
+  push:
+    branches:
+      - main
+    paths:
+      - ".config/dotnet-tools.json"
+      - "docs/**"
+      - "src/**"
+      - "build/verify-docs.ps1"
+      - "Directory.Build.props"
+      - "Directory.Packages.props"
+      - "global.json"
+
+permissions:
+  contents: read
+
+jobs:
+  build-docs:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.302"
+
+      - name: Build documentation
+        shell: pwsh
+        run: ./build/verify-docs.ps1
+
+      - name: Upload documentation site
+        uses: actions/upload-artifact@v4
+        with:
+          name: skeletonkey-docs-site
+          path: artifacts/docs/site
+          if-no-files-found: error
+          retention-days: 14

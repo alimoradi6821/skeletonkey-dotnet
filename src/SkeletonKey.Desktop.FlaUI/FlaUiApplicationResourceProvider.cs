@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using FlaUI.Core;
 using FlaUI.Core.AutomationElements;
+using FlaUI.Core.Definitions;
 using FlaUI.UIA3;
 using SkeletonKey.Desktop.Abstractions;
 using SkeletonKey.Runtime.Resources;
@@ -40,24 +41,32 @@ public sealed class FlaUiApplicationResourceProvider : IWorkflowRuntimeResourceP
         }
 
         var constraints = FlaUiApplicationConstraints.Parse(request.Definition.Constraints);
-        HashSet<int> existingProcessIds = constraints.Mode == "launch"
-            ? CaptureProcessIds(constraints.Executable!)
-            : [];
         Application? application = null;
         UIA3Automation? automation = null;
+        Window? resolvedWindow = null;
+        bool ownsProcess = constraints.Mode == "launch";
         try
         {
-            application = CreateApplication(constraints);
             automation = new UIA3Automation();
+            HashSet<int> existingProcessIds = constraints.Mode == "launch"
+                ? CaptureProcessIds(constraints.Executable!)
+                : [];
+            HashSet<IntPtr> existingWindowHandles = constraints.Mode == "launch"
+                ? CaptureTopLevelWindowHandles(automation, existingProcessIds)
+                : [];
+
+            application = CreateApplication(constraints);
             ApplicationWindowResult resolved = await WaitForMainWindowAsync(
                 application,
                 automation,
                 constraints,
                 existingProcessIds,
+                existingWindowHandles,
                 cancellationToken).ConfigureAwait(false);
             application = resolved.Application;
-            Window? window = resolved.Window;
-            if (window is null)
+            resolvedWindow = resolved.Window;
+            ownsProcess = resolved.OwnsProcess;
+            if (resolvedWindow is null)
             {
                 throw Failure(DesktopAutomationErrorCodes.WindowUnavailable, "The application main window did not become available.", "create");
             }
@@ -67,29 +76,47 @@ public sealed class FlaUiApplicationResourceProvider : IWorkflowRuntimeResourceP
                 request.Definition.Access,
                 application,
                 automation,
-                window,
+                resolvedWindow,
                 constraints,
-                Capabilities);
+                Capabilities,
+                ownsProcess);
         }
         catch (DesktopAutomationException)
         {
-            CleanupFailedCreation(application, automation, constraints.Mode == "launch");
+            CleanupFailedCreation(application, automation, resolvedWindow, constraints.Mode == "launch", ownsProcess);
             throw;
         }
         catch (OperationCanceledException)
         {
-            CleanupFailedCreation(application, automation, constraints.Mode == "launch");
+            CleanupFailedCreation(application, automation, resolvedWindow, constraints.Mode == "launch", ownsProcess);
             throw;
         }
         catch (Exception exception)
         {
-            CleanupFailedCreation(application, automation, constraints.Mode == "launch");
+            CleanupFailedCreation(application, automation, resolvedWindow, constraints.Mode == "launch", ownsProcess);
             throw Failure(DesktopAutomationErrorCodes.ApplicationStartFailed, "Application launch or attachment failed.", "create", exception);
         }
     }
 
-    private static void CleanupFailedCreation(Application? application, UIA3Automation? automation, bool closeApplication)
+    private static void CleanupFailedCreation(
+        Application? application,
+        UIA3Automation? automation,
+        Window? window,
+        bool closeApplication,
+        bool ownsProcess)
     {
+        if (application is not null && closeApplication)
+        {
+            try
+            {
+                CloseOwnedTarget(application, window, ownsProcess, killIfCloseFails: true);
+            }
+            catch
+            {
+                // Preserve the primary creation failure.
+            }
+        }
+
         try
         {
             automation?.Dispose();
@@ -106,24 +133,23 @@ public sealed class FlaUiApplicationResourceProvider : IWorkflowRuntimeResourceP
 
         try
         {
-            if (closeApplication)
-            {
-                application.Close(killIfCloseFails: true);
-            }
-        }
-        catch
-        {
-            // Preserve the primary creation failure.
-        }
-
-        try
-        {
             application.Dispose();
         }
         catch
         {
             // Preserve the primary creation failure.
         }
+    }
+
+    private static void CloseOwnedTarget(Application application, Window? window, bool ownsProcess, bool killIfCloseFails)
+    {
+        if (ownsProcess)
+        {
+            application.Close(killIfCloseFails);
+            return;
+        }
+
+        window?.Close();
     }
 
     private static Application CreateApplication(FlaUiApplicationConstraints constraints)
@@ -166,6 +192,7 @@ public sealed class FlaUiApplicationResourceProvider : IWorkflowRuntimeResourceP
         UIA3Automation automation,
         FlaUiApplicationConstraints constraints,
         IReadOnlySet<int> existingProcessIds,
+        IReadOnlySet<IntPtr> existingWindowHandles,
         CancellationToken cancellationToken)
     {
         int initialProcessId = application.ProcessId;
@@ -177,43 +204,28 @@ public sealed class FlaUiApplicationResourceProvider : IWorkflowRuntimeResourceP
         do
         {
             cancellationToken.ThrowIfCancellationRequested();
-            IReadOnlyList<int> candidateProcessIds = CandidateProcessIds(initialProcessId, launchedProcessName, existingProcessIds);
+            IReadOnlyList<int> candidateProcessIds = CandidateProcessIds(initialProcessId, launchedProcessName);
             foreach (int candidateProcessId in candidateProcessIds)
             {
-                Process? process = null;
-                try
+                bool processExistedBeforeLaunch = existingProcessIds.Contains(candidateProcessId);
+                Window? window = TryFindOwnedTopLevelWindow(
+                    automation,
+                    candidateProcessId,
+                    processExistedBeforeLaunch ? existingWindowHandles : null);
+                if (window is null)
                 {
-                    process = Process.GetProcessById(candidateProcessId);
-                    process.Refresh();
-                    IntPtr mainWindowHandle = process.MainWindowHandle;
-                    if (mainWindowHandle == IntPtr.Zero)
-                    {
-                        continue;
-                    }
-
-                    Window? window = automation.FromHandle(mainWindowHandle)?.AsWindow();
-                    if (window is null)
-                    {
-                        continue;
-                    }
-
-                    if (candidateProcessId == initialProcessId)
-                    {
-                        return new ApplicationWindowResult(application, window);
-                    }
-
-                    var successor = Application.Attach(candidateProcessId);
-                    application.Dispose();
-                    return new ApplicationWindowResult(successor, window);
+                    continue;
                 }
-                catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException)
+
+                bool ownsProcess = !processExistedBeforeLaunch;
+                if (candidateProcessId == initialProcessId)
                 {
-                    // The process or its window can disappear while a delegated launch is settling.
+                    return new ApplicationWindowResult(application, window, ownsProcess);
                 }
-                finally
-                {
-                    process?.Dispose();
-                }
+
+                var successor = Application.Attach(candidateProcessId);
+                application.Dispose();
+                return new ApplicationWindowResult(successor, window, ownsProcess);
             }
 
             TimeSpan remaining = timeout - stopwatch.Elapsed;
@@ -226,10 +238,38 @@ public sealed class FlaUiApplicationResourceProvider : IWorkflowRuntimeResourceP
         }
         while (stopwatch.Elapsed < timeout);
 
-        return new ApplicationWindowResult(application, null);
+        return new ApplicationWindowResult(application, null, !existingProcessIds.Contains(initialProcessId));
     }
 
-    private static IReadOnlyList<int> CandidateProcessIds(int initialProcessId, string? launchedProcessName, IReadOnlySet<int> existingProcessIds)
+    private static Window? TryFindOwnedTopLevelWindow(
+        UIA3Automation automation,
+        int processId,
+        IReadOnlySet<IntPtr>? excludedWindowHandles)
+    {
+        try
+        {
+            AutomationElement[] windows = automation.GetDesktop().FindAllChildren(
+                cf => cf.ByProcessId(processId).And(cf.ByControlType(ControlType.Window)));
+            return windows
+                .Select(static element => new
+                {
+                    Element = element,
+                    Handle = element.Properties.NativeWindowHandle.ValueOrDefault,
+                })
+                .Where(candidate => candidate.Handle != IntPtr.Zero &&
+                    (excludedWindowHandles is null || !excludedWindowHandles.Contains(candidate.Handle)))
+                .OrderBy(static candidate => candidate.Handle.ToInt64())
+                .Select(static candidate => candidate.Element.AsWindow())
+                .FirstOrDefault(static window => window is not null);
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException)
+        {
+            // The process or one of its windows can disappear while a delegated launch is settling.
+            return null;
+        }
+    }
+
+    private static IReadOnlyList<int> CandidateProcessIds(int initialProcessId, string? launchedProcessName)
     {
         List<int> processIds = [initialProcessId];
         if (string.IsNullOrWhiteSpace(launchedProcessName))
@@ -242,7 +282,7 @@ public sealed class FlaUiApplicationResourceProvider : IWorkflowRuntimeResourceP
         {
             processIds.AddRange(matches
                 .Select(static process => process.Id)
-                .Where(processId => processId != initialProcessId && !existingProcessIds.Contains(processId))
+                .Where(processId => processId != initialProcessId)
                 .OrderBy(static processId => processId));
             return processIds;
         }
@@ -272,10 +312,37 @@ public sealed class FlaUiApplicationResourceProvider : IWorkflowRuntimeResourceP
         }
     }
 
+    private static HashSet<IntPtr> CaptureTopLevelWindowHandles(UIA3Automation automation, IReadOnlySet<int> processIds)
+    {
+        HashSet<IntPtr> handles = [];
+        foreach (int processId in processIds.OrderBy(static value => value))
+        {
+            try
+            {
+                AutomationElement[] windows = automation.GetDesktop().FindAllChildren(
+                    cf => cf.ByProcessId(processId).And(cf.ByControlType(ControlType.Window)));
+                foreach (AutomationElement window in windows)
+                {
+                    IntPtr handle = window.Properties.NativeWindowHandle.ValueOrDefault;
+                    if (handle != IntPtr.Zero)
+                    {
+                        handles.Add(handle);
+                    }
+                }
+            }
+            catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException)
+            {
+                // Existing windows are only a baseline. Ignore processes that disappear during capture.
+            }
+        }
+
+        return handles;
+    }
+
     private static DesktopAutomationException Failure(string code, string message, string operation, Exception? exception = null)
     {
         return new DesktopAutomationException(new DesktopOperationError(code, message, operation), exception);
     }
 
-    private sealed record ApplicationWindowResult(Application Application, Window? Window);
+    private sealed record ApplicationWindowResult(Application Application, Window? Window, bool OwnsProcess);
 }

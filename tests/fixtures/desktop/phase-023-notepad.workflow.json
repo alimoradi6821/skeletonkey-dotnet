@@ -22,7 +22,7 @@
         "mode": "launch",
         "executable": "notepad.exe",
         "closeOnDispose": true,
-        "mainWindowTimeoutMilliseconds": 30000,
+        "mainWindowTimeoutMilliseconds": 60000,
         "defaultTimeoutMilliseconds": 30000
       }
     }

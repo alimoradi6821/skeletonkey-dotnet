@@ -1,0 +1,88 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "phase-029-interrupted",
+  "name": "Phase 29 Interrupted In Flight",
+  "inputs": {},
+  "variables": {},
+  "resources": {
+    "page": {
+      "kind": "web.page",
+      "lifetime": "execution",
+      "access": "exclusive",
+      "required": true,
+      "capabilities": [
+        "web.navigation",
+        "web.locators"
+      ],
+      "constraints": {
+        "engine": "chromium",
+        "profile": "ephemeral",
+        "visibility": "headless",
+        "defaultTimeoutMilliseconds": 45000
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "navigate",
+      "type": "web.navigate",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": { "$resource": { "name": "page" } },
+        "url": "data:text/html,%3Chtml%3E%3Cbody%3E%3Ch1%3EPhase%2029%20Interrupted%3C%2Fh1%3E%3C%2Fbody%3E%3C%2Fhtml%3E"
+      }
+    },
+    {
+      "id": "wait",
+      "type": "web.wait",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": { "$resource": { "name": "page" } },
+        "target": {
+          "$locator": {
+            "catalog": "phase-029-deployment",
+            "version": "0.1.0",
+            "id": "never"
+          }
+        },
+        "state": "visible",
+        "timeoutMilliseconds": 30000
+      },
+      "policy": {
+        "timeout": "PT35S",
+        "onError": "fail"
+      }
+    },
+    {
+      "id": "end",
+      "type": "core.end",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    }
+  ],
+  "connections": [
+    {
+      "from": { "node": "start", "port": "main" },
+      "to": { "node": "navigate", "port": "main" }
+    },
+    {
+      "from": { "node": "navigate", "port": "continue" },
+      "to": { "node": "wait", "port": "main" }
+    },
+    {
+      "from": { "node": "wait", "port": "continue" },
+      "to": { "node": "end", "port": "main" }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/locators/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "example-domain",
+  "name": "Example Domain Pilot Locators",
+  "locators": {
+    "heading": {
+      "description": "The main page heading.",
+      "cardinality": "one",
+      "strategies": [
+        {
+          "kind": "css",
+          "selector": "h1"
+        }
+      ]
+    },
+    "moreInfoLink": {
+      "description": "The single link on example.com.",
+      "cardinality": "one",
+      "strategies": [
+        {
+          "kind": "css",
+          "selector": "a"
+        }
+      ]
+    }
+  }
+}

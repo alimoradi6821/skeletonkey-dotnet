@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -117,9 +118,11 @@ public sealed class SkeletonKeyRunner
 
     private async ValueTask<int> VersionAsync(CancellationToken cancellationToken)
     {
+        Assembly assembly = typeof(SkeletonKeyRunner).Assembly;
         await WriteEnvelopeAsync(RunnerEnvelope.Success("version", new Dictionary<string, object?>
         {
-            ["assemblyVersion"] = typeof(SkeletonKeyRunner).Assembly.GetName().Version?.ToString() ?? "0.0.0.0",
+            ["assemblyVersion"] = assembly.GetName().Version?.ToString() ?? "0.0.0.0",
+            ["informationalVersion"] = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "0.0.0",
             ["targetFramework"] = "net10.0",
         }), cancellationToken).ConfigureAwait(false);
         return RunnerExitCodes.Success;

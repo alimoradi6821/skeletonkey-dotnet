@@ -1,4 +1,4 @@
-﻿# Build outputs
+# Build outputs
 bin/
 obj/
 artifacts/
@@ -16,3 +16,5 @@ coverage/
 # Packages
 *.nupkg
 *.snupkg
+# Generated documentation metadata
+docs/api/

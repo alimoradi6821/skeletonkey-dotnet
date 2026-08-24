@@ -98,6 +98,36 @@ public sealed class FileSystemWorkflowArtifactStoreTests
     }
 
     /// <summary>
+    /// Verifies a storage root that becomes unavailable fails with the stable persistence code.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "Phase30GA")]
+    public async Task UnavailableArtifactRootUsesStablePersistenceCode()
+    {
+        string root = NewRoot();
+        FileSystemWorkflowArtifactStore store = new(new FileSystemArtifactStoreOptions(root, maximumArtifactBytes: 1024));
+        Directory.Delete(root);
+        File.WriteAllText(root, "blocked");
+        try
+        {
+            await using MemoryStream content = new(Encoding.UTF8.GetBytes("hello"));
+
+            WorkflowArtifactException exception = await Assert.ThrowsAsync<WorkflowArtifactException>(async () =>
+                await store.WriteAsync(new WorkflowArtifactWriteRequest("blocked.txt", "text/plain", WorkflowArtifactSensitivity.Internal, 1024), content));
+
+            Assert.Equal(WorkflowArtifactErrorCodes.ArtifactPersistenceFailed, exception.Code);
+            Assert.True(File.Exists(root));
+        }
+        finally
+        {
+            if (File.Exists(root))
+            {
+                File.Delete(root);
+            }
+        }
+    }
+
+    /// <summary>
     /// Verifies metadata is immutable with respect to the requested artifact ID.
     /// </summary>
     [Fact]

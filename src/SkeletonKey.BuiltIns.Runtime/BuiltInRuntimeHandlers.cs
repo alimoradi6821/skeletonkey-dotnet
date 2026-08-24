@@ -7,8 +7,8 @@ namespace SkeletonKey.BuiltIns.Runtime;
 /// Creates immutable handler collections for executable built-in node definitions.
 /// </summary>
 /// <remarks>
-/// The default collection includes start, return, if, and switch. The interaction handler is included only when a host supplies an
-/// explicit <see cref="IWorkflowInteractionHandler" />. Loop and workflow invocation handlers are intentionally absent.
+/// The default collection includes start, end, return, branch, and loop handlers. The interaction handler is included only when a host supplies an
+/// explicit <see cref="IWorkflowInteractionHandler" />. Workflow invocation remains runtime-owned and intentionally has no ordinary node handler.
 /// </remarks>
 public static class BuiltInRuntimeHandlers
 {
@@ -22,6 +22,7 @@ public static class BuiltInRuntimeHandlers
         List<INodeHandler> handlers =
         [
             new CoreStartHandler(),
+            new CoreEndHandler(),
             new CoreReturnHandler(),
             new FlowIfHandler(),
             new FlowForEachHandler(),

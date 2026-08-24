@@ -35,6 +35,22 @@ public sealed class BuiltInRuntimeHandlerTests
     }
 
     /// <summary>
+    /// Verifies the end handler succeeds without producing outputs.
+    /// </summary>
+    [Fact]
+    public async Task CoreEndCompletesWithoutOutputs()
+    {
+        CoreEndHandler handler = new();
+
+        NodeHandlerResult result = await handler.ExecuteAsync(Request("core.end"), Context("core.end"));
+
+        Assert.Equal(NodeHandlerCompletionStatus.Succeeded, result.Status);
+        Assert.Empty(result.Outputs.ActivatedControlOutputs);
+        Assert.Empty(result.Outputs.DataOutputs);
+        Assert.Null(result.Metadata);
+    }
+
+    /// <summary>
     /// Verifies the return handler produces terminal outcome metadata without control outputs.
     /// </summary>
     [Fact]
@@ -169,7 +185,7 @@ public sealed class BuiltInRuntimeHandlerTests
     {
         IReadOnlyList<INodeHandler> handlers = BuiltInRuntimeHandlers.Create();
 
-        Assert.Equal(["core.return", "core.start", "flow.foreach", "flow.if", "flow.repeat", "flow.switch", "flow.while"], handlers.Select(static handler => handler.Definition.Type));
+        Assert.Equal(["core.end", "core.return", "core.start", "flow.foreach", "flow.if", "flow.repeat", "flow.switch", "flow.while"], handlers.Select(static handler => handler.Definition.Type));
         Assert.All(handlers, handler => Assert.True(BuiltInWorkflowNodeCatalog.Catalog.TryGetDefinition(handler.Definition.Type, handler.Definition.Version, out _)));
         Assert.DoesNotContain(handlers, static handler => handler.Definition.Type == "workflow.invoke");
     }

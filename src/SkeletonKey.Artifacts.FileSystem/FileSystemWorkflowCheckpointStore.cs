@@ -26,8 +26,22 @@ public sealed class FileSystemWorkflowCheckpointStore : IWorkflowCheckpointStore
     public FileSystemWorkflowCheckpointStore(string rootPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(rootPath);
-        _rootPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(rootPath));
-        Directory.CreateDirectory(_rootPath);
+        string canonicalRoot = Path.TrimEndingDirectorySeparator(Path.GetFullPath(rootPath));
+        try
+        {
+            if (File.Exists(canonicalRoot))
+            {
+                throw new IOException("Checkpoint root cannot be a file.");
+            }
+
+            Directory.CreateDirectory(canonicalRoot);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            throw new WorkflowCheckpointStoreException(WorkflowCheckpointErrorCodes.StoreFailure, "The checkpoint root is unavailable.", exception);
+        }
+
+        _rootPath = canonicalRoot;
     }
 
     /// <inheritdoc />

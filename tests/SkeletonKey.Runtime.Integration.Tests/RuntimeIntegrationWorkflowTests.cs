@@ -40,6 +40,20 @@ public sealed class RuntimeIntegrationWorkflowTests
     }
 
     /// <summary>
+    /// Verifies a structural core.end terminal executes successfully through the default runtime.
+    /// </summary>
+    [Fact]
+    public async Task BasicEndWorkflowSucceeds()
+    {
+        WorkflowRuntimeResult result = await Runtime().ExecuteAsync(Request(Workflow([Start(), End()], [Connect("start", "main", "end", "main")])));
+
+        Assert.Equal(WorkflowExecutionStatus.Succeeded, result.Result.Status);
+        Assert.Null(result.Result.Outcome);
+        Assert.Null(result.Result.Error);
+        Assert.Equal(["start", "end"], result.NodeResults.Where(static node => node.Status == NodeExecutionStatus.Succeeded).Select(static node => node.NodeId));
+    }
+
+    /// <summary>
     /// Verifies flow.if executes the true branch and skips the false branch.
     /// </summary>
     [Fact]
@@ -282,6 +296,11 @@ public sealed class RuntimeIntegrationWorkflowTests
     private static WorkflowNode Start()
     {
         return new("start", "core.start", 1);
+    }
+
+    private static WorkflowNode End()
+    {
+        return new("end", "core.end", 1);
     }
 
     private static WorkflowNode Return(string id)

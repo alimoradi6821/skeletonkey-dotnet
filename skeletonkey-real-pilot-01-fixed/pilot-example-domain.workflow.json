@@ -1,0 +1,272 @@
+{
+  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+  "specVersion": "0.1.0",
+  "id": "pilot-example-domain",
+  "name": "Pilot Example Domain",
+  "inputs": {},
+  "variables": {},
+  "resources": {
+    "page": {
+      "kind": "web.page",
+      "lifetime": "execution",
+      "access": "exclusive",
+      "required": true,
+      "capabilities": [
+        "web.navigation",
+        "web.actions",
+        "web.locators",
+        "web.text",
+        "web.attributes"
+      ],
+      "constraints": {
+        "engine": "chromium",
+        "profile": "ephemeral",
+        "visibility": "headful",
+        "defaultTimeoutMilliseconds": 15000
+      },
+      "description": "Visible Chromium page for the first real-world SkeletonKey pilot."
+    }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.start",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {}
+    },
+    {
+      "id": "navigate",
+      "type": "web.navigate",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": {
+          "$resource": {
+            "name": "page"
+          }
+        },
+        "url": "https://example.com/",
+        "waitUntil": "load",
+        "timeoutMilliseconds": 30000
+      }
+    },
+    {
+      "id": "waitHeading",
+      "type": "web.wait",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": {
+          "$resource": {
+            "name": "page"
+          }
+        },
+        "target": {
+          "$locator": {
+            "catalog": "example-domain",
+            "version": "0.1.0",
+            "id": "heading"
+          }
+        },
+        "state": "visible",
+        "timeoutMilliseconds": 15000
+      }
+    },
+    {
+      "id": "readInitialHeading",
+      "type": "web.getText",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": {
+          "$resource": {
+            "name": "page"
+          }
+        },
+        "target": {
+          "$locator": {
+            "catalog": "example-domain",
+            "version": "0.1.0",
+            "id": "heading"
+          }
+        },
+        "timeoutMilliseconds": 15000
+      }
+    },
+    {
+      "id": "readLinkHref",
+      "type": "web.getAttribute",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": {
+          "$resource": {
+            "name": "page"
+          }
+        },
+        "target": {
+          "$locator": {
+            "catalog": "example-domain",
+            "version": "0.1.0",
+            "id": "moreInfoLink"
+          }
+        },
+        "name": "href",
+        "timeoutMilliseconds": 15000
+      }
+    },
+    {
+      "id": "clickMoreInfo",
+      "type": "web.click",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": {
+          "$resource": {
+            "name": "page"
+          }
+        },
+        "target": {
+          "$locator": {
+            "catalog": "example-domain",
+            "version": "0.1.0",
+            "id": "moreInfoLink"
+          }
+        },
+        "timeoutMilliseconds": 15000
+      }
+    },
+    {
+      "id": "waitDestination",
+      "type": "web.waitForLoadState",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": {
+          "$resource": {
+            "name": "page"
+          }
+        },
+        "state": "domcontentloaded",
+        "timeoutMilliseconds": 30000
+      }
+    },
+    {
+      "id": "readDestinationHeading",
+      "type": "web.getText",
+      "typeVersion": 1,
+      "disabled": false,
+      "parameters": {
+        "page": {
+          "$resource": {
+            "name": "page"
+          }
+        },
+        "target": {
+          "$locator": {
+            "catalog": "example-domain",
+            "version": "0.1.0",
+            "id": "heading"
+          }
+        },
+        "timeoutMilliseconds": 15000
+      }
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "start",
+        "port": "main"
+      },
+      "to": {
+        "node": "navigate",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "navigate",
+        "port": "continue"
+      },
+      "to": {
+        "node": "waitHeading",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "waitHeading",
+        "port": "continue"
+      },
+      "to": {
+        "node": "readInitialHeading",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "readInitialHeading",
+        "port": "continue"
+      },
+      "to": {
+        "node": "readLinkHref",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "readLinkHref",
+        "port": "continue"
+      },
+      "to": {
+        "node": "clickMoreInfo",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "clickMoreInfo",
+        "port": "continue"
+      },
+      "to": {
+        "node": "waitDestination",
+        "port": "main"
+      }
+    },
+    {
+      "from": {
+        "node": "waitDestination",
+        "port": "continue"
+      },
+      "to": {
+        "node": "readDestinationHeading",
+        "port": "main"
+      }
+    }
+  ],
+  "outputs": {
+    "initialHeading": {
+      "mode": "single",
+      "from": {
+        "node": "readInitialHeading",
+        "port": "result"
+      }
+    },
+    "linkHref": {
+      "mode": "single",
+      "from": {
+        "node": "readLinkHref",
+        "port": "result"
+      }
+    },
+    "destinationHeading": {
+      "mode": "single",
+      "from": {
+        "node": "readDestinationHeading",
+        "port": "result"
+      }
+    }
+  }
+}

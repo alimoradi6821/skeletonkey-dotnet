@@ -1,0 +1,54 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": [
+            "**/*.csproj"
+          ],
+          "src": "../src"
+        }
+      ],
+      "dest": "api",
+      "properties": {
+        "Configuration": "Release"
+      },
+      "memberLayout": "samePage",
+      "namespaceLayout": "nested"
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [
+          "**/*.md",
+          "**/toc.yml",
+          "api/**/*.yml"
+        ],
+        "exclude": [
+          "api/**/index.md"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "files": [
+          "**/images/**"
+        ]
+      }
+    ],
+    "dest": "../artifacts/docs/site",
+    "template": [
+      "default",
+      "modern"
+    ],
+    "globalMetadata": {
+      "_appName": "SkeletonKey",
+      "_appTitle": "SkeletonKey Documentation",
+      "_enableSearch": true,
+      "_enableNewTab": true,
+      "_disableContribution": true,
+      "_lang": "en"
+    }
+  }
+}

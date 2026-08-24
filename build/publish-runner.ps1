@@ -42,9 +42,18 @@ $manifestFiles = Get-ChildItem -LiteralPath $OutputDirectory -File -Recurse |
         }
     }
 
+[xml]$buildProps = Get-Content -LiteralPath (Join-Path $repo "Directory.Build.props") -Raw
+$versionPrefixNode = $buildProps.SelectSingleNode("/Project/PropertyGroup/VersionPrefix")
+$versionSuffixNode = $buildProps.SelectSingleNode("/Project/PropertyGroup/VersionSuffix")
+$versionPrefix = if ($null -eq $versionPrefixNode) { "" } else { [string]$versionPrefixNode.InnerText }
+$versionSuffix = if ($null -eq $versionSuffixNode) { "" } else { [string]$versionSuffixNode.InnerText }
+if ([string]::IsNullOrWhiteSpace($versionPrefix)) { throw "VersionPrefix is missing from Directory.Build.props." }
+$releaseVersion = if ([string]::IsNullOrWhiteSpace($versionSuffix)) { $versionPrefix } else { "$versionPrefix-$versionSuffix" }
+
 $manifest = [pscustomobject]@{
     formatVersion = "1.0"
     product = "SkeletonKey Runner"
+    version = $releaseVersion
     targetFramework = "net10.0-windows"
     runtimeIdentifier = $RuntimeIdentifier
     selfContained = [bool]$SelfContained

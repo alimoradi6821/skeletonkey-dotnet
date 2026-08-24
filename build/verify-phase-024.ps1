@@ -93,8 +93,43 @@ try {
         $desktopWorkflow = Join-Path $desktopDirectory "phase-023-notepad.workflow.json"
         & dotnet $runnerDll analyze --file $desktopWorkflow --locator-directory $desktopDirectory
         if ($LASTEXITCODE -ne 0) { throw "Desktop workflow and locator analysis smoke failed." }
-        & dotnet $runnerDll run --file $desktopWorkflow --locator-directory $desktopDirectory --execution-id phase-024-desktop-smoke
-        if ($LASTEXITCODE -ne 0) { throw "FlaUI Notepad execution smoke failed." }
+        $desktopSucceeded = $false
+        $desktopAttempts = 3
+        for ($desktopAttempt = 1; $desktopAttempt -le $desktopAttempts; $desktopAttempt++) {
+            $desktopExecutionId = "phase-024-desktop-smoke-$desktopAttempt"
+            $previousErrorActionPreference = $ErrorActionPreference
+            try {
+                $ErrorActionPreference = "Continue"
+                $desktopOutput = @(& dotnet $runnerDll run --file $desktopWorkflow --locator-directory $desktopDirectory --execution-id $desktopExecutionId 2>&1)
+                $desktopExitCode = $LASTEXITCODE
+            }
+            finally {
+                $ErrorActionPreference = $previousErrorActionPreference
+            }
+
+            foreach ($desktopLine in $desktopOutput) {
+                Write-Host ([string] $desktopLine)
+            }
+
+            if ($desktopExitCode -eq 0) {
+                $desktopSucceeded = $true
+                break
+            }
+
+            $desktopText = $desktopOutput | Out-String
+            if ($desktopText -notmatch '"code"\s*:\s*"SKR1999"') {
+                throw "FlaUI Notepad execution smoke failed with a non-transient desktop error."
+            }
+
+            if ($desktopAttempt -lt $desktopAttempts) {
+                Write-Warning "Transient FlaUI main-window discovery failure (SKR1999) on attempt $desktopAttempt/$desktopAttempts; retrying."
+                Start-Sleep -Seconds (2 * $desktopAttempt)
+            }
+        }
+
+        if (-not $desktopSucceeded) {
+            throw "FlaUI Notepad execution smoke failed after $desktopAttempts transient-window attempts."
+        }
     }
 
     $selfContained = Join-Path $repo "artifacts/runner/$RuntimeIdentifier-self-contained"

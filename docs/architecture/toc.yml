@@ -1,0 +1,53 @@
+items:
+- name: Architecture Decision Records
+  href: index.md
+- name: "ADR 0004: Immutable Workflow Document Model"
+  href: 0004-immutable-workflow-document-model.md
+- name: "ADR 0005: Dedicated JSON Serialization Layer"
+  href: 0005-dedicated-json-serialization-layer.md
+- name: "ADR 0006: Separate Semantic Validation Layer"
+  href: 0006-separate-semantic-validation-layer.md
+- name: "ADR 0007: Normative JSON Schema and Conformance Suite"
+  href: 0007-normative-json-schema-and-conformance-suite.md
+- name: "0008 Workflow Outputs and Host-Neutral Execution Contracts"
+  href: 0008-workflow-outputs-and-host-neutral-execution-contracts.md
+- name: "0009 Subworkflow Invocation and Explicit Data Binding"
+  href: 0009-subworkflow-invocation-and-explicit-data-binding.md
+- name: "ADR 0010: Graph-Native Control Flow And Safe Expressions"
+  href: 0010-graph-native-control-flow-and-safe-expressions.md
+- name: "ADR 0011: Declarative Resources, Locators, and Human Interaction"
+  href: 0011-declarative-resources-locators-and-human-interaction.md
+- name: "ADR 0012: Catalog-Aware Analysis and Execution Planning Contracts"
+  href: 0012-catalog-aware-analysis-and-execution-planning.md
+- name: "ADR 0013: Runtime State, Context, and Handler Boundaries"
+  href: 0013-runtime-state-context-and-handler-boundaries.md
+- name: "ADR 0014: Workflow Value Resolution and Safe Evaluation"
+  href: 0014-workflow-value-resolution-and-safe-evaluation.md
+- name: "ADR 0015: Catalog-Aware Analysis and Execution Planning"
+  href: 0015-catalog-aware-analysis-and-execution-planning.md
+- name: "0016: Core Workflow Runtime"
+  href: 0016-core-workflow-runtime.md
+- name: "Phase 0-14 Loop, Invocation, Resource, and Interaction Runtime"
+  href: 0017-loop-invocation-resource-interaction-runtime.md
+- name: "ADR 0018: Locator and Playwright Web Runtime"
+  href: 0018-locator-and-playwright-web-runtime.md
+- name: "Phase 0-16 Advanced Web, Runner, and Windows Packaging"
+  href: 0019-advanced-web-runner-and-windows-packaging.md
+- name: "Phase 0-17 Durable Execution Checkpoints and Resume"
+  href: 0020-durable-execution-checkpoints-and-resume.md
+- name: "Phase 0-18 Runtime-Owned Execution Policies"
+  href: 0021-runtime-owned-execution-policies.md
+- name: "Phase 0-19 Bounded Parallel Runtime Scheduling"
+  href: 0022-bounded-parallel-runtime-scheduling.md
+- name: "Phase 0-20 Cross-Workflow Invocation Analysis"
+  href: 0023-cross-workflow-invocation-analysis.md
+- name: "Phase 0-21 Bounded Network Interception"
+  href: 0024-bounded-network-interception.md
+- name: "Phase 0-22 Explicit Local Plugin Loading"
+  href: 0025-explicit-local-plugin-loading.md
+- name: "0026: Windows Desktop Automation through FlaUI UIA3"
+  href: 0026-windows-desktop-automation.md
+- name: "0027: Resumable Runtime Resources"
+  href: 0027-resumable-runtime-resources.md
+- name: "ADR 0028: Use DocFX and MADR-Style Architecture Decision Records"
+  href: 0028-use-docfx-and-madr-for-project-documentation.md
