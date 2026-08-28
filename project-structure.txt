@@ -1,0 +1,1535 @@
+﻿├── build
+│   ├── agent-canary.ps1
+│   ├── csc.cmd
+│   ├── fault-injection.ps1
+│   ├── finalize-ga-release.ps1
+│   ├── ga-storage-faults.ps1
+│   ├── generate-provenance.ps1
+│   ├── generate-sbom.ps1
+│   ├── generate-signing-readiness.ps1
+│   ├── install-playwright-browsers.ps1
+│   ├── invoke-agent-task.ps1
+│   ├── package-release.ps1
+│   ├── prepare-agent-bundle.ps1
+│   ├── promote-agent-slot.ps1
+│   ├── publish-runner.ps1
+│   ├── refresh-release-manifest.ps1
+│   ├── rollback-agent-slot.ps1
+│   ├── security-audit.ps1
+│   ├── serve-docs.ps1
+│   ├── sign-release.ps1
+│   ├── soak-runner.ps1
+│   ├── stage-agent-bundle.ps1
+│   ├── test-runner-publish-matrix.ps1
+│   ├── verify-agent-bundle.ps1
+│   ├── verify-clean-machine.ps1
+│   ├── verify-clean-machine-phase-027.ps1
+│   ├── verify-clean-machine-phase-028.ps1
+│   ├── verify-clean-machine-phase-029.ps1
+│   ├── verify-clean-machine-phase-030.ps1
+│   ├── verify-docs.ps1
+│   ├── verify-phase-016.ps1
+│   ├── verify-phase-017.ps1
+│   ├── verify-phase-018.ps1
+│   ├── verify-phase-019.ps1
+│   ├── verify-phase-020.ps1
+│   ├── verify-phase-021.ps1
+│   ├── verify-phase-022.ps1
+│   ├── verify-phase-023.ps1
+│   ├── verify-phase-024.ps1
+│   ├── verify-phase-025.ps1
+│   ├── verify-phase-026.ps1
+│   ├── verify-phase-027.ps1
+│   ├── verify-phase-028.ps1
+│   ├── verify-phase-029.ps1
+│   ├── verify-phase-030.ps1
+│   ├── verify-release-package.ps1
+│   └── verify-supply-chain.ps1
+├── docs
+│   ├── api
+│   │   ├── SkeletonKey.Abstractions.Events.IWorkflowEventSink.yml
+│   │   ├── SkeletonKey.Abstractions.Events.WorkflowEvent.yml
+│   │   ├── SkeletonKey.Abstractions.Events.WorkflowLogEvent.yml
+│   │   ├── SkeletonKey.Abstractions.Events.WorkflowLogLevel.yml
+│   │   ├── SkeletonKey.Abstractions.Events.WorkflowOutputEvent.yml
+│   │   ├── SkeletonKey.Abstractions.Events.WorkflowProgressEvent.yml
+│   │   ├── SkeletonKey.Abstractions.Events.yml
+│   │   ├── SkeletonKey.Abstractions.Execution.NodeExecutionResult.yml
+│   │   ├── SkeletonKey.Abstractions.Execution.NodeExecutionStatus.yml
+│   │   ├── SkeletonKey.Abstractions.Execution.WorkflowError.yml
+│   │   ├── SkeletonKey.Abstractions.Execution.WorkflowExecutionMetrics.yml
+│   │   ├── SkeletonKey.Abstractions.Execution.WorkflowExecutionResult.yml
+│   │   ├── SkeletonKey.Abstractions.Execution.WorkflowExecutionStatus.yml
+│   │   ├── SkeletonKey.Abstractions.Execution.WorkflowIterationContext.yml
+│   │   ├── SkeletonKey.Abstractions.Execution.WorkflowOutcome.yml
+│   │   ├── SkeletonKey.Abstractions.Execution.WorkflowOutcomeKind.yml
+│   │   ├── SkeletonKey.Abstractions.Execution.yml
+│   │   ├── SkeletonKey.Abstractions.Grammar.SkeletonKeyIdentifierGrammar.yml
+│   │   ├── SkeletonKey.Abstractions.Grammar.yml
+│   │   ├── SkeletonKey.Abstractions.Interaction.IWorkflowInteractionHandler.yml
+│   │   ├── SkeletonKey.Abstractions.Interaction.WorkflowInteractionKind.yml
+│   │   ├── SkeletonKey.Abstractions.Interaction.WorkflowInteractionOption.yml
+│   │   ├── SkeletonKey.Abstractions.Interaction.WorkflowInteractionRequest.yml
+│   │   ├── SkeletonKey.Abstractions.Interaction.WorkflowInteractionResponse.yml
+│   │   ├── SkeletonKey.Abstractions.Interaction.WorkflowInteractionResponseStatus.yml
+│   │   ├── SkeletonKey.Abstractions.Interaction.yml
+│   │   ├── SkeletonKey.Abstractions.Web.WebBrowserEnginePreference.yml
+│   │   ├── SkeletonKey.Abstractions.Web.WebBrowserProfilePreference.yml
+│   │   ├── SkeletonKey.Abstractions.Web.WebBrowserResourceConstraints.yml
+│   │   ├── SkeletonKey.Abstractions.Web.WebBrowserVisibilityPreference.yml
+│   │   ├── SkeletonKey.Abstractions.Web.yml
+│   │   ├── SkeletonKey.Abstractions.yml
+│   │   ├── SkeletonKey.Analysis.Default.DefaultWorkflowAnalyzer.yml
+│   │   ├── SkeletonKey.Analysis.Default.WorkflowAnalysisOptions.yml
+│   │   ├── SkeletonKey.Analysis.Default.yml
+│   │   ├── SkeletonKey.Analysis.IWorkflowAnalyzer.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowAnalysisCodes.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowAnalysisIssue.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowAnalysisResult.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowAnalysisSeverity.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowCapabilityCompatibilityStatus.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowConnectionAnalysis.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowConnectionRoleCompatibilityStatus.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowDynamicPortAnalysisStatus.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowEffectivePort.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowEffectivePortOrigin.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowLocatorSlotAnalysis.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowLocatorSlotAnalysisStatus.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowNodeAnalysis.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowNodeCatalogStatus.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowParameterAnalysisStatus.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowPortCatalogStatus.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowResourceRequirementAnalysisStatus.yml
+│   │   ├── SkeletonKey.Analysis.WorkflowResourceSlotAnalysis.yml
+│   │   ├── SkeletonKey.Analysis.yml
+│   │   ├── SkeletonKey.Artifacts.FileSystem.FileSystemArtifactStoreOptions.yml
+│   │   ├── SkeletonKey.Artifacts.FileSystem.FileSystemWorkflowArtifactStore.yml
+│   │   ├── SkeletonKey.Artifacts.FileSystem.FileSystemWorkflowCheckpointStore.yml
+│   │   ├── SkeletonKey.Artifacts.FileSystem.yml
+│   │   ├── SkeletonKey.Artifacts.IWorkflowArtifactStore.yml
+│   │   ├── SkeletonKey.Artifacts.WorkflowArtifactErrorCodes.yml
+│   │   ├── SkeletonKey.Artifacts.WorkflowArtifactException.yml
+│   │   ├── SkeletonKey.Artifacts.WorkflowArtifactMetadata.yml
+│   │   ├── SkeletonKey.Artifacts.WorkflowArtifactReference.yml
+│   │   ├── SkeletonKey.Artifacts.WorkflowArtifactSensitivity.yml
+│   │   ├── SkeletonKey.Artifacts.WorkflowArtifactWriteRequest.yml
+│   │   ├── SkeletonKey.Artifacts.yml
+│   │   ├── SkeletonKey.Binding.WorkflowBindingFormatException.yml
+│   │   ├── SkeletonKey.Binding.WorkflowBindingOccurrence.yml
+│   │   ├── SkeletonKey.Binding.WorkflowBindingReader.yml
+│   │   ├── SkeletonKey.Binding.yml
+│   │   ├── SkeletonKey.BuiltIns.BuiltInWorkflowNodeCatalog.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.BuiltInRuntimeHandlers.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.CoreEndHandler.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.CoreReturnHandler.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.CoreStartHandler.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.FlowForEachHandler.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.FlowIfHandler.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.FlowRepeatHandler.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.FlowSwitchHandler.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.FlowWhileHandler.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.ImmutableNodeHandlerResolver.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.InteractionRequestHandler.yml
+│   │   ├── SkeletonKey.BuiltIns.Runtime.yml
+│   │   ├── SkeletonKey.BuiltIns.yml
+│   │   ├── SkeletonKey.Catalog.IWorkflowNodeDefinitionCatalog.yml
+│   │   ├── SkeletonKey.Catalog.Json.NodeCatalogJsonSerializer.yml
+│   │   ├── SkeletonKey.Catalog.Json.NodeCatalogSerializationException.yml
+│   │   ├── SkeletonKey.Catalog.Json.yml
+│   │   ├── SkeletonKey.Catalog.LocatorUsageMode.yml
+│   │   ├── SkeletonKey.Catalog.NodeCatalogDocument.yml
+│   │   ├── SkeletonKey.Catalog.NodeCatalogSpecification.yml
+│   │   ├── SkeletonKey.Catalog.NodeLocatorSlotDefinition.yml
+│   │   ├── SkeletonKey.Catalog.Validation.NodeCatalogSemanticValidator.yml
+│   │   ├── SkeletonKey.Catalog.Validation.NodeCatalogValidationCodes.yml
+│   │   ├── SkeletonKey.Catalog.Validation.NodeCatalogValidationIssue.yml
+│   │   ├── SkeletonKey.Catalog.Validation.NodeCatalogValidationResult.yml
+│   │   ├── SkeletonKey.Catalog.Validation.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowDynamicPortRule.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowDynamicPortRuleKind.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowNodeBehaviorKind.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowNodeBehaviorMetadata.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowNodeDefinition.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowNodeDefinitionCatalog.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowNodeDefinitionKey.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowNodeDeprecationMetadata.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowNodeResourceRequirement.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowNodeStability.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowPortDefinition.yml
+│   │   ├── SkeletonKey.Catalog.WorkflowPortDirection.yml
+│   │   ├── SkeletonKey.Catalog.yml
+│   │   ├── SkeletonKey.Desktop.Abstractions.DesktopAutomationErrorCodes.yml
+│   │   ├── SkeletonKey.Desktop.Abstractions.DesktopAutomationException.yml
+│   │   ├── SkeletonKey.Desktop.Abstractions.DesktopClickRequest.yml
+│   │   ├── SkeletonKey.Desktop.Abstractions.DesktopFillRequest.yml
+│   │   ├── SkeletonKey.Desktop.Abstractions.DesktopOperationError.yml
+│   │   ├── SkeletonKey.Desktop.Abstractions.DesktopPressRequest.yml
+│   │   ├── SkeletonKey.Desktop.Abstractions.DesktopQueryRequest.yml
+│   │   ├── SkeletonKey.Desktop.Abstractions.IDesktopApplicationAdapter.yml
+│   │   ├── SkeletonKey.Desktop.Abstractions.yml
+│   │   ├── SkeletonKey.Desktop.BuiltIns.DesktopBuiltInRuntimeHandlers.yml
+│   │   ├── SkeletonKey.Desktop.BuiltIns.DesktopBuiltInWorkflowNodeCatalog.yml
+│   │   ├── SkeletonKey.Desktop.BuiltIns.DesktopClickHandler.yml
+│   │   ├── SkeletonKey.Desktop.BuiltIns.DesktopFillHandler.yml
+│   │   ├── SkeletonKey.Desktop.BuiltIns.DesktopGetCountHandler.yml
+│   │   ├── SkeletonKey.Desktop.BuiltIns.DesktopGetTextHandler.yml
+│   │   ├── SkeletonKey.Desktop.BuiltIns.DesktopHandlerBase.yml
+│   │   ├── SkeletonKey.Desktop.BuiltIns.DesktopPressHandler.yml
+│   │   ├── SkeletonKey.Desktop.BuiltIns.yml
+│   │   ├── SkeletonKey.Desktop.FlaUI.FlaUiApplicationConstraints.yml
+│   │   ├── SkeletonKey.Desktop.FlaUI.FlaUiApplicationResource.yml
+│   │   ├── SkeletonKey.Desktop.FlaUI.FlaUiApplicationResourceProvider.yml
+│   │   ├── SkeletonKey.Desktop.FlaUI.FlaUiDesktopApplicationAdapter.yml
+│   │   ├── SkeletonKey.Desktop.FlaUI.yml
+│   │   ├── SkeletonKey.Desktop.yml
+│   │   ├── SkeletonKey.Evaluation.IWorkflowBindingResolver.yml
+│   │   ├── SkeletonKey.Evaluation.IWorkflowExpressionEvaluator.yml
+│   │   ├── SkeletonKey.Evaluation.JsonPointerResolver.yml
+│   │   ├── SkeletonKey.Evaluation.WorkflowBindingResolver.yml
+│   │   ├── SkeletonKey.Evaluation.WorkflowExpressionEvaluationContext.yml
+│   │   ├── SkeletonKey.Evaluation.WorkflowExpressionEvaluator.yml
+│   │   ├── SkeletonKey.Evaluation.WorkflowValueError.yml
+│   │   ├── SkeletonKey.Evaluation.WorkflowValueErrorCode.yml
+│   │   ├── SkeletonKey.Evaluation.WorkflowValueProcessingLimits.yml
+│   │   ├── SkeletonKey.Evaluation.WorkflowValueResolutionContext.yml
+│   │   ├── SkeletonKey.Evaluation.WorkflowValueResult.yml
+│   │   ├── SkeletonKey.Evaluation.yml
+│   │   ├── SkeletonKey.Execution.ExecutionLifecycleState.yml
+│   │   ├── SkeletonKey.Execution.ExecutionScopeKind.yml
+│   │   ├── SkeletonKey.Execution.ExecutionStateTransition.yml
+│   │   ├── SkeletonKey.Execution.INodeExecutionContext.yml
+│   │   ├── SkeletonKey.Execution.INodeExecutionEventWriter.yml
+│   │   ├── SkeletonKey.Execution.INodeResourceAccessor.yml
+│   │   ├── SkeletonKey.Execution.INodeResourceHandle.yml
+│   │   ├── SkeletonKey.Execution.INodeResourceLease.yml
+│   │   ├── SkeletonKey.Execution.NodeExecutionIdentity.yml
+│   │   ├── SkeletonKey.Execution.NodeExecutionRequest.yml
+│   │   ├── SkeletonKey.Execution.NodeExecutionStateSnapshot.yml
+│   │   ├── SkeletonKey.Execution.NodePortValueMap.yml
+│   │   ├── SkeletonKey.Execution.NodePortValueSet.yml
+│   │   ├── SkeletonKey.Execution.NodeResourceBinding.yml
+│   │   ├── SkeletonKey.Execution.WorkflowExecutionStateSnapshot.yml
+│   │   ├── SkeletonKey.Execution.WorkflowInvocationStateSnapshot.yml
+│   │   ├── SkeletonKey.Execution.yml
+│   │   ├── SkeletonKey.Expressions.WorkflowExpressionDiagnostic.yml
+│   │   ├── SkeletonKey.Expressions.WorkflowExpressionDocument.yml
+│   │   ├── SkeletonKey.Expressions.WorkflowExpressionFormatException.yml
+│   │   ├── SkeletonKey.Expressions.WorkflowExpressionOccurrence.yml
+│   │   ├── SkeletonKey.Expressions.WorkflowExpressionParser.yml
+│   │   ├── SkeletonKey.Expressions.WorkflowExpressionReader.yml
+│   │   ├── SkeletonKey.Expressions.WorkflowExpressionReference.yml
+│   │   ├── SkeletonKey.Expressions.WorkflowExpressionReferenceKind.yml
+│   │   ├── SkeletonKey.Expressions.WorkflowExpressionSourceSpan.yml
+│   │   ├── SkeletonKey.Expressions.yml
+│   │   ├── SkeletonKey.Handlers.INodeHandler.yml
+│   │   ├── SkeletonKey.Handlers.INodeHandlerResolver.yml
+│   │   ├── SkeletonKey.Handlers.NodeHandlerCompletionStatus.yml
+│   │   ├── SkeletonKey.Handlers.NodeHandlerOutputs.yml
+│   │   ├── SkeletonKey.Handlers.NodeHandlerResult.yml
+│   │   ├── SkeletonKey.Handlers.yml
+│   │   ├── SkeletonKey.Locators.INodeLocatorAccessor.yml
+│   │   ├── SkeletonKey.Locators.Json.LocatorJsonSerializer.yml
+│   │   ├── SkeletonKey.Locators.Json.LocatorSerializationException.yml
+│   │   ├── SkeletonKey.Locators.Json.yml
+│   │   ├── SkeletonKey.Locators.LocatorCardinality.yml
+│   │   ├── SkeletonKey.Locators.LocatorDefinition.yml
+│   │   ├── SkeletonKey.Locators.LocatorDocument.yml
+│   │   ├── SkeletonKey.Locators.LocatorReference.yml
+│   │   ├── SkeletonKey.Locators.LocatorReferenceFormatException.yml
+│   │   ├── SkeletonKey.Locators.LocatorReferenceOccurrence.yml
+│   │   ├── SkeletonKey.Locators.LocatorReferenceReader.yml
+│   │   ├── SkeletonKey.Locators.LocatorResolutionTrace.yml
+│   │   ├── SkeletonKey.Locators.LocatorSpecification.yml
+│   │   ├── SkeletonKey.Locators.LocatorStrategy.yml
+│   │   ├── SkeletonKey.Locators.LocatorStrategyAttempt.yml
+│   │   ├── SkeletonKey.Locators.LocatorTextMatchMode.yml
+│   │   ├── SkeletonKey.Locators.NodeLocatorBinding.yml
+│   │   ├── SkeletonKey.Locators.ResolvedLocatorPlan.yml
+│   │   ├── SkeletonKey.Locators.ResolvedLocatorScope.yml
+│   │   ├── SkeletonKey.Locators.ResolvedLocatorStrategy.yml
+│   │   ├── SkeletonKey.Locators.Runtime.ILocatorDocumentRepository.yml
+│   │   ├── SkeletonKey.Locators.Runtime.ILocatorPlanResolver.yml
+│   │   ├── SkeletonKey.Locators.Runtime.ImmutableLocatorDocumentRepository.yml
+│   │   ├── SkeletonKey.Locators.Runtime.LocatorDocumentLookupResult.yml
+│   │   ├── SkeletonKey.Locators.Runtime.LocatorPlanResolutionCodes.yml
+│   │   ├── SkeletonKey.Locators.Runtime.LocatorPlanResolutionException.yml
+│   │   ├── SkeletonKey.Locators.Runtime.LocatorPlanResolver.yml
+│   │   ├── SkeletonKey.Locators.Runtime.RuntimeNodeLocatorAccessor.yml
+│   │   ├── SkeletonKey.Locators.Runtime.yml
+│   │   ├── SkeletonKey.Locators.Validation.LocatorSemanticValidator.yml
+│   │   ├── SkeletonKey.Locators.Validation.LocatorValidationCodes.yml
+│   │   ├── SkeletonKey.Locators.Validation.LocatorValidationIssue.yml
+│   │   ├── SkeletonKey.Locators.Validation.LocatorValidationResult.yml
+│   │   ├── SkeletonKey.Locators.Validation.yml
+│   │   ├── SkeletonKey.Locators.yml
+│   │   ├── SkeletonKey.Materialization.IWorkflowValueMaterializer.yml
+│   │   ├── SkeletonKey.Materialization.NodeParameterMaterializer.yml
+│   │   ├── SkeletonKey.Materialization.WorkflowValueMaterializer.yml
+│   │   ├── SkeletonKey.Materialization.yml
+│   │   ├── SkeletonKey.Planning.Default.DefaultWorkflowExecutionPlanner.yml
+│   │   ├── SkeletonKey.Planning.Default.ExecutionPlanningOptions.yml
+│   │   ├── SkeletonKey.Planning.Default.yml
+│   │   ├── SkeletonKey.Planning.IWorkflowExecutionPlanner.yml
+│   │   ├── SkeletonKey.Planning.NodeLocatorUse.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlan.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanBoundary.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanCodes.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanDependency.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanDependencyKind.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanIssue.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanIssueSeverity.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanResource.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanResourceUse.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanResult.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanStatus.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanStep.yml
+│   │   ├── SkeletonKey.Planning.WorkflowExecutionPlanStepKind.yml
+│   │   ├── SkeletonKey.Planning.yml
+│   │   ├── SkeletonKey.Resources.WorkflowResourceReferenceFormatException.yml
+│   │   ├── SkeletonKey.Resources.WorkflowResourceReferenceOccurrence.yml
+│   │   ├── SkeletonKey.Resources.WorkflowResourceReferenceReader.yml
+│   │   ├── SkeletonKey.Resources.yml
+│   │   ├── SkeletonKey.Runner.Core.Plugins.SkeletonKeyPluginDescriptor.yml
+│   │   ├── SkeletonKey.Runner.Core.Plugins.SkeletonKeyPluginLoader.yml
+│   │   ├── SkeletonKey.Runner.Core.Plugins.SkeletonKeyPluginLoadException.yml
+│   │   ├── SkeletonKey.Runner.Core.Plugins.SkeletonKeyPluginLoadResult.yml
+│   │   ├── SkeletonKey.Runner.Core.Plugins.yml
+│   │   ├── SkeletonKey.Runner.Core.RunnerEnvelope.yml
+│   │   ├── SkeletonKey.Runner.Core.RunnerExitCodes.yml
+│   │   ├── SkeletonKey.Runner.Core.RunnerIssue.yml
+│   │   ├── SkeletonKey.Runner.Core.RunnerOutputFormat.yml
+│   │   ├── SkeletonKey.Runner.Core.SkeletonKeyRunner.yml
+│   │   ├── SkeletonKey.Runner.Core.yml
+│   │   ├── SkeletonKey.Runtime.Default.DefaultWorkflowRuntime.yml
+│   │   ├── SkeletonKey.Runtime.Default.SystemWorkflowClock.yml
+│   │   ├── SkeletonKey.Runtime.Default.yml
+│   │   ├── SkeletonKey.Runtime.IExecutionStateStore.yml
+│   │   ├── SkeletonKey.Runtime.InMemoryExecutionStateStore.yml
+│   │   ├── SkeletonKey.Runtime.Interactions.PendingWorkflowInteraction.yml
+│   │   ├── SkeletonKey.Runtime.Interactions.WorkflowInteractionContinuation.yml
+│   │   ├── SkeletonKey.Runtime.Interactions.WorkflowInteractionContinuationErrorCodes.yml
+│   │   ├── SkeletonKey.Runtime.Interactions.WorkflowInteractionContinuationResult.yml
+│   │   ├── SkeletonKey.Runtime.Interactions.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.ImmutableWorkflowRepository.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.IWorkflowRepository.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.WorkflowInvocationAnalysisCodes.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.WorkflowInvocationAnalysisIssue.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.WorkflowInvocationAnalysisOptions.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.WorkflowInvocationAnalysisResult.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.WorkflowInvocationDependency.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.WorkflowInvocationGraphAnalyzer.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.WorkflowInvocationRuntimePolicy.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.WorkflowRepositoryLookupResult.yml
+│   │   ├── SkeletonKey.Runtime.Invocation.yml
+│   │   ├── SkeletonKey.Runtime.IWorkflowCheckpointStore.yml
+│   │   ├── SkeletonKey.Runtime.IWorkflowClock.yml
+│   │   ├── SkeletonKey.Runtime.IWorkflowExecutionSession.yml
+│   │   ├── SkeletonKey.Runtime.IWorkflowRuntime.yml
+│   │   ├── SkeletonKey.Runtime.IWorkflowRuntimeDelay.yml
+│   │   ├── SkeletonKey.Runtime.Plugins.ISkeletonKeyPlugin.yml
+│   │   ├── SkeletonKey.Runtime.Plugins.yml
+│   │   ├── SkeletonKey.Runtime.PreparedNodeParameters.yml
+│   │   ├── SkeletonKey.Runtime.Resources.IWorkflowRuntimeResourceCheckpointParticipant.yml
+│   │   ├── SkeletonKey.Runtime.Resources.IWorkflowRuntimeResourceInstance.yml
+│   │   ├── SkeletonKey.Runtime.Resources.IWorkflowRuntimeResourceProvider.yml
+│   │   ├── SkeletonKey.Runtime.Resources.IWorkflowRuntimeResourceRecoveryProvider.yml
+│   │   ├── SkeletonKey.Runtime.Resources.RuntimeNodeResourceAccessor.yml
+│   │   ├── SkeletonKey.Runtime.Resources.RuntimeResourceLease.yml
+│   │   ├── SkeletonKey.Runtime.Resources.WorkflowRuntimeResourceCheckpointState.yml
+│   │   ├── SkeletonKey.Runtime.Resources.WorkflowRuntimeResourceInstance.yml
+│   │   ├── SkeletonKey.Runtime.Resources.WorkflowRuntimeResourceRequest.yml
+│   │   ├── SkeletonKey.Runtime.Resources.WorkflowRuntimeResourceSet.yml
+│   │   ├── SkeletonKey.Runtime.Resources.yml
+│   │   ├── SkeletonKey.Runtime.RuntimeActivationIdentity.yml
+│   │   ├── SkeletonKey.Runtime.RuntimeWorkflowEvent.yml
+│   │   ├── SkeletonKey.Runtime.RuntimeWorkflowEventKind.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowCheckpointErrorCodes.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowCheckpointPortValue.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowCheckpointResource.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowCheckpointStep.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowCheckpointStoreException.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowExecutionCheckpoint.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowExecutionRequest.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowRuntimeErrorCodes.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowRuntimeOptions.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowRuntimeResult.yml
+│   │   ├── SkeletonKey.Runtime.WorkflowStepRuntimeStatus.yml
+│   │   ├── SkeletonKey.Runtime.yml
+│   │   ├── SkeletonKey.Serialization.Json.WorkflowJsonSerializer.yml
+│   │   ├── SkeletonKey.Serialization.Json.WorkflowSerializationException.yml
+│   │   ├── SkeletonKey.Serialization.Json.WorkflowSerializationOperation.yml
+│   │   ├── SkeletonKey.Serialization.Json.yml
+│   │   ├── SkeletonKey.Validation.IWorkflowValidator.yml
+│   │   ├── SkeletonKey.Validation.WorkflowSemanticValidator.yml
+│   │   ├── SkeletonKey.Validation.WorkflowValidationCodes.yml
+│   │   ├── SkeletonKey.Validation.WorkflowValidationIssue.yml
+│   │   ├── SkeletonKey.Validation.WorkflowValidationResult.yml
+│   │   ├── SkeletonKey.Validation.WorkflowValidationSeverity.yml
+│   │   ├── SkeletonKey.Validation.yml
+│   │   ├── SkeletonKey.Web.Abstractions.DefaultWebNavigationPolicy.yml
+│   │   ├── SkeletonKey.Web.Abstractions.IWebNavigationPolicy.yml
+│   │   ├── SkeletonKey.Web.Abstractions.IWebPageAdapter.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebAutomationErrorCodes.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebAutomationException.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebClickRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebCookie.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebDialogInformation.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebDialogKind.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebDialogReference.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebDialogWaitRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebDownloadRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebFillRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebNavigationRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebNavigationWaitUntil.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebNetworkInterceptionAction.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebNetworkInterceptionDecision.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebNetworkInterceptionPolicy.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebNetworkInterceptionRule.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebNetworkRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebOperationError.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebPageCollectionSnapshot.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebPageInformation.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebPageReference.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebPopupRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebPressRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebScreenshotFormat.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebScreenshotRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebScreenshotResult.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebSelectOptionRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebSetCheckedRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebStorageStateRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebTargetContext.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebUploadFilesRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebWaitRequest.yml
+│   │   ├── SkeletonKey.Web.Abstractions.WebWaitState.yml
+│   │   ├── SkeletonKey.Web.Abstractions.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebActivatePageHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebBuiltInRuntimeHandlers.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebBuiltInWorkflowNodeCatalog.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebClearCookiesHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebClickAndWaitForDialogHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebClickAndWaitForDownloadHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebClickAndWaitForPopupHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebClickHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebClosePageHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebExportStorageStateHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebFillHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebGetAttributeHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebGetCookiesHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebGetCountHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebGetTextHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebHandlerBase.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebImportStorageStateHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebListPagesHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebNavigateHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebOpenPageHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebPressHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebRespondDialogHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebScreenshotHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebSelectOptionHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebSetCheckedHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebSetCookiesHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebUploadFilesHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebWaitForLoadStateHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebWaitForUrlHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.WebWaitHandler.yml
+│   │   ├── SkeletonKey.Web.BuiltIns.yml
+│   │   ├── SkeletonKey.Web.Playwright.PlaywrightPageAdapter.yml
+│   │   ├── SkeletonKey.Web.Playwright.PlaywrightPageConstraints.yml
+│   │   ├── SkeletonKey.Web.Playwright.PlaywrightPageProviderOptions.yml
+│   │   ├── SkeletonKey.Web.Playwright.PlaywrightPageResource.yml
+│   │   ├── SkeletonKey.Web.Playwright.PlaywrightPageResourceProvider.yml
+│   │   ├── SkeletonKey.Web.Playwright.yml
+│   │   ├── SkeletonKey.Web.yml
+│   │   ├── SkeletonKey.Workflow.Bindings.WorkflowBinding.yml
+│   │   ├── SkeletonKey.Workflow.Bindings.WorkflowBindingMissingBehavior.yml
+│   │   ├── SkeletonKey.Workflow.Bindings.WorkflowBindingSource.yml
+│   │   ├── SkeletonKey.Workflow.Bindings.yml
+│   │   ├── SkeletonKey.Workflow.Connections.WorkflowConnection.yml
+│   │   ├── SkeletonKey.Workflow.Connections.WorkflowEndpoint.yml
+│   │   ├── SkeletonKey.Workflow.Connections.yml
+│   │   ├── SkeletonKey.Workflow.ControlFlow.WorkflowForEachExecutionMode.yml
+│   │   ├── SkeletonKey.Workflow.ControlFlow.WorkflowForEachExecutionPolicy.yml
+│   │   ├── SkeletonKey.Workflow.ControlFlow.WorkflowReturnOutcome.yml
+│   │   ├── SkeletonKey.Workflow.ControlFlow.WorkflowSwitchCase.yml
+│   │   ├── SkeletonKey.Workflow.ControlFlow.yml
+│   │   ├── SkeletonKey.Workflow.Designer.WorkflowDesignerMetadata.yml
+│   │   ├── SkeletonKey.Workflow.Designer.WorkflowNodePosition.yml
+│   │   ├── SkeletonKey.Workflow.Designer.WorkflowNodeSize.yml
+│   │   ├── SkeletonKey.Workflow.Designer.yml
+│   │   ├── SkeletonKey.Workflow.Documents.WorkflowDocument.yml
+│   │   ├── SkeletonKey.Workflow.Documents.yml
+│   │   ├── SkeletonKey.Workflow.Inputs.WorkflowInputDefinition.yml
+│   │   ├── SkeletonKey.Workflow.Inputs.WorkflowInputType.yml
+│   │   ├── SkeletonKey.Workflow.Inputs.yml
+│   │   ├── SkeletonKey.Workflow.Invocation.WorkflowInvocationStreamMode.yml
+│   │   ├── SkeletonKey.Workflow.Invocation.WorkflowInvocationStreamPolicy.yml
+│   │   ├── SkeletonKey.Workflow.Invocation.yml
+│   │   ├── SkeletonKey.Workflow.Nodes.WorkflowNode.yml
+│   │   ├── SkeletonKey.Workflow.Nodes.yml
+│   │   ├── SkeletonKey.Workflow.Outputs.WorkflowOutputDefinition.yml
+│   │   ├── SkeletonKey.Workflow.Outputs.WorkflowOutputMode.yml
+│   │   ├── SkeletonKey.Workflow.Outputs.yml
+│   │   ├── SkeletonKey.Workflow.Policies.WorkflowExecutionPolicy.yml
+│   │   ├── SkeletonKey.Workflow.Policies.WorkflowOnError.yml
+│   │   ├── SkeletonKey.Workflow.Policies.WorkflowRetryPolicy.yml
+│   │   ├── SkeletonKey.Workflow.Policies.yml
+│   │   ├── SkeletonKey.Workflow.References.WorkflowReference.yml
+│   │   ├── SkeletonKey.Workflow.References.yml
+│   │   ├── SkeletonKey.Workflow.Resources.StandardWorkflowResourceCapabilities.yml
+│   │   ├── SkeletonKey.Workflow.Resources.StandardWorkflowResourceKinds.yml
+│   │   ├── SkeletonKey.Workflow.Resources.WorkflowResourceAccessMode.yml
+│   │   ├── SkeletonKey.Workflow.Resources.WorkflowResourceDefinition.yml
+│   │   ├── SkeletonKey.Workflow.Resources.WorkflowResourceLifetime.yml
+│   │   ├── SkeletonKey.Workflow.Resources.WorkflowResourceReference.yml
+│   │   ├── SkeletonKey.Workflow.Resources.yml
+│   │   ├── SkeletonKey.Workflow.Specification.WorkflowSpecification.yml
+│   │   ├── SkeletonKey.Workflow.Specification.yml
+│   │   ├── SkeletonKey.Workflow.yml
+│   │   ├── SkeletonKey.yml
+│   │   └── toc.yml
+│   ├── architecture
+│   │   ├── 0004-immutable-workflow-document-model.md
+│   │   ├── 0005-dedicated-json-serialization-layer.md
+│   │   ├── 0006-separate-semantic-validation-layer.md
+│   │   ├── 0007-normative-json-schema-and-conformance-suite.md
+│   │   ├── 0008-workflow-outputs-and-host-neutral-execution-contracts.md
+│   │   ├── 0009-subworkflow-invocation-and-explicit-data-binding.md
+│   │   ├── 0010-graph-native-control-flow-and-safe-expressions.md
+│   │   ├── 0011-declarative-resources-locators-and-human-interaction.md
+│   │   ├── 0012-catalog-aware-analysis-and-execution-planning.md
+│   │   ├── 0013-runtime-state-context-and-handler-boundaries.md
+│   │   ├── 0014-workflow-value-resolution-and-safe-evaluation.md
+│   │   ├── 0015-catalog-aware-analysis-and-execution-planning.md
+│   │   ├── 0016-core-workflow-runtime.md
+│   │   ├── 0017-loop-invocation-resource-interaction-runtime.md
+│   │   ├── 0018-locator-and-playwright-web-runtime.md
+│   │   ├── 0019-advanced-web-runner-and-windows-packaging.md
+│   │   ├── 0020-durable-execution-checkpoints-and-resume.md
+│   │   ├── 0021-runtime-owned-execution-policies.md
+│   │   ├── 0022-bounded-parallel-runtime-scheduling.md
+│   │   ├── 0023-cross-workflow-invocation-analysis.md
+│   │   ├── 0024-bounded-network-interception.md
+│   │   ├── 0025-explicit-local-plugin-loading.md
+│   │   ├── 0026-windows-desktop-automation.md
+│   │   ├── 0027-resumable-runtime-resources.md
+│   │   ├── 0028-use-docfx-and-madr-for-project-documentation.md
+│   │   ├── 0029-short-title.md
+│   │   ├── adr-template.md
+│   │   ├── index.md
+│   │   └── toc.yml
+│   ├── configuration
+│   │   ├── environment-variables.md
+│   │   ├── index.md
+│   │   └── toc.yml
+│   ├── development
+│   │   ├── agent-host-integration.md
+│   │   ├── ga-release-runbook.md
+│   │   ├── index.md
+│   │   ├── phase-016-verification.md
+│   │   ├── phase-017-verification.md
+│   │   ├── phase-018-verification.md
+│   │   ├── phase-019-verification.md
+│   │   ├── phase-020-verification.md
+│   │   ├── phase-021-verification.md
+│   │   ├── phase-022-verification.md
+│   │   ├── phase-023-verification.md
+│   │   ├── phase-024-verification.md
+│   │   ├── phase-025-verification.md
+│   │   ├── phase-026-verification.md
+│   │   ├── phase-027-verification.md
+│   │   ├── phase-028-verification.md
+│   │   ├── phase-029-verification.md
+│   │   ├── phase-030-verification.md
+│   │   ├── production-readiness.md
+│   │   ├── release-notes-0.1.0.md
+│   │   ├── support-policy.md
+│   │   ├── toc.yml
+│   │   └── windows-compiler-workaround.md
+│   ├── specifications
+│   │   ├── built-in-node-catalog-0.1.md
+│   │   ├── compatibility-policy-0.1.md
+│   │   ├── conformance-suite-0.1.md
+│   │   ├── control-port-conventions-0.1.md
+│   │   ├── default-execution-planner-0.1.md
+│   │   ├── default-workflow-analyzer-0.1.md
+│   │   ├── desktop-automation-0.1.md
+│   │   ├── durable-workflow-checkpoints-0.1.md
+│   │   ├── effective-node-ports-0.1.md
+│   │   ├── essential-built-in-handlers-0.1.md
+│   │   ├── essential-web-handlers-0.1.md
+│   │   ├── execution-lifecycle-state-0.1.md
+│   │   ├── execution-plan-boundaries-0.1.md
+│   │   ├── execution-plan-dependencies-0.1.md
+│   │   ├── execution-planning-0.1.md
+│   │   ├── execution-results-and-events-0.1.md
+│   │   ├── index.md
+│   │   ├── local-plugin-package-0.1.md
+│   │   ├── locator-document-0.1.md
+│   │   ├── locator-strategies-0.1.md
+│   │   ├── node-capabilities-and-behavior-0.1.md
+│   │   ├── node-catalog-0.1.md
+│   │   ├── node-definition-0.1.md
+│   │   ├── node-execution-context-0.1.md
+│   │   ├── node-execution-request-0.1.md
+│   │   ├── node-handler-contracts-0.1.md
+│   │   ├── node-locator-slots-0.1.md
+│   │   ├── node-parameter-materialization-0.1.md
+│   │   ├── node-ports-0.1.md
+│   │   ├── node-runtime-resource-access-0.1.md
+│   │   ├── playwright-page-provider-0.1.md
+│   │   ├── runtime-events-0.1.md
+│   │   ├── runtime-execution-policies-0.1.md
+│   │   ├── runtime-locator-resolution-0.1.md
+│   │   ├── runtime-loop-invocation-resource-interaction-0.1.md
+│   │   ├── runtime-output-propagation-0.1.md
+│   │   ├── runtime-parallel-scheduling-0.1.md
+│   │   ├── runtime-scheduling-0.1.md
+│   │   ├── runtime-state-transitions-0.1.md
+│   │   ├── toc.yml
+│   │   ├── validation-error-codes-0.1.md
+│   │   ├── web-locator-fallback-0.1.md
+│   │   ├── web-navigation-policy-0.1.md
+│   │   ├── web-network-interception-0.1.md
+│   │   ├── web-page-resource-0.1.md
+│   │   ├── workflow-analysis-0.1.md
+│   │   ├── workflow-binding-resolution-0.1.md
+│   │   ├── workflow-control-flow-0.1.md
+│   │   ├── workflow-data-binding-0.1.md
+│   │   ├── workflow-document-model-0.1.md
+│   │   ├── workflow-expression-evaluation-0.1.md
+│   │   ├── workflow-expressions-0.1.md
+│   │   ├── workflow-human-interaction-0.1.md
+│   │   ├── workflow-invocation-0.1.md
+│   │   ├── workflow-invocation-analysis-0.1.md
+│   │   ├── workflow-iteration-0.1.md
+│   │   ├── workflow-json-format-0.1.md
+│   │   ├── workflow-json-schema-0.1.md
+│   │   ├── workflow-outputs-0.1.md
+│   │   ├── workflow-resource-analysis-0.1.md
+│   │   ├── workflow-resources-0.1.md
+│   │   ├── workflow-runtime-0.1.md
+│   │   ├── workflow-validation-0.1.md
+│   │   ├── workflow-value-materialization-0.1.md
+│   │   └── workflow-value-resolution-context-0.1.md
+│   ├── docfx.json
+│   ├── getting-started.md
+│   ├── index.md
+│   ├── legacy-python-inventory.md
+│   └── toc.yml
+├── examples
+│   ├── control-flow
+│   │   ├── conditional-message.workflow.json
+│   │   ├── early-return.workflow.json
+│   │   └── process-contacts.workflow.json
+│   ├── interactions
+│   │   └── manual-login.workflow.json
+│   ├── locators
+│   │   └── bale-contacts.locators.json
+│   ├── node-catalog
+│   │   └── minimal.node-catalog.json
+│   ├── resources
+│   │   ├── browser-resource.workflow.json
+│   │   └── subworkflow-resource-mapping.workflow.json
+│   ├── subworkflows
+│   │   ├── check-account.workflow.json
+│   │   └── send-message.workflow.json
+│   └── minimal.workflow.json
+├── schemas
+│   ├── locators
+│   │   ├── 0.1
+│   │   │   └── schema.json
+│   │   └── README.md
+│   ├── node-catalog
+│   │   ├── 0.1
+│   │   │   └── schema.json
+│   │   └── README.md
+│   ├── workflow
+│   │   └── 0.1
+│   │       └── schema.json
+│   └── README.md
+├── skeletonkey-real-pilot-01-fixed
+│   ├── locators
+│   │   └── example-domain.locators.json
+│   ├── pilot-example-domain.workflow.json
+│   ├── README.txt
+│   └── run.ps1
+├── src
+│   ├── SkeletonKey.Abstractions
+│   │   ├── Events
+│   │   │   ├── IWorkflowEventSink.cs
+│   │   │   ├── WorkflowEvent.cs
+│   │   │   ├── WorkflowLogEvent.cs
+│   │   │   ├── WorkflowLogLevel.cs
+│   │   │   ├── WorkflowOutputEvent.cs
+│   │   │   └── WorkflowProgressEvent.cs
+│   │   ├── Execution
+│   │   │   ├── NodeExecutionResult.cs
+│   │   │   ├── NodeExecutionStatus.cs
+│   │   │   ├── WorkflowError.cs
+│   │   │   ├── WorkflowExecutionMetrics.cs
+│   │   │   ├── WorkflowExecutionResult.cs
+│   │   │   ├── WorkflowExecutionStatus.cs
+│   │   │   ├── WorkflowIterationContext.cs
+│   │   │   ├── WorkflowOutcome.cs
+│   │   │   └── WorkflowOutcomeKind.cs
+│   │   ├── Grammar
+│   │   │   └── SkeletonKeyIdentifierGrammar.cs
+│   │   ├── Interaction
+│   │   │   ├── IWorkflowInteractionHandler.cs
+│   │   │   ├── WorkflowInteractionKind.cs
+│   │   │   ├── WorkflowInteractionOption.cs
+│   │   │   ├── WorkflowInteractionRequest.cs
+│   │   │   ├── WorkflowInteractionResponse.cs
+│   │   │   └── WorkflowInteractionResponseStatus.cs
+│   │   ├── Web
+│   │   │   ├── WebBrowserEnginePreference.cs
+│   │   │   ├── WebBrowserProfilePreference.cs
+│   │   │   ├── WebBrowserResourceConstraints.cs
+│   │   │   └── WebBrowserVisibilityPreference.cs
+│   │   └── SkeletonKey.Abstractions.csproj
+│   ├── SkeletonKey.Analysis
+│   │   ├── IWorkflowAnalyzer.cs
+│   │   ├── SkeletonKey.Analysis.csproj
+│   │   ├── WorkflowAnalysisCodes.cs
+│   │   ├── WorkflowAnalysisIssue.cs
+│   │   ├── WorkflowAnalysisResult.cs
+│   │   ├── WorkflowAnalysisSeverity.cs
+│   │   ├── WorkflowCapabilityCompatibilityStatus.cs
+│   │   ├── WorkflowConnectionAnalysis.cs
+│   │   ├── WorkflowConnectionRoleCompatibilityStatus.cs
+│   │   ├── WorkflowDynamicPortAnalysisStatus.cs
+│   │   ├── WorkflowEffectivePort.cs
+│   │   ├── WorkflowEffectivePortOrigin.cs
+│   │   ├── WorkflowLocatorSlotAnalysis.cs
+│   │   ├── WorkflowLocatorSlotAnalysisStatus.cs
+│   │   ├── WorkflowNodeAnalysis.cs
+│   │   ├── WorkflowNodeCatalogStatus.cs
+│   │   ├── WorkflowParameterAnalysisStatus.cs
+│   │   ├── WorkflowPortCatalogStatus.cs
+│   │   ├── WorkflowResourceRequirementAnalysisStatus.cs
+│   │   └── WorkflowResourceSlotAnalysis.cs
+│   ├── SkeletonKey.Analysis.Default
+│   │   ├── DefaultWorkflowAnalyzer.cs
+│   │   ├── SkeletonKey.Analysis.Default.csproj
+│   │   └── WorkflowAnalysisOptions.cs
+│   ├── SkeletonKey.Artifacts
+│   │   ├── IWorkflowArtifactStore.cs
+│   │   ├── SkeletonKey.Artifacts.csproj
+│   │   ├── WorkflowArtifactErrorCodes.cs
+│   │   ├── WorkflowArtifactException.cs
+│   │   ├── WorkflowArtifactMetadata.cs
+│   │   ├── WorkflowArtifactReference.cs
+│   │   ├── WorkflowArtifactSensitivity.cs
+│   │   └── WorkflowArtifactWriteRequest.cs
+│   ├── SkeletonKey.Artifacts.FileSystem
+│   │   ├── FileSystemArtifactStoreOptions.cs
+│   │   ├── FileSystemWorkflowArtifactStore.cs
+│   │   ├── FileSystemWorkflowCheckpointStore.cs
+│   │   └── SkeletonKey.Artifacts.FileSystem.csproj
+│   ├── SkeletonKey.Binding
+│   │   ├── Internal
+│   │   │   └── JsonPointerSyntax.cs
+│   │   ├── SkeletonKey.Binding.csproj
+│   │   ├── WorkflowBindingFormatException.cs
+│   │   ├── WorkflowBindingOccurrence.cs
+│   │   └── WorkflowBindingReader.cs
+│   ├── SkeletonKey.BuiltIns
+│   │   ├── BuiltInWorkflowNodeCatalog.cs
+│   │   └── SkeletonKey.BuiltIns.csproj
+│   ├── SkeletonKey.BuiltIns.Runtime
+│   │   ├── BuiltInRuntimeHandlers.cs
+│   │   ├── CoreEndHandler.cs
+│   │   ├── CoreReturnHandler.cs
+│   │   ├── CoreStartHandler.cs
+│   │   ├── FlowForEachHandler.cs
+│   │   ├── FlowIfHandler.cs
+│   │   ├── FlowRepeatHandler.cs
+│   │   ├── FlowSwitchHandler.cs
+│   │   ├── FlowWhileHandler.cs
+│   │   ├── ImmutableNodeHandlerResolver.cs
+│   │   ├── InteractionRequestHandler.cs
+│   │   └── SkeletonKey.BuiltIns.Runtime.csproj
+│   ├── SkeletonKey.Catalog
+│   │   ├── IWorkflowNodeDefinitionCatalog.cs
+│   │   ├── LocatorUsageMode.cs
+│   │   ├── NodeCatalogDocument.cs
+│   │   ├── NodeCatalogSpecification.cs
+│   │   ├── NodeLocatorSlotDefinition.cs
+│   │   ├── SkeletonKey.Catalog.csproj
+│   │   ├── WorkflowDynamicPortRule.cs
+│   │   ├── WorkflowDynamicPortRuleKind.cs
+│   │   ├── WorkflowNodeBehaviorKind.cs
+│   │   ├── WorkflowNodeBehaviorMetadata.cs
+│   │   ├── WorkflowNodeDefinition.cs
+│   │   ├── WorkflowNodeDefinitionCatalog.cs
+│   │   ├── WorkflowNodeDefinitionKey.cs
+│   │   ├── WorkflowNodeDeprecationMetadata.cs
+│   │   ├── WorkflowNodeResourceRequirement.cs
+│   │   ├── WorkflowNodeStability.cs
+│   │   ├── WorkflowPortDefinition.cs
+│   │   └── WorkflowPortDirection.cs
+│   ├── SkeletonKey.Catalog.Json
+│   │   ├── Internal
+│   │   │   └── JsonDuplicatePropertyDetector.cs
+│   │   ├── NodeCatalogJsonSerializer.cs
+│   │   ├── NodeCatalogSerializationException.cs
+│   │   └── SkeletonKey.Catalog.Json.csproj
+│   ├── SkeletonKey.Catalog.Validation
+│   │   ├── NodeCatalogSemanticValidator.cs
+│   │   ├── NodeCatalogValidationCodes.cs
+│   │   ├── NodeCatalogValidationIssue.cs
+│   │   ├── NodeCatalogValidationResult.cs
+│   │   └── SkeletonKey.Catalog.Validation.csproj
+│   ├── SkeletonKey.Core
+│   │   └── SkeletonKey.Core.csproj
+│   ├── SkeletonKey.Desktop.Abstractions
+│   │   ├── DesktopAutomationErrorCodes.cs
+│   │   ├── DesktopAutomationException.cs
+│   │   ├── DesktopRequests.cs
+│   │   ├── IDesktopApplicationAdapter.cs
+│   │   └── SkeletonKey.Desktop.Abstractions.csproj
+│   ├── SkeletonKey.Desktop.BuiltIns
+│   │   ├── DesktopBuiltInRuntimeHandlers.cs
+│   │   ├── DesktopBuiltInWorkflowNodeCatalog.cs
+│   │   ├── DesktopHandlerBase.cs
+│   │   ├── DesktopHandlers.cs
+│   │   └── SkeletonKey.Desktop.BuiltIns.csproj
+│   ├── SkeletonKey.Desktop.FlaUI
+│   │   ├── FlaUiApplicationConstraints.cs
+│   │   ├── FlaUiApplicationResource.cs
+│   │   ├── FlaUiApplicationResourceProvider.cs
+│   │   ├── FlaUiDesktopApplicationAdapter.cs
+│   │   └── SkeletonKey.Desktop.FlaUI.csproj
+│   ├── SkeletonKey.Evaluation
+│   │   ├── IWorkflowBindingResolver.cs
+│   │   ├── IWorkflowExpressionEvaluator.cs
+│   │   ├── JsonClone.cs
+│   │   ├── JsonPointerResolver.cs
+│   │   ├── SkeletonKey.Evaluation.csproj
+│   │   ├── WorkflowBindingResolver.cs
+│   │   ├── WorkflowExpressionEvaluationContext.cs
+│   │   ├── WorkflowExpressionEvaluator.cs
+│   │   ├── WorkflowValueError.cs
+│   │   ├── WorkflowValueErrorCode.cs
+│   │   ├── WorkflowValueProcessingLimits.cs
+│   │   ├── WorkflowValueResolutionContext.cs
+│   │   └── WorkflowValueResult.cs
+│   ├── SkeletonKey.Execution
+│   │   ├── ExecutionLifecycleState.cs
+│   │   ├── ExecutionScopeKind.cs
+│   │   ├── ExecutionStateTransition.cs
+│   │   ├── INodeExecutionContext.cs
+│   │   ├── INodeExecutionEventWriter.cs
+│   │   ├── INodeResourceAccessor.cs
+│   │   ├── INodeResourceHandle.cs
+│   │   ├── INodeResourceLease.cs
+│   │   ├── JsonClone.cs
+│   │   ├── NodeExecutionIdentity.cs
+│   │   ├── NodeExecutionRequest.cs
+│   │   ├── NodeExecutionStateSnapshot.cs
+│   │   ├── NodePortValueMap.cs
+│   │   ├── NodePortValueSet.cs
+│   │   ├── NodeResourceBinding.cs
+│   │   ├── SkeletonKey.Execution.csproj
+│   │   ├── WorkflowExecutionStateSnapshot.cs
+│   │   └── WorkflowInvocationStateSnapshot.cs
+│   ├── SkeletonKey.Expressions
+│   │   ├── Internal
+│   │   │   └── JsonPointerSyntax.cs
+│   │   ├── SkeletonKey.Expressions.csproj
+│   │   ├── WorkflowExpressionDiagnostic.cs
+│   │   ├── WorkflowExpressionDocument.cs
+│   │   ├── WorkflowExpressionFormatException.cs
+│   │   ├── WorkflowExpressionOccurrence.cs
+│   │   ├── WorkflowExpressionParser.cs
+│   │   ├── WorkflowExpressionReader.cs
+│   │   ├── WorkflowExpressionReference.cs
+│   │   ├── WorkflowExpressionReferenceKind.cs
+│   │   └── WorkflowExpressionSourceSpan.cs
+│   ├── SkeletonKey.Handlers
+│   │   ├── INodeHandler.cs
+│   │   ├── INodeHandlerResolver.cs
+│   │   ├── NodeHandlerCompletionStatus.cs
+│   │   ├── NodeHandlerOutputs.cs
+│   │   ├── NodeHandlerResult.cs
+│   │   └── SkeletonKey.Handlers.csproj
+│   ├── SkeletonKey.Locators
+│   │   ├── Internal
+│   │   │   └── JsonPointerSyntax.cs
+│   │   ├── INodeLocatorAccessor.cs
+│   │   ├── LocatorCardinality.cs
+│   │   ├── LocatorDefinition.cs
+│   │   ├── LocatorDocument.cs
+│   │   ├── LocatorReference.cs
+│   │   ├── LocatorReferenceFormatException.cs
+│   │   ├── LocatorReferenceOccurrence.cs
+│   │   ├── LocatorReferenceReader.cs
+│   │   ├── LocatorResolutionTrace.cs
+│   │   ├── LocatorSpecification.cs
+│   │   ├── LocatorStrategy.cs
+│   │   ├── LocatorStrategyAttempt.cs
+│   │   ├── LocatorTextMatchMode.cs
+│   │   ├── NodeLocatorBinding.cs
+│   │   ├── ResolvedLocatorPlan.cs
+│   │   ├── ResolvedLocatorScope.cs
+│   │   ├── ResolvedLocatorStrategy.cs
+│   │   └── SkeletonKey.Locators.csproj
+│   ├── SkeletonKey.Locators.Json
+│   │   ├── Internal
+│   │   │   └── JsonDuplicatePropertyDetector.cs
+│   │   ├── LocatorJsonSerializer.cs
+│   │   ├── LocatorSerializationException.cs
+│   │   └── SkeletonKey.Locators.Json.csproj
+│   ├── SkeletonKey.Locators.Runtime
+│   │   ├── ILocatorDocumentRepository.cs
+│   │   ├── ILocatorPlanResolver.cs
+│   │   ├── ImmutableLocatorDocumentRepository.cs
+│   │   ├── LocatorDocumentLookupResult.cs
+│   │   ├── LocatorPlanResolutionCodes.cs
+│   │   ├── LocatorPlanResolutionException.cs
+│   │   ├── LocatorPlanResolver.cs
+│   │   ├── RuntimeNodeLocatorAccessor.cs
+│   │   └── SkeletonKey.Locators.Runtime.csproj
+│   ├── SkeletonKey.Locators.Validation
+│   │   ├── LocatorSemanticValidator.cs
+│   │   ├── LocatorValidationCodes.cs
+│   │   ├── LocatorValidationIssue.cs
+│   │   ├── LocatorValidationResult.cs
+│   │   └── SkeletonKey.Locators.Validation.csproj
+│   ├── SkeletonKey.Materialization
+│   │   ├── IWorkflowValueMaterializer.cs
+│   │   ├── NodeParameterMaterializer.cs
+│   │   ├── SkeletonKey.Materialization.csproj
+│   │   └── WorkflowValueMaterializer.cs
+│   ├── SkeletonKey.Planning
+│   │   ├── IWorkflowExecutionPlanner.cs
+│   │   ├── NodeLocatorUse.cs
+│   │   ├── SkeletonKey.Planning.csproj
+│   │   ├── WorkflowExecutionPlan.cs
+│   │   ├── WorkflowExecutionPlanBoundary.cs
+│   │   ├── WorkflowExecutionPlanCodes.cs
+│   │   ├── WorkflowExecutionPlanDependency.cs
+│   │   ├── WorkflowExecutionPlanDependencyKind.cs
+│   │   ├── WorkflowExecutionPlanIssue.cs
+│   │   ├── WorkflowExecutionPlanIssueSeverity.cs
+│   │   ├── WorkflowExecutionPlanResource.cs
+│   │   ├── WorkflowExecutionPlanResourceUse.cs
+│   │   ├── WorkflowExecutionPlanResult.cs
+│   │   ├── WorkflowExecutionPlanStatus.cs
+│   │   ├── WorkflowExecutionPlanStep.cs
+│   │   └── WorkflowExecutionPlanStepKind.cs
+│   ├── SkeletonKey.Planning.Default
+│   │   ├── DefaultWorkflowExecutionPlanner.cs
+│   │   ├── ExecutionPlanningOptions.cs
+│   │   └── SkeletonKey.Planning.Default.csproj
+│   ├── SkeletonKey.Resources
+│   │   ├── Internal
+│   │   │   └── JsonPointerSyntax.cs
+│   │   ├── SkeletonKey.Resources.csproj
+│   │   ├── WorkflowResourceReferenceFormatException.cs
+│   │   ├── WorkflowResourceReferenceOccurrence.cs
+│   │   └── WorkflowResourceReferenceReader.cs
+│   ├── SkeletonKey.Runner
+│   │   ├── Program.cs
+│   │   └── SkeletonKey.Runner.csproj
+│   ├── SkeletonKey.Runner.Core
+│   │   ├── Plugins
+│   │   │   ├── SkeletonKeyPluginLoader.cs
+│   │   │   ├── SkeletonKeyPluginLoadException.cs
+│   │   │   └── SkeletonKeyPluginLoadResult.cs
+│   │   ├── SkeletonKey.Runner.Core.csproj
+│   │   └── SkeletonKeyRunner.cs
+│   ├── SkeletonKey.Runtime
+│   │   ├── Plugins
+│   │   │   └── ISkeletonKeyPlugin.cs
+│   │   ├── IExecutionStateStore.cs
+│   │   ├── InMemoryExecutionStateStore.cs
+│   │   ├── IWorkflowCheckpointStore.cs
+│   │   ├── IWorkflowClock.cs
+│   │   ├── IWorkflowExecutionSession.cs
+│   │   ├── IWorkflowRuntime.cs
+│   │   ├── IWorkflowRuntimeDelay.cs
+│   │   ├── PreparedNodeParameters.cs
+│   │   ├── RuntimeActivationIdentity.cs
+│   │   ├── RuntimeWorkflowEvent.cs
+│   │   ├── RuntimeWorkflowEventKind.cs
+│   │   ├── SkeletonKey.Runtime.csproj
+│   │   ├── WorkflowCheckpointErrorCodes.cs
+│   │   ├── WorkflowCheckpointPortValue.cs
+│   │   ├── WorkflowCheckpointResource.cs
+│   │   ├── WorkflowCheckpointStep.cs
+│   │   ├── WorkflowCheckpointStoreException.cs
+│   │   ├── WorkflowExecutionCheckpoint.cs
+│   │   ├── WorkflowExecutionRequest.cs
+│   │   ├── WorkflowRuntimeErrorCodes.cs
+│   │   ├── WorkflowRuntimeOptions.cs
+│   │   ├── WorkflowRuntimeResult.cs
+│   │   └── WorkflowStepRuntimeStatus.cs
+│   ├── SkeletonKey.Runtime.Default
+│   │   ├── DefaultWorkflowRuntime.cs
+│   │   ├── SkeletonKey.Runtime.Default.csproj
+│   │   └── SystemWorkflowClock.cs
+│   ├── SkeletonKey.Runtime.Interactions
+│   │   ├── PendingWorkflowInteraction.cs
+│   │   ├── SkeletonKey.Runtime.Interactions.csproj
+│   │   ├── WorkflowInteractionContinuation.cs
+│   │   ├── WorkflowInteractionContinuationErrorCodes.cs
+│   │   └── WorkflowInteractionContinuationResult.cs
+│   ├── SkeletonKey.Runtime.Invocation
+│   │   ├── ImmutableWorkflowRepository.cs
+│   │   ├── IWorkflowRepository.cs
+│   │   ├── SkeletonKey.Runtime.Invocation.csproj
+│   │   ├── WorkflowInvocationAnalysisCodes.cs
+│   │   ├── WorkflowInvocationAnalysisIssue.cs
+│   │   ├── WorkflowInvocationAnalysisOptions.cs
+│   │   ├── WorkflowInvocationAnalysisResult.cs
+│   │   ├── WorkflowInvocationDependency.cs
+│   │   ├── WorkflowInvocationGraphAnalyzer.cs
+│   │   ├── WorkflowInvocationRuntimePolicy.cs
+│   │   └── WorkflowRepositoryLookupResult.cs
+│   ├── SkeletonKey.Runtime.Resources
+│   │   ├── IWorkflowRuntimeResourceCheckpointParticipant.cs
+│   │   ├── IWorkflowRuntimeResourceInstance.cs
+│   │   ├── IWorkflowRuntimeResourceProvider.cs
+│   │   ├── IWorkflowRuntimeResourceRecoveryProvider.cs
+│   │   ├── RuntimeNodeResourceAccessor.cs
+│   │   ├── RuntimeResourceLease.cs
+│   │   ├── SkeletonKey.Runtime.Resources.csproj
+│   │   ├── WorkflowRuntimeResourceCheckpointState.cs
+│   │   ├── WorkflowRuntimeResourceInstance.cs
+│   │   ├── WorkflowRuntimeResourceRequest.cs
+│   │   └── WorkflowRuntimeResourceSet.cs
+│   ├── SkeletonKey.Serialization.Json
+│   │   ├── Internal
+│   │   │   ├── JsonDuplicatePropertyDetector.cs
+│   │   │   └── JsonExceptionFactory.cs
+│   │   ├── SkeletonKey.Serialization.Json.csproj
+│   │   ├── WorkflowJsonSerializer.cs
+│   │   ├── WorkflowJsonSerializer.Helpers.cs
+│   │   ├── WorkflowJsonSerializer.Read.Core.cs
+│   │   ├── WorkflowJsonSerializer.Read.Graph.cs
+│   │   ├── WorkflowJsonSerializer.Write.cs
+│   │   ├── WorkflowSerializationException.cs
+│   │   └── WorkflowSerializationOperation.cs
+│   ├── SkeletonKey.Validation
+│   │   ├── Contracts
+│   │   │   └── IWorkflowValidator.cs
+│   │   ├── Diagnostics
+│   │   │   ├── WorkflowValidationCodes.cs
+│   │   │   ├── WorkflowValidationIssue.cs
+│   │   │   ├── WorkflowValidationResult.cs
+│   │   │   └── WorkflowValidationSeverity.cs
+│   │   ├── Internal
+│   │   │   ├── JsonPointer.cs
+│   │   │   ├── SemanticVersionValidator.cs
+│   │   │   ├── WorkflowDurationParser.cs
+│   │   │   └── WorkflowValidationPatterns.cs
+│   │   ├── SkeletonKey.Validation.csproj
+│   │   └── WorkflowSemanticValidator.cs
+│   ├── SkeletonKey.Web.Abstractions
+│   │   ├── DefaultWebNavigationPolicy.cs
+│   │   ├── IWebNavigationPolicy.cs
+│   │   ├── IWebPageAdapter.cs
+│   │   ├── SkeletonKey.Web.Abstractions.csproj
+│   │   ├── WebAdvancedContracts.cs
+│   │   ├── WebAutomationErrorCodes.cs
+│   │   ├── WebAutomationException.cs
+│   │   ├── WebEnums.cs
+│   │   ├── WebNetworkInterception.cs
+│   │   ├── WebOperationError.cs
+│   │   ├── WebRequests.cs
+│   │   └── WebScreenshotResult.cs
+│   ├── SkeletonKey.Web.BuiltIns
+│   │   ├── SkeletonKey.Web.BuiltIns.csproj
+│   │   ├── WebAdvancedHandlers.cs
+│   │   ├── WebBuiltInRuntimeHandlers.cs
+│   │   ├── WebBuiltInWorkflowNodeCatalog.cs
+│   │   ├── WebHandlerBase.cs
+│   │   └── WebHandlers.cs
+│   ├── SkeletonKey.Web.Playwright
+│   │   ├── PlaywrightNetworkInterceptor.cs
+│   │   ├── PlaywrightNetworkPolicyParser.cs
+│   │   ├── PlaywrightPageAdapter.cs
+│   │   ├── PlaywrightPageCheckpointState.cs
+│   │   ├── PlaywrightPageConstraints.cs
+│   │   ├── PlaywrightPageProviderOptions.cs
+│   │   ├── PlaywrightPageResource.cs
+│   │   ├── PlaywrightPageResourceProvider.cs
+│   │   └── SkeletonKey.Web.Playwright.csproj
+│   └── SkeletonKey.Workflow
+│       ├── Bindings
+│       │   ├── WorkflowBinding.cs
+│       │   ├── WorkflowBindingMissingBehavior.cs
+│       │   └── WorkflowBindingSource.cs
+│       ├── Connections
+│       │   ├── WorkflowConnection.cs
+│       │   └── WorkflowEndpoint.cs
+│       ├── ControlFlow
+│       │   ├── WorkflowForEachExecutionMode.cs
+│       │   ├── WorkflowForEachExecutionPolicy.cs
+│       │   ├── WorkflowReturnOutcome.cs
+│       │   └── WorkflowSwitchCase.cs
+│       ├── Designer
+│       │   ├── WorkflowDesignerMetadata.cs
+│       │   ├── WorkflowNodePosition.cs
+│       │   └── WorkflowNodeSize.cs
+│       ├── Documents
+│       │   └── WorkflowDocument.cs
+│       ├── Inputs
+│       │   ├── WorkflowInputDefinition.cs
+│       │   └── WorkflowInputType.cs
+│       ├── Invocation
+│       │   ├── WorkflowInvocationStreamMode.cs
+│       │   └── WorkflowInvocationStreamPolicy.cs
+│       ├── Nodes
+│       │   └── WorkflowNode.cs
+│       ├── Outputs
+│       │   ├── WorkflowOutputDefinition.cs
+│       │   └── WorkflowOutputMode.cs
+│       ├── Policies
+│       │   ├── WorkflowExecutionPolicy.cs
+│       │   ├── WorkflowOnError.cs
+│       │   └── WorkflowRetryPolicy.cs
+│       ├── References
+│       │   └── WorkflowReference.cs
+│       ├── Resources
+│       │   ├── StandardWorkflowResourceCapabilities.cs
+│       │   ├── StandardWorkflowResourceKinds.cs
+│       │   ├── WorkflowResourceAccessMode.cs
+│       │   ├── WorkflowResourceDefinition.cs
+│       │   ├── WorkflowResourceLifetime.cs
+│       │   └── WorkflowResourceReference.cs
+│       ├── Specification
+│       │   └── WorkflowSpecification.cs
+│       └── SkeletonKey.Workflow.csproj
+├── tests
+│   ├── fixtures
+│   │   ├── conformance
+│   │   │   ├── schema-invalid
+│   │   │   │   ├── binding-invalid-source-shape.workflow.json
+│   │   │   │   ├── binding-missing-source.workflow.json
+│   │   │   │   ├── binding-unknown-property.workflow.json
+│   │   │   │   ├── core-return-missing-outcome.workflow.json
+│   │   │   │   ├── expression-non-string.workflow.json
+│   │   │   │   ├── expression-wrapper-with-sibling.workflow.json
+│   │   │   │   ├── flow-foreach-invalid-mode.workflow.json
+│   │   │   │   ├── flow-foreach-missing-items.workflow.json
+│   │   │   │   ├── flow-if-missing-condition.workflow.json
+│   │   │   │   ├── flow-switch-missing-cases.workflow.json
+│   │   │   │   ├── flow-while-invalid-max-iterations-type.workflow.json
+│   │   │   │   ├── input-default-type-mismatch.workflow.json
+│   │   │   │   ├── interaction-missing-kind.workflow.json
+│   │   │   │   ├── interaction-missing-prompt.workflow.json
+│   │   │   │   ├── interaction-unknown-property.workflow.json
+│   │   │   │   ├── invalid-endpoint-port.workflow.json
+│   │   │   │   ├── invalid-node-type-format.workflow.json
+│   │   │   │   ├── invalid-output-channel.workflow.json
+│   │   │   │   ├── invoke-invalid-stream-mode.workflow.json
+│   │   │   │   ├── invoke-missing-workflow.workflow.json
+│   │   │   │   ├── invoke-unknown-parameter.workflow.json
+│   │   │   │   ├── literal-wrapper-with-sibling.workflow.json
+│   │   │   │   ├── locator-wrapper-with-sibling.workflow.json
+│   │   │   │   ├── map-streams-without-mappings.workflow.json
+│   │   │   │   ├── missing-required-root-property.workflow.json
+│   │   │   │   ├── non-positive-designer-size.workflow.json
+│   │   │   │   ├── null-node-entry.workflow.json
+│   │   │   │   ├── null-nodes.workflow.json
+│   │   │   │   ├── numeric-enum.workflow.json
+│   │   │   │   ├── output-invalid-mode.workflow.json
+│   │   │   │   ├── output-missing-mode.workflow.json
+│   │   │   │   ├── output-unknown-property.workflow.json
+│   │   │   │   ├── required-input-with-default.workflow.json
+│   │   │   │   ├── resource-missing-kind.workflow.json
+│   │   │   │   ├── resource-unknown-property.workflow.json
+│   │   │   │   ├── resource-wrapper-with-sibling.workflow.json
+│   │   │   │   ├── single-output-missing-source.workflow.json
+│   │   │   │   ├── single-output-with-channel.workflow.json
+│   │   │   │   ├── stream-output-missing-channel.workflow.json
+│   │   │   │   ├── stream-output-with-source.workflow.json
+│   │   │   │   └── unknown-node-property.workflow.json
+│   │   │   ├── semantic-invalid
+│   │   │   │   ├── binding-invalid-default-policy.workflow.json
+│   │   │   │   ├── binding-invalid-pointer.workflow.json
+│   │   │   │   ├── binding-self-reference.workflow.json
+│   │   │   │   ├── binding-unknown-input.workflow.json
+│   │   │   │   ├── binding-unknown-node.workflow.json
+│   │   │   │   ├── binding-unknown-variable.workflow.json
+│   │   │   │   ├── core-return-outgoing-connection.workflow.json
+│   │   │   │   ├── duplicate-connection.workflow.json
+│   │   │   │   ├── duplicate-node-id.workflow.json
+│   │   │   │   ├── expression-self-reference.workflow.json
+│   │   │   │   ├── expression-syntax-error.workflow.json
+│   │   │   │   ├── expression-unknown-input.workflow.json
+│   │   │   │   ├── expression-unknown-node.workflow.json
+│   │   │   │   ├── expression-unknown-variable.workflow.json
+│   │   │   │   ├── flow-foreach-invalid-policy.workflow.json
+│   │   │   │   ├── flow-if-invalid-condition.workflow.json
+│   │   │   │   ├── flow-repeat-negative-count.workflow.json
+│   │   │   │   ├── flow-switch-duplicate-case.workflow.json
+│   │   │   │   ├── flow-while-invalid-limit.workflow.json
+│   │   │   │   ├── incoming-connection-to-start.workflow.json
+│   │   │   │   ├── interaction-choice-without-options.workflow.json
+│   │   │   │   ├── interaction-invalid-port.workflow.json
+│   │   │   │   ├── interaction-invalid-timeout.workflow.json
+│   │   │   │   ├── interaction-secret-with-default.workflow.json
+│   │   │   │   ├── invalid-timeout.workflow.json
+│   │   │   │   ├── invoke-invalid-reference-id.workflow.json
+│   │   │   │   ├── invoke-invalid-reference-version.workflow.json
+│   │   │   │   ├── invoke-resource-unknown-parent.workflow.json
+│   │   │   │   ├── invoke-undeclared-stream-target.workflow.json
+│   │   │   │   ├── invoke-unsupported-version.workflow.json
+│   │   │   │   ├── iteration-unknown-loop.workflow.json
+│   │   │   │   ├── locator-invalid-version.workflow.json
+│   │   │   │   ├── max-delay-less-than-delay.workflow.json
+│   │   │   │   ├── missing-start-node.workflow.json
+│   │   │   │   ├── multiple-start-nodes.workflow.json
+│   │   │   │   ├── outgoing-connection-from-end.workflow.json
+│   │   │   │   ├── output-unknown-source-node.workflow.json
+│   │   │   │   ├── resource-duplicate-capability.workflow.json
+│   │   │   │   ├── resource-invalid-kind.workflow.json
+│   │   │   │   ├── resource-invalid-name.workflow.json
+│   │   │   │   ├── resource-reference-unknown.workflow.json
+│   │   │   │   ├── unknown-connection-source.workflow.json
+│   │   │   │   └── unknown-connection-target.workflow.json
+│   │   │   ├── serialization-invalid
+│   │   │   │   ├── comment.workflow.json
+│   │   │   │   ├── duplicate-nested-parameter.workflow.json
+│   │   │   │   ├── duplicate-root-property.workflow.json
+│   │   │   │   ├── trailing-comma.workflow.json
+│   │   │   │   ├── unknown-root-property.workflow.json
+│   │   │   │   └── wrong-property-casing.workflow.json
+│   │   │   ├── valid
+│   │   │   │   ├── collection-output.workflow.json
+│   │   │   │   ├── core-return.workflow.json
+│   │   │   │   ├── expression-condition.workflow.json
+│   │   │   │   ├── expression-with-functions.workflow.json
+│   │   │   │   ├── flow-foreach-parallel.workflow.json
+│   │   │   │   ├── flow-foreach-sequential.workflow.json
+│   │   │   │   ├── flow-if.workflow.json
+│   │   │   │   ├── flow-repeat.workflow.json
+│   │   │   │   ├── flow-switch.workflow.json
+│   │   │   │   ├── flow-while.workflow.json
+│   │   │   │   ├── inputs-and-variables.workflow.json
+│   │   │   │   ├── interaction-choice.workflow.json
+│   │   │   │   ├── interaction-confirmation.workflow.json
+│   │   │   │   ├── interaction-manual-action.workflow.json
+│   │   │   │   ├── interaction-secret.workflow.json
+│   │   │   │   ├── invoke-resource-mapping.workflow.json
+│   │   │   │   ├── invoke-workflow-forward-streams.workflow.json
+│   │   │   │   ├── invoke-workflow-input-binding.workflow.json
+│   │   │   │   ├── invoke-workflow-literal-inputs.workflow.json
+│   │   │   │   ├── invoke-workflow-literal-wrapper.workflow.json
+│   │   │   │   ├── invoke-workflow-mapped-streams.workflow.json
+│   │   │   │   ├── invoke-workflow-nested-bindings.workflow.json
+│   │   │   │   ├── invoke-workflow-node-binding.workflow.json
+│   │   │   │   ├── invoke-workflow-suppressed-streams.workflow.json
+│   │   │   │   ├── invoke-workflow-variable-binding.workflow.json
+│   │   │   │   ├── iteration-binding.workflow.json
+│   │   │   │   ├── locator-reference.workflow.json
+│   │   │   │   ├── minimal.workflow.json
+│   │   │   │   ├── multiple-output-modes.workflow.json
+│   │   │   │   ├── nested-parameters.workflow.json
+│   │   │   │   ├── policy-and-designer.workflow.json
+│   │   │   │   ├── resource-reference.workflow.json
+│   │   │   │   ├── single-output.workflow.json
+│   │   │   │   ├── stream-output.workflow.json
+│   │   │   │   └── workflow-resources.workflow.json
+│   │   │   ├── warning
+│   │   │   │   ├── unknown-designer-position-node.workflow.json
+│   │   │   │   ├── unknown-designer-size-node.workflow.json
+│   │   │   │   └── unreachable-node.workflow.json
+│   │   │   └── manifest.json
+│   │   ├── deployment
+│   │   │   ├── phase-029-deployment.locators.json
+│   │   │   ├── phase-029-interrupted.workflow.json
+│   │   │   └── phase-029-safe-recovery.workflow.json
+│   │   ├── desktop
+│   │   │   ├── phase-023-notepad.locators.json
+│   │   │   └── phase-023-notepad.workflow.json
+│   │   ├── locators
+│   │   │   ├── schema-invalid
+│   │   │   │   ├── locator-unknown-property.locators.json
+│   │   │   │   ├── missing-locators.locators.json
+│   │   │   │   ├── missing-spec-version.locators.json
+│   │   │   │   ├── strategy-missing-value.locators.json
+│   │   │   │   ├── strategy-unknown-kind.locators.json
+│   │   │   │   └── unknown-root-property.locators.json
+│   │   │   ├── semantic-invalid
+│   │   │   │   ├── direct-self-scope.locators.json
+│   │   │   │   ├── empty-strategy-value.locators.json
+│   │   │   │   ├── invalid-document-id.locators.json
+│   │   │   │   ├── invalid-locator-id.locators.json
+│   │   │   │   ├── scope-cycle.locators.json
+│   │   │   │   └── unknown-within.locators.json
+│   │   │   ├── valid
+│   │   │   │   ├── collection-locator.locators.json
+│   │   │   │   ├── css-xpath-fallback.locators.json
+│   │   │   │   ├── fallback-strategies.locators.json
+│   │   │   │   ├── scoped-locators.locators.json
+│   │   │   │   └── semantic-strategies.locators.json
+│   │   │   └── manifest.json
+│   │   ├── node-catalog
+│   │   │   ├── schema-invalid
+│   │   │   │   └── missing-definitions.node-catalog.json
+│   │   │   ├── semantic-invalid
+│   │   │   │   └── duplicate-definition.node-catalog.json
+│   │   │   ├── valid
+│   │   │   │   └── minimal.node-catalog.json
+│   │   │   └── manifest.json
+│   │   ├── plugins
+│   │   │   └── phase-022-echo.workflow.json
+│   │   ├── soak
+│   │   │   ├── phase-028-browser-soak.locators.json
+│   │   │   └── phase-028-browser-soak.workflow.json
+│   │   └── validation
+│   │       ├── invalid-duplicate-node.workflow.json
+│   │       ├── invalid-unknown-connection-node.workflow.json
+│   │       ├── valid-minimal.workflow.json
+│   │       └── warning-unreachable-node.workflow.json
+│   ├── SkeletonKey.Abstractions.Tests
+│   │   ├── Execution
+│   │   │   ├── ExecutionContractTests.cs
+│   │   │   └── WorkflowIterationContextTests.cs
+│   │   ├── Interaction
+│   │   │   └── WorkflowInteractionContractTests.cs
+│   │   └── SkeletonKey.Abstractions.Tests.csproj
+│   ├── SkeletonKey.Analysis.Default.Tests
+│   │   ├── DefaultWorkflowAnalyzerTests.cs
+│   │   └── SkeletonKey.Analysis.Default.Tests.csproj
+│   ├── SkeletonKey.Analysis.Tests
+│   │   ├── SkeletonKey.Analysis.Tests.csproj
+│   │   └── WorkflowAnalysisContractTests.cs
+│   ├── SkeletonKey.Artifacts.FileSystem.Tests
+│   │   ├── FileSystemWorkflowArtifactStoreTests.cs
+│   │   ├── FileSystemWorkflowCheckpointStoreTests.cs
+│   │   └── SkeletonKey.Artifacts.FileSystem.Tests.csproj
+│   ├── SkeletonKey.Artifacts.Tests
+│   │   ├── SkeletonKey.Artifacts.Tests.csproj
+│   │   └── WorkflowArtifactContractTests.cs
+│   ├── SkeletonKey.Binding.Tests
+│   │   ├── SkeletonKey.Binding.Tests.csproj
+│   │   └── WorkflowBindingReaderTests.cs
+│   ├── SkeletonKey.BuiltIns.Runtime.Tests
+│   │   ├── BuiltInRuntimeHandlerTests.cs
+│   │   └── SkeletonKey.BuiltIns.Runtime.Tests.csproj
+│   ├── SkeletonKey.BuiltIns.Tests
+│   │   ├── BuiltInWorkflowNodeCatalogTests.cs
+│   │   └── SkeletonKey.BuiltIns.Tests.csproj
+│   ├── SkeletonKey.Catalog.Json.Tests
+│   │   ├── NodeCatalogJsonSerializerTests.cs
+│   │   └── SkeletonKey.Catalog.Json.Tests.csproj
+│   ├── SkeletonKey.Catalog.Tests
+│   │   ├── SkeletonKey.Catalog.Tests.csproj
+│   │   └── WorkflowNodeCatalogContractTests.cs
+│   ├── SkeletonKey.Catalog.Validation.Tests
+│   │   ├── NodeCatalogSemanticValidatorTests.cs
+│   │   └── SkeletonKey.Catalog.Validation.Tests.csproj
+│   ├── SkeletonKey.Conformance.Tests
+│   │   ├── Support
+│   │   │   ├── ConformanceManifest.cs
+│   │   │   ├── JsonSchemaConformanceValidator.cs
+│   │   │   ├── LocatorJsonSchemaConformanceValidator.cs
+│   │   │   ├── NodeCatalogJsonSchemaConformanceValidator.cs
+│   │   │   └── RepositoryPaths.cs
+│   │   ├── CanonicalExampleTests.cs
+│   │   ├── ConformanceFixtureTests.cs
+│   │   ├── ControlFlowExampleTests.cs
+│   │   ├── CrossLayerBehaviorTests.cs
+│   │   ├── LocatorConformanceFixtureTests.cs
+│   │   ├── ManifestTests.cs
+│   │   ├── NodeCatalogConformanceFixtureTests.cs
+│   │   ├── ResourceLocatorInteractionExampleTests.cs
+│   │   ├── SchemaArtifactTests.cs
+│   │   ├── SkeletonKey.Conformance.Tests.csproj
+│   │   └── SubworkflowExampleTests.cs
+│   ├── SkeletonKey.ContractSafety.Tests
+│   │   ├── PublicContractSafetyTests.cs
+│   │   └── SkeletonKey.ContractSafety.Tests.csproj
+│   ├── SkeletonKey.Core.Tests
+│   │   ├── InfrastructureTests.cs
+│   │   └── SkeletonKey.Core.Tests.csproj
+│   ├── SkeletonKey.Evaluation.Tests
+│   │   ├── JsonPointerResolverTests.cs
+│   │   ├── SkeletonKey.Evaluation.Tests.csproj
+│   │   ├── WorkflowBindingResolverTests.cs
+│   │   └── WorkflowExpressionEvaluatorTests.cs
+│   ├── SkeletonKey.Execution.Tests
+│   │   ├── ExecutionIdentityAndStateSnapshotTests.cs
+│   │   ├── NodePortValueAndRequestTests.cs
+│   │   ├── ResourceContractTests.cs
+│   │   └── SkeletonKey.Execution.Tests.csproj
+│   ├── SkeletonKey.Expressions.Tests
+│   │   ├── SkeletonKey.Expressions.Tests.csproj
+│   │   ├── WorkflowExpressionParserTests.cs
+│   │   └── WorkflowExpressionReaderTests.cs
+│   ├── SkeletonKey.Handlers.Tests
+│   │   ├── NodeHandlerContractTests.cs
+│   │   ├── NodeHandlerOutputAndResultTests.cs
+│   │   └── SkeletonKey.Handlers.Tests.csproj
+│   ├── SkeletonKey.Locators.Json.Tests
+│   │   ├── LocatorJsonSerializerTests.cs
+│   │   └── SkeletonKey.Locators.Json.Tests.csproj
+│   ├── SkeletonKey.Locators.Runtime.Tests
+│   │   ├── LocatorRuntimeTests.cs
+│   │   └── SkeletonKey.Locators.Runtime.Tests.csproj
+│   ├── SkeletonKey.Locators.Tests
+│   │   ├── LocatorModelTests.cs
+│   │   └── SkeletonKey.Locators.Tests.csproj
+│   ├── SkeletonKey.Locators.Validation.Tests
+│   │   ├── LocatorSemanticValidatorTests.cs
+│   │   └── SkeletonKey.Locators.Validation.Tests.csproj
+│   ├── SkeletonKey.Materialization.Tests
+│   │   ├── SkeletonKey.Materialization.Tests.csproj
+│   │   └── WorkflowValueMaterializerTests.cs
+│   ├── SkeletonKey.Planning.Default.Tests
+│   │   ├── DefaultWorkflowExecutionPlannerTests.cs
+│   │   └── SkeletonKey.Planning.Default.Tests.csproj
+│   ├── SkeletonKey.Planning.Tests
+│   │   ├── SkeletonKey.Planning.Tests.csproj
+│   │   └── WorkflowExecutionPlanningContractTests.cs
+│   ├── SkeletonKey.Resources.Tests
+│   │   ├── SkeletonKey.Resources.Tests.csproj
+│   │   └── WorkflowResourceReferenceReaderTests.cs
+│   ├── SkeletonKey.Runner.Core.Tests
+│   │   ├── DesktopPhase23Tests.cs
+│   │   ├── Phase22FixturePlugin.cs
+│   │   ├── Phase28SoakTests.cs
+│   │   ├── PluginLoadingTests.cs
+│   │   ├── SkeletonKey.Runner.Core.Tests.csproj
+│   │   └── SkeletonKeyRunnerTests.cs
+│   ├── SkeletonKey.Runner.Integration.Tests
+│   │   ├── RunnerCommandSmokeTests.cs
+│   │   └── SkeletonKey.Runner.Integration.Tests.csproj
+│   ├── SkeletonKey.Runner.Tests
+│   │   ├── RunnerProjectTests.cs
+│   │   └── SkeletonKey.Runner.Tests.csproj
+│   ├── SkeletonKey.Runtime.Default.Tests
+│   │   ├── DefaultWorkflowRuntimeTests.cs
+│   │   ├── ParallelSchedulingRuntimeTests.cs
+│   │   ├── SkeletonKey.Runtime.Default.Tests.csproj
+│   │   ├── WorkflowCheckpointRuntimeTests.cs
+│   │   ├── WorkflowExecutionPolicyRuntimeTests.cs
+│   │   └── WorkflowResourceRecoveryRuntimeTests.cs
+│   ├── SkeletonKey.Runtime.Integration.Tests
+│   │   ├── RuntimeIntegrationWorkflowTests.cs
+│   │   └── SkeletonKey.Runtime.Integration.Tests.csproj
+│   ├── SkeletonKey.Runtime.Interactions.Tests
+│   │   ├── InteractionContinuationContractTests.cs
+│   │   └── SkeletonKey.Runtime.Interactions.Tests.csproj
+│   ├── SkeletonKey.Runtime.Invocation.Tests
+│   │   ├── SkeletonKey.Runtime.Invocation.Tests.csproj
+│   │   ├── WorkflowInvocationGraphAnalyzerTests.cs
+│   │   └── WorkflowRepositoryTests.cs
+│   ├── SkeletonKey.Runtime.Resources.Tests
+│   │   ├── ResourceAccessorTests.cs
+│   │   └── SkeletonKey.Runtime.Resources.Tests.csproj
+│   ├── SkeletonKey.Runtime.Tests
+│   │   ├── RuntimeContractTests.cs
+│   │   └── SkeletonKey.Runtime.Tests.csproj
+│   ├── SkeletonKey.Serialization.Json.Tests
+│   │   ├── Basic
+│   │   │   ├── BasicDeserializationTests.cs
+│   │   │   ├── BasicSerializationTests.cs
+│   │   │   ├── ControlFlowSerializationTests.cs
+│   │   │   ├── InvocationSerializationTests.cs
+│   │   │   ├── OutputSerializationTests.cs
+│   │   │   └── ResourceLocatorInteractionSerializationTests.cs
+│   │   ├── Errors
+│   │   │   └── ErrorInformationTests.cs
+│   │   ├── Examples
+│   │   │   └── RepositoryExampleTests.cs
+│   │   ├── Files
+│   │   │   └── FileOperationTests.cs
+│   │   ├── RoundTrip
+│   │   │   └── RoundTripTests.cs
+│   │   ├── StrictParsing
+│   │   │   └── StrictParsingTests.cs
+│   │   ├── Support
+│   │   │   └── WorkflowJsonTestData.cs
+│   │   ├── Threading
+│   │   │   └── ThreadSafetyTests.cs
+│   │   └── SkeletonKey.Serialization.Json.Tests.csproj
+│   ├── SkeletonKey.Validation.Tests
+│   │   ├── Behavior
+│   │   │   └── WorkflowSemanticValidatorBehaviorTests.cs
+│   │   ├── Diagnostics
+│   │   │   └── WorkflowValidationResultTests.cs
+│   │   ├── Integration
+│   │   │   └── RepositoryExampleValidationTests.cs
+│   │   ├── Rules
+│   │   │   ├── ConnectionValidationTests.cs
+│   │   │   ├── ControlFlowValidationTests.cs
+│   │   │   ├── DesignerValidationTests.cs
+│   │   │   ├── ExecutionPolicyValidationTests.cs
+│   │   │   ├── InputValidationTests.cs
+│   │   │   ├── InvocationValidationTests.cs
+│   │   │   ├── NodeValidationTests.cs
+│   │   │   ├── OutputValidationTests.cs
+│   │   │   ├── ReachabilityValidationTests.cs
+│   │   │   ├── ResourceLocatorInteractionValidationTests.cs
+│   │   │   ├── RootValidationTests.cs
+│   │   │   └── VariableValidationTests.cs
+│   │   ├── Support
+│   │   │   └── ValidationTestData.cs
+│   │   └── SkeletonKey.Validation.Tests.csproj
+│   ├── SkeletonKey.Web.Abstractions.Tests
+│   │   ├── SkeletonKey.Web.Abstractions.Tests.csproj
+│   │   ├── WebAbstractionTests.cs
+│   │   └── WebNetworkInterceptionTests.cs
+│   ├── SkeletonKey.Web.Advanced.Integration.Tests
+│   │   ├── AdvancedChromiumWorkflowSmokeTests.cs
+│   │   ├── NetworkInterceptionChromiumTests.cs
+│   │   ├── PlaywrightPackageBoundaryTests.cs
+│   │   └── SkeletonKey.Web.Advanced.Integration.Tests.csproj
+│   ├── SkeletonKey.Web.Advanced.Tests
+│   │   ├── SkeletonKey.Web.Advanced.Tests.csproj
+│   │   └── WebAdvancedContractTests.cs
+│   ├── SkeletonKey.Web.BuiltIns.Tests
+│   │   ├── SkeletonKey.Web.BuiltIns.Tests.csproj
+│   │   └── WebBuiltInHandlerTests.cs
+│   ├── SkeletonKey.Web.Integration.Tests
+│   │   ├── ChromiumSmokeWorkflowTests.cs
+│   │   └── SkeletonKey.Web.Integration.Tests.csproj
+│   ├── SkeletonKey.Web.Playwright.Tests
+│   │   ├── PlaywrightProviderConfigurationTests.cs
+│   │   └── SkeletonKey.Web.Playwright.Tests.csproj
+│   └── SkeletonKey.Workflow.Tests
+│       ├── Connections
+│       │   └── WorkflowConnectionTests.cs
+│       ├── ControlFlow
+│       │   └── WorkflowControlFlowContractTests.cs
+│       ├── Designer
+│       │   └── WorkflowDesignerMetadataTests.cs
+│       ├── Documents
+│       │   └── WorkflowDocumentTests.cs
+│       ├── Inputs
+│       │   └── WorkflowInputDefinitionTests.cs
+│       ├── Invocation
+│       │   ├── WorkflowInvocationContractTests.cs
+│       │   └── WorkflowResourceInvocationContractTests.cs
+│       ├── Nodes
+│       │   └── WorkflowNodeTests.cs
+│       ├── Outputs
+│       │   └── WorkflowOutputDefinitionTests.cs
+│       ├── Policies
+│       │   └── WorkflowExecutionPolicyTests.cs
+│       ├── References
+│       │   └── LocatorReferenceContractTests.cs
+│       ├── Resources
+│       │   └── WorkflowResourceContractTests.cs
+│       ├── Specification
+│       │   └── WorkflowSpecificationTests.cs
+│       ├── InfrastructureTests.cs
+│       └── SkeletonKey.Workflow.Tests.csproj
+├── tools
+│   └── SkeletonKey.Playwright.BrowserInstaller
+│       ├── Program.cs
+│       └── SkeletonKey.Playwright.BrowserInstaller.csproj
+├── Directory.Build.props
+├── Directory.Packages.props
+├── generate-tree.ps1
+├── global.json
+├── project-structure.txt
+├── README.md
+└── SkeletonKey.sln
