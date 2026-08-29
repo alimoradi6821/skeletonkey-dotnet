@@ -3,8 +3,10 @@ using SkeletonKey.Runner.Core;
 
 namespace SkeletonKey.Runner.Core.Tests;
 
+/// <summary>Tests standalone package manifest identity and tamper validation.</summary>
 public sealed class StandalonePackageManifestTests
 {
+    /// <summary>Verifies dependency enumeration order does not affect the computed package identity.</summary>
     [Fact]
     public void PackageIdentityIsStableAcrossDependencyEnumerationOrder()
     {
@@ -19,6 +21,7 @@ public sealed class StandalonePackageManifestTests
         Assert.Equal(left, right);
     }
 
+    /// <summary>Verifies settings content participates in the package identity.</summary>
     [Fact]
     public void ChangingSettingsChangesPackageIdentity()
     {
@@ -32,6 +35,7 @@ public sealed class StandalonePackageManifestTests
         Assert.NotEqual(left, right);
     }
 
+    /// <summary>Verifies deserialization rejects a manifest with a tampered package identity.</summary>
     [Fact]
     public void DeserializeRejectsTamperedPackageIdentity()
     {
