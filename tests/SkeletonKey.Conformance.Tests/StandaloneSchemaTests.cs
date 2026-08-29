@@ -9,25 +9,28 @@ public sealed class StandaloneSchemaTests
 {
     private static readonly string _schemaPath = Path.Combine(RepositoryPaths.Root, "schemas", "standalone", "0.1", "schema.json");
 
+    /// <summary>Validates a canonical standalone settings example against the Standalone Export 0.1 schema.</summary>
+    /// <param name="fileName">The canonical settings file name.</param>
     [Theory]
     [InlineData("once.execution.settings.json")]
     [InlineData("interval.execution.settings.json")]
     [InlineData("daily.execution.settings.json")]
     public void CanonicalStandaloneSettingsExamplesMatchSchema(string fileName)
     {
-        JsonSchema schema = JsonSchema.FromText(File.ReadAllText(_schemaPath));
+        var schema = JsonSchema.FromText(File.ReadAllText(_schemaPath));
         string path = Path.Combine(RepositoryPaths.Root, "examples", "standalone", fileName);
-        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(path));
+        using var document = JsonDocument.Parse(File.ReadAllText(path));
         EvaluationResults result = schema.Evaluate(document.RootElement, new EvaluationOptions { OutputFormat = OutputFormat.List });
 
         Assert.True(result.IsValid, fileName + " must conform to Standalone Export settings schema 0.1.");
     }
 
+    /// <summary>Verifies that unknown schedule properties are rejected by the standalone schema.</summary>
     [Fact]
     public void SchemaRejectsUnknownScheduleProperties()
     {
-        JsonSchema schema = JsonSchema.FromText(File.ReadAllText(_schemaPath));
-        using JsonDocument document = JsonDocument.Parse("""
+        var schema = JsonSchema.FromText(File.ReadAllText(_schemaPath));
+        using var document = JsonDocument.Parse("""
             {
               "specVersion": "0.1",
               "schedule": {
