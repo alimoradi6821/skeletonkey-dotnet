@@ -2,8 +2,10 @@ using SkeletonKey.Runner.Core;
 
 namespace SkeletonKey.Runner.Core.Tests;
 
+/// <summary>Tests standalone schedule boundary calculation across interval and daily schedules.</summary>
 public sealed class StandaloneScheduleCursorTests
 {
+    /// <summary>Verifies interval schedules retain fixed boundaries and skip missed occurrences.</summary>
     [Fact]
     public void IntervalKeepsFixedBoundariesAndSkipsMissedOccurrences()
     {
@@ -17,10 +19,11 @@ public sealed class StandaloneScheduleCursorTests
         Assert.Equal(anchor.AddMinutes(15), cursor.GetNextDueAfter(anchor.AddMinutes(12)));
     }
 
+    /// <summary>Verifies daily schedules use the configured local wall-clock time.</summary>
     [Fact]
     public void DailyUsesConfiguredLocalWallClock()
     {
-        TimeZoneInfo zone = TimeZoneInfo.CreateCustomTimeZone("UTC+0330", TimeSpan.FromMinutes(210), "UTC+0330", "UTC+0330");
+        var zone = TimeZoneInfo.CreateCustomTimeZone("UTC+0330", TimeSpan.FromMinutes(210), "UTC+0330", "UTC+0330");
         DateTimeOffset after = new(2026, 8, 29, 3, 0, 0, TimeSpan.Zero); // 06:30 local
         StandaloneScheduleCursor cursor = new(
             new StandaloneSchedule(StandaloneScheduleKind.Daily, null, new TimeOnly(8, 30)),
@@ -30,6 +33,7 @@ public sealed class StandaloneScheduleCursorTests
         Assert.Equal(new DateTimeOffset(2026, 8, 29, 5, 0, 0, TimeSpan.Zero), cursor.GetNextDueAfter(after));
     }
 
+    /// <summary>Verifies spring-forward gaps normalize to the first valid local minute.</summary>
     [Fact]
     public void DailyNormalizesSpringForwardGapToFirstValidMinute()
     {
@@ -44,6 +48,7 @@ public sealed class StandaloneScheduleCursorTests
         Assert.Equal(new DateTimeOffset(2026, 3, 8, 7, 0, 0, TimeSpan.Zero), cursor.GetNextDueAfter(after));
     }
 
+    /// <summary>Verifies ambiguous fall-back times resolve to the earlier UTC occurrence.</summary>
     [Fact]
     public void DailyChoosesEarlierUtcOccurrenceForAmbiguousFallBackTime()
     {
@@ -60,17 +65,17 @@ public sealed class StandaloneScheduleCursorTests
 
     private static TimeZoneInfo CreateDstZone()
     {
-        TimeZoneInfo.TransitionTime daylightStart = TimeZoneInfo.TransitionTime.CreateFloatingDateRule(
+        var daylightStart = TimeZoneInfo.TransitionTime.CreateFloatingDateRule(
             new DateTime(1, 1, 1, 2, 0, 0),
             3,
             2,
             DayOfWeek.Sunday);
-        TimeZoneInfo.TransitionTime daylightEnd = TimeZoneInfo.TransitionTime.CreateFloatingDateRule(
+        var daylightEnd = TimeZoneInfo.TransitionTime.CreateFloatingDateRule(
             new DateTime(1, 1, 1, 2, 0, 0),
             11,
             1,
             DayOfWeek.Sunday);
-        TimeZoneInfo.AdjustmentRule rule = TimeZoneInfo.AdjustmentRule.CreateAdjustmentRule(
+        var rule = TimeZoneInfo.AdjustmentRule.CreateAdjustmentRule(
             new DateTime(2020, 1, 1),
             new DateTime(2030, 12, 31),
             TimeSpan.FromHours(1),
@@ -85,6 +90,7 @@ public sealed class StandaloneScheduleCursorTests
             [rule]);
     }
 
+    /// <summary>Verifies once schedules have no future boundary after their anchor.</summary>
     [Fact]
     public void OnceHasNoFutureBoundary()
     {
