@@ -1,6 +1,6 @@
 # Specifications
 
-This section contains SkeletonKey's versioned language, runtime, resource, locator, plugin, browser, desktop, validation, planning, and compatibility contracts.
+This section contains SkeletonKey's versioned language, runtime, resource, locator, plugin, browser, desktop, validation, planning, compatibility, and packaging contracts.
 
 For the GA 0.1.0 support boundary, start with:
 
@@ -12,5 +12,9 @@ For the GA 0.1.0 support boundary, start with:
 - [Desktop Automation 0.1](desktop-automation-0.1.md)
 - [Web Page Resource 0.1](web-page-resource-0.1.md)
 - [Local Plugin Package 0.1](local-plugin-package-0.1.md)
+
+## Proposed Packaging Contracts
+
+- [Standalone Export 0.1](standalone-export-0.1.md) defines the scenario-specific sealed executable output mode. It is intentionally separate from the workflow schema and remains proposed until implementation verification is complete.
 
 The table of contents contains the complete specification set.

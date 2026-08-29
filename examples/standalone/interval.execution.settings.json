@@ -1,0 +1,12 @@
+{
+  "specVersion": "0.1",
+  "schedule": {
+    "type": "interval",
+    "interval": "PT5M"
+  },
+  "execution": {
+    "runImmediately": true,
+    "overlap": "skip",
+    "continueAfterFailure": true
+  }
+}

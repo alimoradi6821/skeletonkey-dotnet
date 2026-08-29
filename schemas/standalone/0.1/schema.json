@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.skeletonkey.dev/standalone/0.1/schema.json",
+  "title": "SkeletonKey Standalone Execution Settings 0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "specVersion",
+    "schedule"
+  ],
+  "properties": {
+    "specVersion": {
+      "const": "0.1"
+    },
+    "schedule": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/onceSchedule"
+        },
+        {
+          "$ref": "#/$defs/intervalSchedule"
+        },
+        {
+          "$ref": "#/$defs/dailySchedule"
+        }
+      ]
+    },
+    "execution": {
+      "$ref": "#/$defs/execution"
+    }
+  },
+  "$defs": {
+    "onceSchedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "once"
+        }
+      }
+    },
+    "intervalSchedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "interval"
+      ],
+      "properties": {
+        "type": {
+          "const": "interval"
+        },
+        "interval": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 64,
+          "description": "ISO-8601 duration. The semantic implementation additionally bounds the value to PT1S through P365D."
+        }
+      }
+    },
+    "dailySchedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "time"
+      ],
+      "properties": {
+        "type": {
+          "const": "daily"
+        },
+        "time": {
+          "type": "string",
+          "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+        }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runImmediately": {
+          "type": "boolean",
+          "default": false
+        },
+        "overlap": {
+          "const": "skip",
+          "default": "skip"
+        },
+        "continueAfterFailure": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    }
+  }
+}

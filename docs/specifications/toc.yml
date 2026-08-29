@@ -77,6 +77,8 @@ items:
   href: runtime-scheduling-0.1.md
 - name: "Runtime State Transitions 0.1"
   href: runtime-state-transitions-0.1.md
+- name: "Standalone Export 0.1"
+  href: standalone-export-0.1.md
 - name: "Validation Error Codes 0.1"
   href: validation-error-codes-0.1.md
 - name: "Web Locator Fallback 0.1"

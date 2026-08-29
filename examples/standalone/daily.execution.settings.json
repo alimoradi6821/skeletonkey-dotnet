@@ -1,0 +1,12 @@
+{
+  "specVersion": "0.1",
+  "schedule": {
+    "type": "daily",
+    "time": "08:30"
+  },
+  "execution": {
+    "runImmediately": false,
+    "overlap": "skip",
+    "continueAfterFailure": true
+  }
+}

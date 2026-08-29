@@ -16,9 +16,11 @@ The repository already contains the historical ADR series beginning at 0004. Tho
 ## Create an ADR
 
 ```powershell
-Copy-Item .\docs\architecture\adr-template.md .\docs\architecture\0029-short-title.md
+Copy-Item .\docs\architecture\adr-template.md .\docs\architecture\0030-short-title.md
 ```
 
 Then fill in the context, drivers, considered options, decision outcome, consequences, and confirmation.
 
 ADR 0028 records the decision to use DocFX for the documentation site and the MADR-style template for future decisions.
+
+ADR 0029 records the accepted sealed standalone workflow application export decision: one normal SkeletonKey workflow plus host-owned execution settings are packaged into one scenario-specific executable without moving scheduling semantics into `WorkflowDocument`.

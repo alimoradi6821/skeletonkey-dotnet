@@ -1,0 +1,6 @@
+{
+  "specVersion": "0.1",
+  "schedule": {
+    "type": "once"
+  }
+}

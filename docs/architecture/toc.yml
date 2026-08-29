@@ -51,3 +51,5 @@ items:
   href: 0027-resumable-runtime-resources.md
 - name: "ADR 0028: Use DocFX and MADR-Style Architecture Decision Records"
   href: 0028-use-docfx-and-madr-for-project-documentation.md
+- name: "ADR 0029: Export Sealed Standalone Workflow Applications"
+  href: 0029-standalone-export-of-sealed-workflow-applications.md
