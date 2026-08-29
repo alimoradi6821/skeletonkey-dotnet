@@ -1,0 +1,2 @@
+# Canonical JSON fixtures and schemas must keep deterministic LF line endings on every platform.
+*.json text eol=lf
