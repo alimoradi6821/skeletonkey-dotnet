@@ -19,11 +19,11 @@ public sealed record StandaloneExportResult(
 /// <summary>Builds a sealed standalone executable from a workflow and host settings.</summary>
 public sealed class StandaloneExporter
 {
-    private const int MaximumWorkflowBytes = 16 * 1024 * 1024;
-    private const int MaximumSettingsBytes = 1024 * 1024;
-    private const int MaximumLocatorBytes = 4 * 1024 * 1024;
-    private const int MaximumLocatorFiles = 256;
-    private const int MaximumWorkflowFiles = 1024;
+    private const int _maximumWorkflowBytes = 16 * 1024 * 1024;
+    private const int _maximumSettingsBytes = 1024 * 1024;
+    private const int _maximumLocatorBytes = 4 * 1024 * 1024;
+    private const int _maximumLocatorFiles = 256;
+    private const int _maximumWorkflowFiles = 1024;
 
     /// <summary>Parses export arguments, validates immutable inputs, and publishes the scenario executable.</summary>
     public async ValueTask<StandaloneExportResult> ExportAsync(IReadOnlyList<string> args, CancellationToken cancellationToken = default)
@@ -112,15 +112,15 @@ public sealed class StandaloneExporter
 
     private static async ValueTask<Snapshot> CreateSnapshotAsync(StandaloneExportOptions options, string stagingRoot, CancellationToken cancellationToken)
     {
-        string workflowPath = await SnapshotFileAsync(options.WorkflowPath, Path.Combine(stagingRoot, "scenario.workflow.json"), MaximumWorkflowBytes, cancellationToken).ConfigureAwait(false);
-        string settingsPath = await SnapshotFileAsync(options.SettingsPath, Path.Combine(stagingRoot, "execution.settings.json"), MaximumSettingsBytes, cancellationToken).ConfigureAwait(false);
+        string workflowPath = await SnapshotFileAsync(options.WorkflowPath, Path.Combine(stagingRoot, "scenario.workflow.json"), _maximumWorkflowBytes, cancellationToken).ConfigureAwait(false);
+        string settingsPath = await SnapshotFileAsync(options.SettingsPath, Path.Combine(stagingRoot, "execution.settings.json"), _maximumSettingsBytes, cancellationToken).ConfigureAwait(false);
 
         string? locators = options.LocatorDirectory is null
             ? null
-            : await SnapshotDirectoryAsync(options.LocatorDirectory, Path.Combine(stagingRoot, "locators"), "*.locators.json", MaximumLocatorFiles, MaximumLocatorBytes, cancellationToken).ConfigureAwait(false);
+            : await SnapshotDirectoryAsync(options.LocatorDirectory, Path.Combine(stagingRoot, "locators"), "*.locators.json", _maximumLocatorFiles, _maximumLocatorBytes, cancellationToken).ConfigureAwait(false);
         string? workflows = options.WorkflowDirectory is null
             ? null
-            : await SnapshotDirectoryAsync(options.WorkflowDirectory, Path.Combine(stagingRoot, "workflows"), "*.workflow.json", MaximumWorkflowFiles, MaximumWorkflowBytes, cancellationToken).ConfigureAwait(false);
+            : await SnapshotDirectoryAsync(options.WorkflowDirectory, Path.Combine(stagingRoot, "workflows"), "*.workflow.json", _maximumWorkflowFiles, _maximumWorkflowBytes, cancellationToken).ConfigureAwait(false);
 
         return new Snapshot(workflowPath, settingsPath, locators, workflows);
     }
