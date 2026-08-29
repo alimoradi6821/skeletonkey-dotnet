@@ -48,11 +48,11 @@ public sealed class StandaloneScheduleCursor
     {
         TimeOnly dailyTime = _schedule.DailyTime ?? throw new InvalidOperationException("Daily schedule is missing its wall-clock time.");
         DateTime localAfter = TimeZoneInfo.ConvertTime(afterUtc, _timeZone).DateTime;
-        DateOnly candidateDate = DateOnly.FromDateTime(localAfter);
+        var candidateDate = DateOnly.FromDateTime(localAfter);
 
         for (int dayOffset = 0; dayOffset <= 370; dayOffset++)
         {
-            DateTime localCandidate = DateTime.SpecifyKind(candidateDate.AddDays(dayOffset).ToDateTime(dailyTime), DateTimeKind.Unspecified);
+            var localCandidate = DateTime.SpecifyKind(candidateDate.AddDays(dayOffset).ToDateTime(dailyTime), DateTimeKind.Unspecified);
             localCandidate = NormalizeInvalidLocalTime(localCandidate);
             DateTimeOffset candidate = ResolveLocalCandidate(localCandidate).ToUniversalTime();
             if (candidate > afterUtc)
