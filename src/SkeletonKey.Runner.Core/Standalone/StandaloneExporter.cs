@@ -28,7 +28,7 @@ public sealed class StandaloneExporter
     /// <summary>Parses export arguments, validates immutable inputs, and publishes the scenario executable.</summary>
     public async ValueTask<StandaloneExportResult> ExportAsync(IReadOnlyList<string> args, CancellationToken cancellationToken = default)
     {
-        StandaloneExportOptions options = StandaloneExportOptions.Parse(args);
+        var options = StandaloneExportOptions.Parse(args);
         if (!string.Equals(options.TargetRuntime, "win-x64", StringComparison.Ordinal))
         {
             throw new StandaloneExportException("SKX3001", "Standalone Export 0.1 currently supports only --runtime win-x64.");
