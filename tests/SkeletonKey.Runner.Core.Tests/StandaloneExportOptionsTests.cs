@@ -2,8 +2,10 @@ using SkeletonKey.Runner.Core;
 
 namespace SkeletonKey.Runner.Core.Tests;
 
+/// <summary>Tests parsing of standalone export command-line options.</summary>
 public sealed class StandaloneExportOptionsTests
 {
+    /// <summary>Verifies that the standalone subcommand is mandatory.</summary>
     [Fact]
     public void ParseRequiresStandaloneSubcommand()
     {
@@ -11,10 +13,11 @@ public sealed class StandaloneExportOptionsTests
         Assert.Equal("SKX3020", error.Code);
     }
 
+    /// <summary>Verifies required inputs and optional directories are parsed correctly.</summary>
     [Fact]
     public void ParseAcceptsRequiredInputsAndOptionalDirectories()
     {
-        StandaloneExportOptions options = StandaloneExportOptions.Parse(
+        var options = StandaloneExportOptions.Parse(
         [
             "standalone",
             "--workflow", "scenario.workflow.json",
@@ -33,6 +36,7 @@ public sealed class StandaloneExportOptionsTests
         Assert.Equal("win-x64", options.TargetRuntime);
     }
 
+    /// <summary>Verifies that unknown export options are rejected.</summary>
     [Fact]
     public void ParseRejectsUnknownOptions()
     {
