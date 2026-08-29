@@ -17,7 +17,7 @@ public sealed class StandaloneSchemaTests
     [InlineData("daily.execution.settings.json")]
     public void CanonicalStandaloneSettingsExamplesMatchSchema(string fileName)
     {
-        var schema = LoadSchema();
+        JsonSchema schema = LoadSchema();
         string path = Path.Combine(RepositoryPaths.Root, "examples", "standalone", fileName);
         using var document = JsonDocument.Parse(File.ReadAllText(path));
         EvaluationResults result = schema.Evaluate(document.RootElement, new EvaluationOptions { OutputFormat = OutputFormat.List });
@@ -29,7 +29,7 @@ public sealed class StandaloneSchemaTests
     [Fact]
     public void SchemaRejectsUnknownScheduleProperties()
     {
-        var schema = LoadSchema();
+        JsonSchema schema = LoadSchema();
         using var document = JsonDocument.Parse("""
             {
               "specVersion": "0.1",
