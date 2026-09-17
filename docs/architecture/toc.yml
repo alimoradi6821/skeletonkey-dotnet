@@ -53,3 +53,5 @@ items:
   href: 0028-use-docfx-and-madr-for-project-documentation.md
 - name: "ADR 0029: Export Sealed Standalone Workflow Applications"
   href: 0029-standalone-export-of-sealed-workflow-applications.md
+- name: "ADR 0030: Domain-Agnostic Automation Capability Foundation"
+  href: 0030-domain-agnostic-automation-capability-foundation.md
