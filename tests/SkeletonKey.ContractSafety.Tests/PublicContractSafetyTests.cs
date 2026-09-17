@@ -33,6 +33,13 @@ public sealed class PublicContractSafetyTests
         typeof(DefaultWorkflowExecutionPlanner).Assembly,
     ];
 
+    private static readonly Assembly[] _runtimeAssemblies =
+    [
+        typeof(IWorkflowRuntime).Assembly,
+        typeof(DefaultWorkflowRuntime).Assembly,
+        typeof(CoreStartHandler).Assembly,
+    ];
+
     private static readonly string[] _domainSpecificTerms =
     [
         "Instagram",
@@ -68,12 +75,14 @@ public sealed class PublicContractSafetyTests
     }
 
     /// <summary>
-    /// Verifies reusable core contracts remain capability-oriented instead of acquiring consumer/vendor-specific public concepts.
+    /// Verifies reusable core and default runtime surfaces remain capability-oriented instead of acquiring consumer/vendor-specific public concepts.
     /// </summary>
     [Fact]
     public void CorePublicContractsRemainDomainAgnostic()
     {
-        foreach (Assembly assembly in _contractAssemblies.Distinct())
+        Assembly[] reusableAssemblies = _contractAssemblies.Concat(_runtimeAssemblies).Distinct().ToArray();
+
+        foreach (Assembly assembly in reusableAssemblies)
         {
             foreach (Type type in assembly.ExportedTypes.Where(static exported => exported.Namespace?.StartsWith("SkeletonKey.", StringComparison.Ordinal) == true))
             {
@@ -89,7 +98,7 @@ public sealed class PublicContractSafetyTests
                     {
                         Assert.False(
                             symbol.Contains(term, StringComparison.OrdinalIgnoreCase),
-                            $"Reusable core contract symbol '{symbol}' contains domain/vendor-specific term '{term}'. Put product-specific integrations outside core contracts.");
+                            $"Reusable core/runtime symbol '{symbol}' contains domain/vendor-specific term '{term}'. Put product-specific integrations outside reusable runtime contracts.");
                     }
                 }
             }
@@ -131,13 +140,6 @@ public sealed class PublicContractSafetyTests
     [Fact]
     public void RuntimeProductionProjectsAvoidProhibitedDependencies()
     {
-        Assembly[] runtimeAssemblies =
-        [
-            typeof(IWorkflowRuntime).Assembly,
-            typeof(DefaultWorkflowRuntime).Assembly,
-            typeof(CoreStartHandler).Assembly,
-        ];
-
         string[] prohibited =
         [
             "Playwright",
@@ -163,7 +165,7 @@ public sealed class PublicContractSafetyTests
             "LegacyPython",
         ];
 
-        foreach (Assembly assembly in runtimeAssemblies)
+        foreach (Assembly assembly in _runtimeAssemblies)
         {
             string[] referenced = assembly.GetReferencedAssemblies().Select(static name => name.Name ?? string.Empty).ToArray();
             foreach (string term in prohibited)
@@ -172,7 +174,7 @@ public sealed class PublicContractSafetyTests
             }
         }
 
-        Type[] exported = runtimeAssemblies.SelectMany(static assembly => assembly.ExportedTypes).ToArray();
+        Type[] exported = _runtimeAssemblies.SelectMany(static assembly => assembly.ExportedTypes).ToArray();
         Assert.DoesNotContain(exported.SelectMany(PublicMembers), member => member.Name.Contains("Register", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(exported.SelectMany(PublicMembers), member => member.Name.Contains("ServiceProvider", StringComparison.OrdinalIgnoreCase));
     }
