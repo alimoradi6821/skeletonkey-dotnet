@@ -1,6 +1,8 @@
 items:
 - name: Specifications Overview
   href: index.md
+- name: "Automation Capability Roadmap 0.1"
+  href: automation-capability-roadmap-0.1.md
 - name: "Built-in Node Catalog 0.1"
   href: built-in-node-catalog-0.1.md
 - name: "Compatibility Policy 0.1"
