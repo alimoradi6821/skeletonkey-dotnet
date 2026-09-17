@@ -29,7 +29,7 @@ public sealed class SystemHttpTransport : IHttpTransport, IDisposable
         cancellationToken.ThrowIfCancellationRequested();
 
         using var timeout = new CancellationTokenSource(request.TimeoutMilliseconds);
-        using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
         try
         {
             using HttpRequestMessage message = new(new HttpMethod(request.Method), request.Uri);
