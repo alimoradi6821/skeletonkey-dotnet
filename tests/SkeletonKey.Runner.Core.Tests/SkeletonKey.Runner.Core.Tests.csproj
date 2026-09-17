@@ -29,6 +29,9 @@
     <ProjectReference Include="..\..\src\SkeletonKey.Runtime\SkeletonKey.Runtime.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Runner.Core\SkeletonKey.Runner.Core.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Runtime.Resources\SkeletonKey.Runtime.Resources.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.State.Abstractions\SkeletonKey.State.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.State.BuiltIns\SkeletonKey.State.BuiltIns.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.State.Sqlite\SkeletonKey.State.Sqlite.csproj" />
   </ItemGroup>
 
   <ItemGroup>
