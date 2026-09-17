@@ -77,8 +77,7 @@ public sealed class HttpTransportRequest
         foreach (KeyValuePair<string, string> header in headers ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase))
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(header.Key);
-            if (header.Key.Contains('\r', StringComparison.Ordinal) || header.Key.Contains('\n', StringComparison.Ordinal) ||
-                header.Value.Contains('\r', StringComparison.Ordinal) || header.Value.Contains('\n', StringComparison.Ordinal))
+            if (header.Key.Contains('\r') || header.Key.Contains('\n') || header.Value.Contains('\r') || header.Value.Contains('\n'))
             {
                 throw new ArgumentException("HTTP header names and values cannot contain CR or LF characters.", nameof(headers));
             }
@@ -103,7 +102,8 @@ public sealed class HttpTransportRequest
     public Uri Uri { get; }
 
     /// <summary>Gets a defensive read-only header map.</summary>
-    public IReadOnlyDictionary<string, string> Headers => new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(_headers, StringComparer.OrdinalIgnoreCase));
+    public IReadOnlyDictionary<string, string> Headers => new ReadOnlyDictionary<string, string>(
+        _headers.ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.OrdinalIgnoreCase));
 
     /// <summary>Gets the optional request body.</summary>
     public string? Body { get; }

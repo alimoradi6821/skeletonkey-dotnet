@@ -31,7 +31,7 @@ public static class HttpBuiltInWorkflowNodeCatalog
             parametersSchema: new JsonObject
             {
                 ["type"] = "object",
-                ["required"] = new JsonArray("url"),
+                ["required"] = new JsonArray(JsonValue.Create("url")),
             },
             inputs: new Dictionary<string, WorkflowPortDefinition>(StringComparer.Ordinal)
             {

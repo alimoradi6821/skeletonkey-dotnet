@@ -45,7 +45,7 @@ public sealed class Phase1HttpCapabilityTests
     {
         WorkflowNodeDefinition definition = Assert.Single(HttpBuiltInWorkflowNodeCatalog.Catalog.Definitions);
         Assert.Equal("http.request", definition.Type);
-        Assert.Equal(1, definition.TypeVersion);
+        Assert.Equal(1, definition.Version);
     }
 
     private static NodeExecutionIdentity Identity(string type)
