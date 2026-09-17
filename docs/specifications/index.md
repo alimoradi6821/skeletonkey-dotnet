@@ -13,6 +13,10 @@ For the GA 0.1.0 support boundary, start with:
 - [Web Page Resource 0.1](web-page-resource-0.1.md)
 - [Local Plugin Package 0.1](local-plugin-package-0.1.md)
 
+## Capability Roadmap
+
+- [Automation Capability Roadmap 0.1](automation-capability-roadmap-0.1.md) defines the staged path for generic HTTP I/O, durable state, host-lifetime resources, structured web operations, secrets, deterministic utilities, diagnostics, leases, and side-effect recovery without introducing consumer-domain concepts into SkeletonKey Core.
+
 ## Proposed Packaging Contracts
 
 - [Standalone Export 0.1](standalone-export-0.1.md) defines the scenario-specific sealed executable output mode. It is intentionally separate from the workflow schema and remains proposed until implementation verification is complete.
