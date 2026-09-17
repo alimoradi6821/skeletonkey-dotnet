@@ -3,6 +3,10 @@ items:
   href: index.md
 - name: "Automation Capability Roadmap 0.1"
   href: automation-capability-roadmap-0.1.md
+- name: "HTTP Request 0.1"
+  href: http-request-0.1.md
+- name: "Durable State 0.1"
+  href: durable-state-0.1.md
 - name: "Built-in Node Catalog 0.1"
   href: built-in-node-catalog-0.1.md
 - name: "Compatibility Policy 0.1"

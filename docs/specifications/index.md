@@ -17,6 +17,11 @@ For the GA 0.1.0 support boundary, start with:
 
 - [Automation Capability Roadmap 0.1](automation-capability-roadmap-0.1.md) defines the staged path for generic HTTP I/O, durable state, host-lifetime resources, structured web operations, secrets, deterministic utilities, diagnostics, leases, and side-effect recovery without introducing consumer-domain concepts into SkeletonKey Core.
 
+## Phase 1 Capability Contracts
+
+- [HTTP Request 0.1](http-request-0.1.md) defines provider-neutral bounded outbound HTTP I/O and the `http.request` node.
+- [Durable State 0.1](durable-state-0.1.md) defines cross-execution JSON state, workflow/host/custom scopes, atomic compare/exchange, and the local SQLite provider boundary.
+
 ## Proposed Packaging Contracts
 
 - [Standalone Export 0.1](standalone-export-0.1.md) defines the scenario-specific sealed executable output mode. It is intentionally separate from the workflow schema and remains proposed until implementation verification is complete.
