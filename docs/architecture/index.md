@@ -24,3 +24,5 @@ Then fill in the context, drivers, considered options, decision outcome, consequ
 ADR 0028 records the decision to use DocFX for the documentation site and the MADR-style template for future decisions.
 
 ADR 0029 records the accepted sealed standalone workflow application export decision: one normal SkeletonKey workflow plus host-owned execution settings are packaged into one scenario-specific executable without moving scheduling semantics into `WorkflowDocument`.
+
+ADR 0030 records the domain-agnostic automation capability foundation: external HTTP I/O, durable cross-execution state, host-lifetime resources, richer structured web operations, secrets, deterministic utilities, diagnostics, and side-effect recovery must be added as generic capability/provider boundaries rather than consumer-specific runtime concepts.
