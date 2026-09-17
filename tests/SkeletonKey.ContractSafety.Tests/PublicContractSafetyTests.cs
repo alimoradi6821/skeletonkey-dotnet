@@ -33,6 +33,16 @@ public sealed class PublicContractSafetyTests
         typeof(DefaultWorkflowExecutionPlanner).Assembly,
     ];
 
+    private static readonly string[] _domainSpecificTerms =
+    [
+        "Instagram",
+        "WhatsApp",
+        "Telegram",
+        "Facebook",
+        "OpenAI",
+        "Anthropic",
+    ];
+
     /// <summary>
     /// Verifies public contracts do not expose mutable collections, delegates, mutable runtimes, or host-specific types.
     /// </summary>
@@ -52,6 +62,35 @@ public sealed class PublicContractSafetyTests
                     }
 
                     Assert.False(IsProhibited(memberType), $"{type.FullName}.{member.Name} exposes prohibited type {memberType.FullName}.");
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Verifies reusable core contracts remain capability-oriented instead of acquiring consumer/vendor-specific public concepts.
+    /// </summary>
+    [Fact]
+    public void CorePublicContractsRemainDomainAgnostic()
+    {
+        foreach (Assembly assembly in _contractAssemblies.Distinct())
+        {
+            foreach (Type type in assembly.ExportedTypes.Where(static exported => exported.Namespace?.StartsWith("SkeletonKey.", StringComparison.Ordinal) == true))
+            {
+                IEnumerable<string> publicSymbols =
+                [
+                    type.FullName ?? type.Name,
+                    .. PublicMembers(type).Select(static member => member.Name),
+                ];
+
+                foreach (string symbol in publicSymbols)
+                {
+                    foreach (string term in _domainSpecificTerms)
+                    {
+                        Assert.False(
+                            symbol.Contains(term, StringComparison.OrdinalIgnoreCase),
+                            $"Reusable core contract symbol '{symbol}' contains domain/vendor-specific term '{term}'. Put product-specific integrations outside core contracts.");
+                    }
                 }
             }
         }
@@ -87,7 +126,7 @@ public sealed class PublicContractSafetyTests
     }
 
     /// <summary>
-    /// Verifies runtime production assemblies avoid browser, dependency-injection, plugin, transport, AI, and legacy dependencies.
+    /// Verifies runtime production assemblies avoid concrete transports/providers, browser/desktop engines, dependency-injection, plugins, AI, and consumer-domain dependencies.
     /// </summary>
     [Fact]
     public void RuntimeProductionProjectsAvoidProhibitedDependencies()
@@ -107,7 +146,16 @@ public sealed class PublicContractSafetyTests
             "FlaUI",
             "AspNetCore",
             "DependencyInjection",
+            "System.Net.Http",
+            "Microsoft.Data.Sqlite",
+            "Npgsql",
+            "StackExchange.Redis",
             "OpenAI",
+            "Anthropic",
+            "Instagram",
+            "WhatsApp",
+            "Telegram",
+            "Facebook",
             "Azure.AI",
             "Backend",
             "Transport",
