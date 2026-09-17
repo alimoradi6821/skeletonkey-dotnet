@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Http.HttpClient</AssemblyName>
+    <RootNamespace>SkeletonKey.Http.HttpClientProvider</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SkeletonKey.Http.Abstractions\SkeletonKey.Http.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

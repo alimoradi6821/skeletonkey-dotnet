@@ -21,6 +21,9 @@
     <ProjectReference Include="..\..\src\SkeletonKey.Desktop.FlaUI\SkeletonKey.Desktop.FlaUI.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Execution\SkeletonKey.Execution.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Handlers\SkeletonKey.Handlers.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Http.Abstractions\SkeletonKey.Http.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Http.BuiltIns\SkeletonKey.Http.BuiltIns.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Http.HttpClient\SkeletonKey.Http.HttpClient.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Locators.Runtime\SkeletonKey.Locators.Runtime.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Runtime\SkeletonKey.Runtime.csproj" />

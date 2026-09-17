@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SkeletonKey.Http.Abstractions</AssemblyName>
+    <RootNamespace>SkeletonKey.Http.Abstractions</RootNamespace>
+  </PropertyGroup>
+</Project>
