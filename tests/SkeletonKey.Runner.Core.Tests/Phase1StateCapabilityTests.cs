@@ -53,8 +53,8 @@ public sealed class Phase1StateCapabilityTests
                 store.CompareExchangeAsync(address, null, JsonValue.Create("b")).AsTask(),
             ];
             WorkflowStateCompareExchangeResult[] results = await Task.WhenAll(attempts);
-            Assert.Single(results.Where(static result => result.Succeeded));
-            Assert.Single(results.Where(static result => !result.Succeeded));
+            Assert.Single(results, static result => result.Succeeded);
+            Assert.Single(results, static result => !result.Succeeded);
         }
         finally
         {
