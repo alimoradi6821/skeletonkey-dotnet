@@ -6,11 +6,13 @@ using SkeletonKey.Catalog;
 using SkeletonKey.Evaluation;
 using SkeletonKey.Execution;
 using SkeletonKey.Handlers;
+using SkeletonKey.Http.Abstractions;
 using SkeletonKey.Materialization;
 using SkeletonKey.Planning;
 using SkeletonKey.Planning.Default;
 using SkeletonKey.Runtime;
 using SkeletonKey.Runtime.Default;
+using SkeletonKey.State.Abstractions;
 
 namespace SkeletonKey.ContractSafety.Tests;
 
@@ -31,6 +33,12 @@ public sealed class PublicContractSafetyTests
         typeof(IWorkflowRuntime).Assembly,
         typeof(DefaultWorkflowAnalyzer).Assembly,
         typeof(DefaultWorkflowExecutionPlanner).Assembly,
+    ];
+
+    private static readonly Assembly[] _phase1CapabilityContractAssemblies =
+    [
+        typeof(IHttpTransport).Assembly,
+        typeof(IWorkflowStateStore).Assembly,
     ];
 
     private static readonly Assembly[] _runtimeAssemblies =
@@ -74,13 +82,54 @@ public sealed class PublicContractSafetyTests
         }
     }
 
+    /// <summary>Verifies Phase 1 provider-neutral contracts do not reference or expose concrete HTTP/database provider types.</summary>
+    [Fact]
+    public void Phase1CapabilityContractsDoNotLeakConcreteProviders()
+    {
+        string[] prohibited =
+        [
+            "System.Net.Http",
+            "Microsoft.Data.Sqlite",
+            "SQLitePCLRaw",
+            "Npgsql",
+            "StackExchange.Redis",
+        ];
+
+        foreach (Assembly assembly in _phase1CapabilityContractAssemblies)
+        {
+            string[] referenced = assembly.GetReferencedAssemblies().Select(static reference => reference.Name ?? string.Empty).ToArray();
+            foreach (string term in prohibited)
+            {
+                Assert.DoesNotContain(referenced, reference => reference.Contains(term, StringComparison.OrdinalIgnoreCase));
+            }
+
+            foreach (Type type in assembly.ExportedTypes)
+            {
+                foreach (MemberInfo member in PublicMembers(type))
+                {
+                    Type? memberType = GetMemberType(member);
+                    if (memberType is null)
+                    {
+                        continue;
+                    }
+
+                    string identity = (memberType.FullName ?? string.Empty) + " " + (memberType.Assembly.GetName().Name ?? string.Empty);
+                    foreach (string term in prohibited)
+                    {
+                        Assert.DoesNotContain(term, identity, StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Verifies reusable core and default runtime surfaces remain capability-oriented instead of acquiring consumer/vendor-specific public concepts.
     /// </summary>
     [Fact]
     public void CorePublicContractsRemainDomainAgnostic()
     {
-        Assembly[] reusableAssemblies = _contractAssemblies.Concat(_runtimeAssemblies).Distinct().ToArray();
+        Assembly[] reusableAssemblies = _contractAssemblies.Concat(_phase1CapabilityContractAssemblies).Concat(_runtimeAssemblies).Distinct().ToArray();
 
         foreach (Assembly assembly in reusableAssemblies)
         {

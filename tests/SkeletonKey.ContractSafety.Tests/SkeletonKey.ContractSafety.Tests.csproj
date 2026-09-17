@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\SkeletonKey.Evaluation\SkeletonKey.Evaluation.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Execution\SkeletonKey.Execution.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Handlers\SkeletonKey.Handlers.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Http.Abstractions\SkeletonKey.Http.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Materialization\SkeletonKey.Materialization.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Planning\SkeletonKey.Planning.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Analysis.Default\SkeletonKey.Analysis.Default.csproj" />
@@ -35,5 +36,6 @@
     <ProjectReference Include="..\..\src\SkeletonKey.Runtime\SkeletonKey.Runtime.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Runtime.Default\SkeletonKey.Runtime.Default.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.BuiltIns.Runtime\SkeletonKey.BuiltIns.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.State.Abstractions\SkeletonKey.State.Abstractions.csproj" />
   </ItemGroup>
 </Project>
