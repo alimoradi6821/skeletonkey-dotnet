@@ -50,7 +50,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IDisposable
         try
         {
             await using SqliteConnection connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-            return await ReadEntryAsync(connection, null, address, cancellationToken).ConfigureAwait(false);
+            return await ReadEntryAsync(connection, address, cancellationToken).ConfigureAwait(false);
         }
         catch (SqliteException exception)
         {
@@ -118,36 +118,39 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(address);
         await EnsureInitializedAsync(cancellationToken).ConfigureAwait(false);
+        WorkflowStateEntry replacement = NewEntry(value);
         try
         {
             await using SqliteConnection connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-            using SqliteTransaction transaction = connection.BeginTransaction(deferred: false);
-            WorkflowStateEntry? current = await ReadEntryAsync(connection, transaction, address, cancellationToken).ConfigureAwait(false);
-            bool matches = expectedVersion is null
-                ? current is null
-                : current is not null && string.Equals(current.Version, expectedVersion, StringComparison.Ordinal);
-            if (!matches)
+            await using SqliteCommand command = connection.CreateCommand();
+            if (expectedVersion is null)
             {
-                transaction.Commit();
-                return new WorkflowStateCompareExchangeResult(false, current);
+                command.CommandText = """
+                    INSERT INTO skeletonkey_state_entries(scope, namespace, key, value_json, version, updated_utc)
+                    VALUES ($scope, $namespace, $key, $value, $version, $updated)
+                    ON CONFLICT(scope, namespace, key) DO NOTHING;
+                    """;
+            }
+            else
+            {
+                command.CommandText = """
+                    UPDATE skeletonkey_state_entries
+                    SET value_json = $value, version = $version, updated_utc = $updated
+                    WHERE scope = $scope AND namespace = $namespace AND key = $key AND version = $expectedVersion;
+                    """;
+                command.Parameters.AddWithValue("$expectedVersion", expectedVersion);
             }
 
-            WorkflowStateEntry replacement = NewEntry(value);
-            await using SqliteCommand command = connection.CreateCommand();
-            command.Transaction = transaction;
-            command.CommandText = current is null
-                ? "INSERT INTO skeletonkey_state_entries(scope, namespace, key, value_json, version, updated_utc) VALUES ($scope, $namespace, $key, $value, $version, $updated);"
-                : "UPDATE skeletonkey_state_entries SET value_json = $value, version = $version, updated_utc = $updated WHERE scope = $scope AND namespace = $namespace AND key = $key;";
             BindAddress(command, address);
             BindEntry(command, replacement);
             int changed = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            if (changed != 1)
+            if (changed == 1)
             {
-                throw new WorkflowStateStoreException(WorkflowStateErrorCodes.StoreFailure, "Durable state compare/exchange did not modify exactly one row.");
+                return new WorkflowStateCompareExchangeResult(true, replacement);
             }
 
-            transaction.Commit();
-            return new WorkflowStateCompareExchangeResult(true, replacement);
+            WorkflowStateEntry? observed = await ReadEntryAsync(connection, address, cancellationToken).ConfigureAwait(false);
+            return new WorkflowStateCompareExchangeResult(false, observed);
         }
         catch (SqliteException exception)
         {
@@ -237,12 +240,10 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IDisposable
 
     private static async ValueTask<WorkflowStateEntry?> ReadEntryAsync(
         SqliteConnection connection,
-        SqliteTransaction? transaction,
         WorkflowStateAddress address,
         CancellationToken cancellationToken)
     {
         await using SqliteCommand command = connection.CreateCommand();
-        command.Transaction = transaction;
         command.CommandText = "SELECT value_json, version, updated_utc FROM skeletonkey_state_entries WHERE scope = $scope AND namespace = $namespace AND key = $key;";
         BindAddress(command, address);
         await using SqliteDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
