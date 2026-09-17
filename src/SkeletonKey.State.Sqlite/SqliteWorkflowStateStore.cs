@@ -254,7 +254,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IDisposable
 
         string json = reader.GetString(0);
         string version = reader.GetString(1);
-        DateTimeOffset updated = DateTimeOffset.Parse(reader.GetString(2), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        var updated = DateTimeOffset.Parse(reader.GetString(2), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
         return new WorkflowStateEntry(JsonNode.Parse(json), version, updated);
     }
 

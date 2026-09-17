@@ -28,7 +28,7 @@ public sealed class SystemHttpTransport : IHttpTransport, IDisposable
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
 
-        using CancellationTokenSource timeout = new(request.TimeoutMilliseconds);
+        using var timeout = new CancellationTokenSource(request.TimeoutMilliseconds);
         using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
         try
         {
