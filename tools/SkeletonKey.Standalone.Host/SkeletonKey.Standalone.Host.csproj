@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SkeletonKey.Desktop.FlaUI\SkeletonKey.Desktop.FlaUI.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Runner.Core\SkeletonKey.Runner.Core.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Serialization.Json\SkeletonKey.Serialization.Json.csproj" />
   </ItemGroup>
 
   <ItemGroup>
