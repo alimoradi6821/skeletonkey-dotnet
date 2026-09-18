@@ -246,6 +246,12 @@ Requirements:
 
 # Phase 2 — Host-Lifetime Resources and Health
 
+## Implementation Status
+
+Phase 2 is implemented through the `host` resource lifetime, the provider-neutral host registry and health contracts, shared cross-execution lease coordination, checkpoint ownership separation, process-lifetime registry composition in the standalone host, and Playwright health/recycle integration.
+
+Verification includes fake-provider reuse/recycle tests, independent-runtime reuse, checkpoint exclusion, missing-registry failure, JSON/schema round-trip coverage, and an opt-in real Chromium persistent-profile smoke that verifies reuse and replacement after deliberate closure.
+
 ## Purpose
 
 Allow explicitly configured hosts to reuse resources such as a browser context or desktop session across multiple ordinary workflow executions without making those resources global workflow semantics.

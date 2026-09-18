@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\src\SkeletonKey.BuiltIns.Runtime\SkeletonKey.BuiltIns.Runtime.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Locators.Runtime\SkeletonKey.Locators.Runtime.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Runtime.Default\SkeletonKey.Runtime.Default.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Runtime.Resources\SkeletonKey.Runtime.Resources.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Web.BuiltIns\SkeletonKey.Web.BuiltIns.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Web.Playwright\SkeletonKey.Web.Playwright.csproj" />
   </ItemGroup>

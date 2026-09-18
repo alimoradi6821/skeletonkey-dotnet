@@ -19,14 +19,15 @@ Root properties use this canonical order:
 5. `description`
 6. `inputs`
 7. `variables`
-8. `nodes`
-9. `connections`
-10. `outputs`
-11. `designer`
+8. `resources`
+9. `nodes`
+10. `connections`
+11. `outputs`
+12. `designer`
 
 Required root properties are `$schema`, `specVersion`, `id`, `name`, `nodes`, and `connections`.
 
-Optional root properties are `description`, `inputs`, `variables`, `outputs`, and `designer`. Omitted `inputs`, `variables`, and `outputs` default to empty dictionaries. Explicit `null` for those collections is rejected.
+Optional root properties are `description`, `inputs`, `variables`, `resources`, `outputs`, and `designer`. Omitted `inputs`, `variables`, `resources`, and `outputs` default to empty dictionaries. Explicit `null` for those collections is rejected.
 
 ## Defaults
 
@@ -69,6 +70,14 @@ Each output definition uses a required `mode`:
 - `stream`: requires `channel`, where `channel` matches `^[a-z][a-z0-9.-]*$`.
 
 Optional `description` is allowed for every output mode. Single and collection outputs do not allow `channel`; stream outputs do not allow `from`.
+
+## Resources
+
+`resources` is an object keyed by workflow-local resource name. A resource definition uses canonical property order `kind`, `lifetime`, `access`, `required`, `capabilities`, `constraints`, and `description`.
+
+Resource lifetimes are `invocation`, `execution`, and `host`. The default remains `invocation`. Host lifetime expresses a host ownership requirement; it does not embed a schedule or live resource in the workflow document.
+
+Access modes are `exclusive` and `shared`.
 
 ## Nodes
 

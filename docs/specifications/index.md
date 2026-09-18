@@ -22,6 +22,10 @@ For the GA 0.1.0 support boundary, start with:
 - [HTTP Request 0.1](http-request-0.1.md) defines provider-neutral bounded outbound HTTP I/O and the `http.request` node.
 - [Durable State 0.1](durable-state-0.1.md) defines cross-execution JSON state, workflow/host/custom scopes, atomic compare/exchange, and the local SQLite provider boundary.
 
+## Phase 2 Resource Contract
+
+- [Host-Lifetime Resources and Health 0.1](host-lifetime-resources-0.1.md) defines host-owned resource reuse, health, recycle, cross-execution lease coordination, checkpoint separation, and Playwright health behavior.
+
 ## Proposed Packaging Contracts
 
 - [Standalone Export 0.1](standalone-export-0.1.md) defines the scenario-specific sealed executable output mode. It is intentionally separate from the workflow schema and remains proposed until implementation verification is complete.
