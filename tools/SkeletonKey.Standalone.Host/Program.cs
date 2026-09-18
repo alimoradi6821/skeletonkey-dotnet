@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using SkeletonKey.Desktop.FlaUI;
 using SkeletonKey.Runner.Core;
+using SkeletonKey.Runtime.Resources;
 using SkeletonKey.Serialization.Json;
 
 if (args.Length != 0)
@@ -20,6 +21,7 @@ ConsoleCancelEventHandler cancelHandler = (_, eventArgs) =>
 Console.CancelKeyPress += cancelHandler;
 
 string? workspace = null;
+WorkflowRuntimeHostResourceRegistry? hostResources = null;
 try
 {
     StandaloneEmbeddedPayload payload = await StandaloneEmbeddedPayload.MaterializeAsync(Assembly.GetExecutingAssembly(), shutdown.Token).ConfigureAwait(false);
@@ -27,6 +29,7 @@ try
     StandaloneExecutionSettings settings = StandaloneExecutionSettings.Parse(await File.ReadAllTextAsync(payload.SettingsPath, shutdown.Token).ConfigureAwait(false));
     string workflowIdentity = new WorkflowJsonSerializer().Deserialize(await File.ReadAllTextAsync(payload.WorkflowPath, shutdown.Token).ConfigureAwait(false)).Id;
     string stateDatabase = StandaloneStateDatabasePath(workflowIdentity);
+    hostResources = new WorkflowRuntimeHostResourceRegistry();
 
     DateTimeOffset startedAtUtc = DateTimeOffset.UtcNow;
     StandaloneScheduleCursor cursor = new(settings.Schedule, startedAtUtc);
@@ -53,7 +56,8 @@ try
             input,
             Console.Out,
             Console.Error,
-            [new FlaUiApplicationResourceProvider()]);
+            [new FlaUiApplicationResourceProvider()],
+            hostResources);
         return await runner.ExecuteAsync(runnerArgs, shutdown.Token).ConfigureAwait(false);
     }
 
@@ -131,6 +135,18 @@ catch (Exception exception)
 finally
 {
     Console.CancelKeyPress -= cancelHandler;
+    if (hostResources is not null)
+    {
+        try
+        {
+            await hostResources.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine("[standalone-host-resource-dispose-failed] " + exception.Message);
+        }
+    }
+
     if (workspace is not null)
     {
         try

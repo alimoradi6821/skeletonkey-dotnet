@@ -229,6 +229,7 @@ public sealed partial class WorkflowJsonSerializer
         return value switch
         {
             "execution" => WorkflowResourceLifetime.Execution,
+            "host" => WorkflowResourceLifetime.Host,
             "invocation" => WorkflowResourceLifetime.Invocation,
             _ => throw JsonExceptionFactory.Create($"Unknown workflow resource lifetime '{value}'.", path),
         };
@@ -239,6 +240,7 @@ public sealed partial class WorkflowJsonSerializer
         return value switch
         {
             WorkflowResourceLifetime.Execution => "execution",
+            WorkflowResourceLifetime.Host => "host",
             WorkflowResourceLifetime.Invocation => "invocation",
             _ => throw new InvalidOperationException($"Unknown workflow resource lifetime '{value}'."),
         };

@@ -60,6 +60,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
     private readonly WorkflowRuntimeOptions _options;
     private readonly IWorkflowRepository? _workflowRepository;
     private readonly IReadOnlyDictionary<string, IWorkflowRuntimeResourceProvider> _resourceProviders;
+    private readonly IWorkflowRuntimeHostResourceRegistry? _hostResourceRegistry;
     private readonly ILocatorPlanResolver? _locatorResolver;
     private readonly IWorkflowRuntimeDelay _delay;
 
@@ -94,6 +95,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
     /// <param name="resourceProviders">Optional explicit runtime resource providers keyed by kind.</param>
     /// <param name="locatorResolver">Optional explicit locator plan resolver used for `$locator` wrapper preparation.</param>
     /// <param name="delay">Optional host-supplied retry delay implementation.</param>
+    /// <param name="hostResourceRegistry">Optional host-owned registry used for resources declared with host lifetime.</param>
     public DefaultWorkflowRuntime(
         IWorkflowValidator validator,
         IWorkflowAnalyzer analyzer,
@@ -106,7 +108,8 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         IWorkflowRepository? workflowRepository = null,
         IReadOnlyList<IWorkflowRuntimeResourceProvider>? resourceProviders = null,
         ILocatorPlanResolver? locatorResolver = null,
-        IWorkflowRuntimeDelay? delay = null)
+        IWorkflowRuntimeDelay? delay = null,
+        IWorkflowRuntimeHostResourceRegistry? hostResourceRegistry = null)
     {
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         _analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
@@ -119,6 +122,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         _workflowRepository = workflowRepository;
         _resourceProviders = (resourceProviders ?? Array.AsReadOnly(Array.Empty<IWorkflowRuntimeResourceProvider>()))
             .ToDictionary(static provider => provider.Kind, StringComparer.Ordinal);
+        _hostResourceRegistry = hostResourceRegistry;
         _locatorResolver = locatorResolver;
         _delay = delay ?? SystemWorkflowRuntimeDelay.Instance;
     }
@@ -210,7 +214,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         }
 
         DefaultWorkflowExecutionSession session = new(request.ExecutionId, _clock);
-        ExecutionSession execution = new(request, invocationId, planning.Plan, analysis, _validator, _analyzer, _planner, _catalog, _clock, _options, _workflowRepository, _resourceProviders, _locatorResolver, _delay, session);
+        ExecutionSession execution = new(request, invocationId, planning.Plan, analysis, _validator, _analyzer, _planner, _catalog, _clock, _options, _workflowRepository, _resourceProviders, _hostResourceRegistry, _locatorResolver, _delay, session);
         session.Start(execution.ExecuteAsync(_handlerResolver, _parameterMaterializer, cancellationToken));
         return session;
     }
@@ -328,7 +332,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             return new WorkflowError(WorkflowCheckpointErrorCodes.InvalidCheckpoint, "A non-terminal resume requires a checkpoint store.");
         }
 
-        if (!checkpoint.IsTerminal && request.Workflow.Resources.Count > 0 &&
+        if (!checkpoint.IsTerminal && request.Workflow.Resources.Values.Any(static definition => definition.Lifetime != WorkflowResourceLifetime.Host) &&
             !string.Equals(checkpoint.FormatVersion, WorkflowExecutionCheckpoint.CurrentFormatVersion, StringComparison.Ordinal))
         {
             return new WorkflowError(WorkflowCheckpointErrorCodes.ResourceResumeNotSupported, "This checkpoint version does not contain reconstructable runtime resource state.");
@@ -347,6 +351,11 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                     !string.Equals(definition.Kind, resource.Kind, StringComparison.Ordinal))
                 {
                     return new WorkflowError(WorkflowCheckpointErrorCodes.InvalidCheckpoint, "A checkpoint resource does not match the workflow declaration.");
+                }
+
+                if (definition.Lifetime == WorkflowResourceLifetime.Host)
+                {
+                    return new WorkflowError(WorkflowCheckpointErrorCodes.InvalidCheckpoint, "Host-lifetime resources are owned by the host registry and must not be checkpoint-owned.");
                 }
 
                 if (!checkpoint.IsTerminal)
@@ -371,6 +380,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                     .Where(static item => (item.Step.Status is WorkflowStepRuntimeStatus.Succeeded or WorkflowStepRuntimeStatus.Failed) || item.Step.RetryAttempt > 0)
                     .SelectMany(static item => item.PlanStep.Resources)
                     .Select(static use => use.ResourceName)
+                    .Where(resourceName => !request.Workflow.Resources.TryGetValue(resourceName, out WorkflowResourceDefinition? definition) || definition.Lifetime != WorkflowResourceLifetime.Host)
                     .ToHashSet(StringComparer.Ordinal);
                 if (requiredResources.Any(resourceName => !checkpoint.Resources.Any(resource => string.Equals(resource.ResourceName, resourceName, StringComparison.Ordinal))))
                 {
@@ -612,10 +622,12 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         private readonly WorkflowRuntimeOptions _options;
         private readonly IWorkflowRepository? _workflowRepository;
         private readonly IReadOnlyDictionary<string, IWorkflowRuntimeResourceProvider> _resourceProviders;
+        private readonly IWorkflowRuntimeHostResourceRegistry? _hostResourceRegistry;
         private readonly ILocatorPlanResolver? _locatorResolver;
         private readonly IWorkflowRuntimeDelay _delay;
         private readonly DefaultWorkflowExecutionSession? _ownerSession;
         private readonly Dictionary<string, IWorkflowRuntimeResourceInstance> _resourcesByName = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _hostOwnedResourceNames = new(StringComparer.Ordinal);
         private readonly InMemoryExecutionStateStore _stateStore = new();
         private readonly Dictionary<string, StepState> _steps;
         private readonly Dictionary<string, WorkflowExecutionPlanStep> _stepsById;
@@ -654,6 +666,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             WorkflowRuntimeOptions options,
             IWorkflowRepository? workflowRepository,
             IReadOnlyDictionary<string, IWorkflowRuntimeResourceProvider> resourceProviders,
+            IWorkflowRuntimeHostResourceRegistry? hostResourceRegistry,
             ILocatorPlanResolver? locatorResolver,
             IWorkflowRuntimeDelay delay,
             DefaultWorkflowExecutionSession? ownerSession)
@@ -670,6 +683,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             _options = options;
             _workflowRepository = workflowRepository;
             _resourceProviders = resourceProviders;
+            _hostResourceRegistry = hostResourceRegistry;
             _locatorResolver = locatorResolver;
             _delay = delay;
             _ownerSession = ownerSession;
@@ -808,6 +822,11 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             List<Exception> errors = [];
             foreach (IWorkflowRuntimeResourceInstance resource in _resourcesByName.Values.Reverse())
             {
+                if (_hostOwnedResourceNames.Contains(resource.ResourceName))
+                {
+                    continue;
+                }
+
                 try
                 {
                     await resource.DisposeAsync().ConfigureAwait(false);
@@ -819,6 +838,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             }
 
             _resourcesByName.Clear();
+            _hostOwnedResourceNames.Clear();
             if (errors.Count > 0 && _terminalError is null)
             {
                 _terminalStatus = WorkflowExecutionStatus.Failed;
@@ -2130,11 +2150,47 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 if (!_resourcesByName.TryGetValue(use.ResourceName, out IWorkflowRuntimeResourceInstance? instance))
                 {
                     WorkflowRuntimeResourceRequest request = new(_request.ExecutionId, _invocationId, _request.Workflow.Id, use.ResourceName, definition);
-                    instance = await provider.CreateAsync(request, cancellationToken).ConfigureAwait(false);
+                    if (definition.Lifetime == WorkflowResourceLifetime.Host)
+                    {
+                        if (_hostResourceRegistry is null)
+                        {
+                            Fail(WorkflowRuntimeErrorCodes.RuntimeHostResourceRegistryUnavailable, "A host-lifetime runtime resource requires a host resource registry.", step.NodeId);
+                            continue;
+                        }
+
+                        try
+                        {
+                            instance = await _hostResourceRegistry.GetOrCreateAsync(request, provider, cancellationToken).ConfigureAwait(false);
+                            _hostOwnedResourceNames.Add(use.ResourceName);
+                        }
+                        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                        {
+                            throw;
+                        }
+                        catch
+                        {
+                            Fail(WorkflowRuntimeErrorCodes.RuntimeResourceProviderInvalid, "Host resource registry could not resolve a reusable runtime resource.", step.NodeId);
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        instance = await provider.CreateAsync(request, cancellationToken).ConfigureAwait(false);
+                    }
+
                     if (!string.Equals(instance.Kind, definition.Kind, StringComparison.Ordinal))
                     {
                         Fail(WorkflowRuntimeErrorCodes.RuntimeResourceProviderInvalid, "Runtime resource provider returned a resource with the wrong kind.", step.NodeId);
-                        await instance.DisposeAsync().ConfigureAwait(false);
+                        if (definition.Lifetime == WorkflowResourceLifetime.Host)
+                        {
+                            await _hostResourceRegistry!.RecycleAsync(_request.Workflow.Id, use.ResourceName, CancellationToken.None).ConfigureAwait(false);
+                            _hostOwnedResourceNames.Remove(use.ResourceName);
+                        }
+                        else
+                        {
+                            await instance.DisposeAsync().ConfigureAwait(false);
+                        }
+
                         continue;
                     }
 
@@ -2558,6 +2614,11 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             List<WorkflowCheckpointResource> resources = [];
             foreach (IWorkflowRuntimeResourceInstance instance in _resourcesByName.Values.OrderBy(static resource => resource.ResourceName, StringComparer.Ordinal))
             {
+                if (_hostOwnedResourceNames.Contains(instance.ResourceName))
+                {
+                    continue;
+                }
+
                 WorkflowRuntimeResourceCheckpointState? state = null;
                 if (instance is IWorkflowRuntimeResourceCheckpointParticipant participant)
                 {

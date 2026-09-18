@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using SkeletonKey.Execution;
 using SkeletonKey.Workflow.Resources;
 
@@ -9,6 +10,8 @@ namespace SkeletonKey.Runtime.Resources;
 /// </summary>
 public sealed class RuntimeNodeResourceAccessor : INodeResourceAccessor
 {
+    private static readonly ConditionalWeakTable<IWorkflowRuntimeResourceInstance, ResourceSlotState> _resourceStates = new();
+
     private readonly IReadOnlyDictionary<string, NodeResourceBinding> _bindingsBySlot;
     private readonly IReadOnlyDictionary<string, ResourceSlotState> _resourcesBySlot;
 
@@ -26,7 +29,7 @@ public sealed class RuntimeNodeResourceAccessor : INodeResourceAccessor
         {
             if (resourcesByName is not null && resourcesByName.TryGetValue(binding.WorkflowResourceName, out IWorkflowRuntimeResourceInstance? resource))
             {
-                resourcesBySlot[binding.SlotName] = new ResourceSlotState(resource);
+                resourcesBySlot[binding.SlotName] = _resourceStates.GetValue(resource, static instance => new ResourceSlotState(instance));
             }
         }
 

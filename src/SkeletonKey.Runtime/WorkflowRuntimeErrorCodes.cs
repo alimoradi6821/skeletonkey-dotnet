@@ -79,4 +79,7 @@ public static class WorkflowRuntimeErrorCodes
 
     /// <summary>Cross-workflow invocation dependency analysis failed before execution state was created.</summary>
     public const string WorkflowInvocationAnalysisFailed = "SKR1025";
+
+    /// <summary>A workflow requested host-lifetime resource reuse but no host registry was configured.</summary>
+    public const string RuntimeHostResourceRegistryUnavailable = "SKR1026";
 }

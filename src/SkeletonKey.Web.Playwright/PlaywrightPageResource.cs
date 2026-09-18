@@ -11,7 +11,7 @@ namespace SkeletonKey.Web.Playwright;
 /// <summary>
 /// Owns a Playwright page together with its internal browser, context, and Playwright lifetime.
 /// </summary>
-public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, IWorkflowRuntimeResourceCheckpointParticipant
+public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, IWorkflowRuntimeResourceCheckpointParticipant, IWorkflowRuntimeResourceHealthParticipant
 {
     private readonly IPlaywright _playwright;
     private readonly IBrowser? _browser;
@@ -132,6 +132,25 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
     public ValueTask<WorkflowRuntimeResourceCheckpointState?> CaptureCheckpointStateAsync(CancellationToken cancellationToken = default)
     {
         return _adapter.CaptureCheckpointStateAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<WorkflowRuntimeResourceHealthState> GetHealthAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (_disposed)
+        {
+            return WorkflowRuntimeResourceHealthState.Unrecoverable;
+        }
+
+        if (_browser is not null && !_browser.IsConnected)
+        {
+            return WorkflowRuntimeResourceHealthState.Disconnected;
+        }
+
+        return await _adapter.IsHealthyAsync(cancellationToken).ConfigureAwait(false)
+            ? WorkflowRuntimeResourceHealthState.Healthy
+            : WorkflowRuntimeResourceHealthState.Disconnected;
     }
 
     /// <inheritdoc />

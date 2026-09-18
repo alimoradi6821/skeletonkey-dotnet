@@ -79,6 +79,30 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
         }
     }
 
+    /// <summary>Checks whether the currently owned browser context still responds without creating replacement resources.</summary>
+    internal async ValueTask<bool> IsHealthyAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        try
+        {
+            if (_pages.Values.All(static page => page.IsClosed || page.Page.IsClosed))
+            {
+                return false;
+            }
+
+            _ = await _context.CookiesAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (PlaywrightException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>Captures reconstructable browser-context state at a runtime safe boundary.</summary>
     internal async ValueTask<WorkflowRuntimeResourceCheckpointState?> CaptureCheckpointStateAsync(CancellationToken cancellationToken)
     {

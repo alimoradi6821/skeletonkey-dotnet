@@ -163,6 +163,7 @@
         "lifetime": {
           "enum": [
             "execution",
+            "host",
             "invocation"
           ],
           "default": "invocation"

@@ -50,6 +50,7 @@ public sealed class SkeletonKeyRunner
     private readonly TextWriter _output;
     private readonly TextWriter _error;
     private readonly IReadOnlyList<IWorkflowRuntimeResourceProvider> _hostResourceProviders;
+    private readonly IWorkflowRuntimeHostResourceRegistry? _hostResourceRegistry;
     private RunnerOutputFormat _outputFormat;
     private bool _diagnostics;
 
@@ -58,12 +59,14 @@ public sealed class SkeletonKeyRunner
         TextReader input,
         TextWriter output,
         TextWriter error,
-        IReadOnlyList<IWorkflowRuntimeResourceProvider>? hostResourceProviders = null)
+        IReadOnlyList<IWorkflowRuntimeResourceProvider>? hostResourceProviders = null,
+        IWorkflowRuntimeHostResourceRegistry? hostResourceRegistry = null)
     {
         _input = input;
         _output = output;
         _error = error;
         _hostResourceProviders = Array.AsReadOnly([.. hostResourceProviders ?? []]);
+        _hostResourceRegistry = hostResourceRegistry;
     }
 
     /// <summary>Executes one command and returns a process-style exit code.</summary>
@@ -232,37 +235,52 @@ public sealed class SkeletonKeyRunner
         WorkflowNodeDefinitionCatalog catalog = Catalog(plugins);
         IReadOnlyList<INodeHandler> handlers = ComposeHandlers(plugins, httpTransport, stateStore, options.StateHostNamespace);
         IReadOnlyList<IWorkflowRuntimeResourceProvider> resourceProviders = ComposeResourceProviders(plugins);
-        DefaultWorkflowRuntime runtime = new(
-            new WorkflowSemanticValidator(),
-            new DefaultWorkflowAnalyzer(locatorResolver: locatorResolver),
-            new DefaultWorkflowExecutionPlanner(),
-            catalog,
-            new ImmutableNodeHandlerResolver(handlers),
-            new NodeParameterMaterializer(),
-            options: new WorkflowRuntimeOptions(maximumExecutedNodeAttempts: 1000),
-            workflowRepository: workflowRepository,
-            resourceProviders: resourceProviders,
-            locatorResolver: locatorResolver);
-
-        string executionId = options.ExecutionId ?? "execution";
-        string planId = ComputePlanId(workflow);
-        BufferedWorkflowEventSink? eventSink = options.OutputFormat == RunnerOutputFormat.Ndjson ? new BufferedWorkflowEventSink() : null;
-        WorkflowRuntimeResult result = await runtime.ExecuteAsync(new WorkflowExecutionRequest(
-            workflow,
-            executionId,
-            planId,
-            inputs,
-            eventSink: eventSink,
-            checkpointStore: checkpointStore,
-            resumeCheckpoint: resumeCheckpoint), cancellationToken).ConfigureAwait(false);
-        bool accepted = result.Result.Status == WorkflowExecutionStatus.Succeeded;
-        if (eventSink is not null)
+        IWorkflowRuntimeHostResourceRegistry hostResourceRegistry = _hostResourceRegistry ?? new WorkflowRuntimeHostResourceRegistry();
+        bool ownsHostResourceRegistry = _hostResourceRegistry is null;
+        WorkflowRuntimeResult result;
+        try
         {
-            foreach (WorkflowEvent workflowEvent in eventSink.Events)
+            DefaultWorkflowRuntime runtime = new(
+                new WorkflowSemanticValidator(),
+                new DefaultWorkflowAnalyzer(locatorResolver: locatorResolver),
+                new DefaultWorkflowExecutionPlanner(),
+                catalog,
+                new ImmutableNodeHandlerResolver(handlers),
+                new NodeParameterMaterializer(),
+                options: new WorkflowRuntimeOptions(maximumExecutedNodeAttempts: 1000),
+                workflowRepository: workflowRepository,
+                resourceProviders: resourceProviders,
+                locatorResolver: locatorResolver,
+                hostResourceRegistry: hostResourceRegistry);
+
+            string executionId = options.ExecutionId ?? "execution";
+            string planId = ComputePlanId(workflow);
+            BufferedWorkflowEventSink? eventSink = options.OutputFormat == RunnerOutputFormat.Ndjson ? new BufferedWorkflowEventSink() : null;
+            result = await runtime.ExecuteAsync(new WorkflowExecutionRequest(
+                workflow,
+                executionId,
+                planId,
+                inputs,
+                eventSink: eventSink,
+                checkpointStore: checkpointStore,
+                resumeCheckpoint: resumeCheckpoint), cancellationToken).ConfigureAwait(false);
+            if (eventSink is not null)
             {
-                await WriteNdjsonRecordAsync(new { type = "event", @event = workflowEvent }, cancellationToken).ConfigureAwait(false);
+                foreach (WorkflowEvent workflowEvent in eventSink.Events)
+                {
+                    await WriteNdjsonRecordAsync(new { type = "event", @event = workflowEvent }, cancellationToken).ConfigureAwait(false);
+                }
             }
         }
+        finally
+        {
+            if (ownsHostResourceRegistry)
+            {
+                await hostResourceRegistry.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+        bool accepted = result.Result.Status == WorkflowExecutionStatus.Succeeded;
         await WriteEnvelopeAsync(RunnerEnvelope.FromRuntime(command, accepted, result), cancellationToken).ConfigureAwait(false);
         return accepted ? RunnerExitCodes.Success : RunnerExitCodes.Failed;
     }
