@@ -14,6 +14,9 @@ using SkeletonKey.BuiltIns.Runtime;
 using SkeletonKey.Catalog;
 using SkeletonKey.Desktop.BuiltIns;
 using SkeletonKey.Handlers;
+using SkeletonKey.Http.Abstractions;
+using SkeletonKey.Http.BuiltIns;
+using SkeletonKey.Http.HttpClientProvider;
 using SkeletonKey.Locators;
 using SkeletonKey.Locators.Json;
 using SkeletonKey.Locators.Runtime;
@@ -27,6 +30,9 @@ using SkeletonKey.Runtime.Default;
 using SkeletonKey.Runtime.Invocation;
 using SkeletonKey.Runtime.Resources;
 using SkeletonKey.Serialization.Json;
+using SkeletonKey.State.Abstractions;
+using SkeletonKey.State.BuiltIns;
+using SkeletonKey.State.Sqlite;
 using SkeletonKey.Validation;
 using SkeletonKey.Web.BuiltIns;
 using SkeletonKey.Web.Playwright;
@@ -221,8 +227,10 @@ public sealed class SkeletonKeyRunner
         IReadOnlyDictionary<string, JsonNode?> inputs = await ReadInputsAsync(options, cancellationToken).ConfigureAwait(false);
         SkeletonKeyPluginLoadResult plugins = await LoadPluginsAsync(options, cancellationToken).ConfigureAwait(false);
         ILocatorPlanResolver? locatorResolver = await LoadLocatorResolverAsync(options, cancellationToken).ConfigureAwait(false);
+        using SystemHttpTransport httpTransport = new();
+        using SqliteWorkflowStateStore? stateStore = options.StateDatabase is null ? null : new SqliteWorkflowStateStore(options.StateDatabase);
         WorkflowNodeDefinitionCatalog catalog = Catalog(plugins);
-        IReadOnlyList<INodeHandler> handlers = ComposeHandlers(plugins);
+        IReadOnlyList<INodeHandler> handlers = ComposeHandlers(plugins, httpTransport, stateStore, options.StateHostNamespace);
         IReadOnlyList<IWorkflowRuntimeResourceProvider> resourceProviders = ComposeResourceProviders(plugins);
         DefaultWorkflowRuntime runtime = new(
             new WorkflowSemanticValidator(),
@@ -488,7 +496,7 @@ public sealed class SkeletonKeyRunner
     {
         try
         {
-            return new WorkflowNodeDefinitionCatalog([.. BuiltInWorkflowNodeCatalog.Catalog.Definitions, .. WebBuiltInWorkflowNodeCatalog.Catalog.Definitions, .. DesktopBuiltInWorkflowNodeCatalog.Catalog.Definitions, .. plugins.NodeDefinitions]);
+            return new WorkflowNodeDefinitionCatalog([.. BuiltInWorkflowNodeCatalog.Catalog.Definitions, .. HttpBuiltInWorkflowNodeCatalog.Catalog.Definitions, .. StateBuiltInWorkflowNodeCatalog.Catalog.Definitions, .. WebBuiltInWorkflowNodeCatalog.Catalog.Definitions, .. DesktopBuiltInWorkflowNodeCatalog.Catalog.Definitions, .. plugins.NodeDefinitions]);
         }
         catch (ArgumentException exception)
         {
@@ -496,9 +504,18 @@ public sealed class SkeletonKeyRunner
         }
     }
 
-    private static IReadOnlyList<INodeHandler> ComposeHandlers(SkeletonKeyPluginLoadResult plugins)
+    private static IReadOnlyList<INodeHandler> ComposeHandlers(
+        SkeletonKeyPluginLoadResult plugins,
+        IHttpTransport httpTransport,
+        IWorkflowStateStore? stateStore,
+        string stateHostNamespace)
     {
-        IReadOnlyList<INodeHandler> handlers = [.. BuiltInRuntimeHandlers.Create(), .. WebBuiltInRuntimeHandlers.Create(), .. DesktopBuiltInRuntimeHandlers.Create(), .. plugins.NodeHandlers];
+        ArgumentNullException.ThrowIfNull(httpTransport);
+        ArgumentException.ThrowIfNullOrWhiteSpace(stateHostNamespace);
+        IReadOnlyList<INodeHandler> stateHandlers = stateStore is null
+            ? Array.AsReadOnly(Array.Empty<INodeHandler>())
+            : StateBuiltInRuntimeHandlers.Create(stateStore, stateHostNamespace);
+        IReadOnlyList<INodeHandler> handlers = [.. BuiltInRuntimeHandlers.Create(), .. HttpBuiltInRuntimeHandlers.Create(httpTransport), .. stateHandlers, .. WebBuiltInRuntimeHandlers.Create(), .. DesktopBuiltInRuntimeHandlers.Create(), .. plugins.NodeHandlers];
         try
         {
             _ = new ImmutableNodeHandlerResolver(handlers);
@@ -529,8 +546,10 @@ public sealed class SkeletonKeyRunner
     private async ValueTask<int> PluginsAsync(RunnerOptions options, CancellationToken cancellationToken)
     {
         SkeletonKeyPluginLoadResult plugins = await LoadPluginsAsync(options, cancellationToken).ConfigureAwait(false);
+        using SystemHttpTransport httpTransport = new();
+        using SqliteWorkflowStateStore? stateStore = options.StateDatabase is null ? null : new SqliteWorkflowStateStore(options.StateDatabase);
         _ = Catalog(plugins);
-        _ = ComposeHandlers(plugins);
+        _ = ComposeHandlers(plugins, httpTransport, stateStore, options.StateHostNamespace);
         _ = ComposeResourceProviders(plugins);
         await WriteEnvelopeAsync(RunnerEnvelope.Success("plugins", new
         {
@@ -622,7 +641,7 @@ public sealed class SkeletonKeyRunner
 
     private async ValueTask WriteUsageAsync()
     {
-        await _output.WriteLineAsync("skeletonkey <version|plugins|validate|analyze|plan|run|resume|install-browsers> [--file <workflow.json>|-] [--workflow-directory <path>] [--locator-directory <path>] [--plugin-directory <path>] [--inputs <json>] [--inputs-file <inputs.json>] [--execution-id <id>] [--checkpoint-directory <path>] [--browser <name>] [--format <json|ndjson>] [--diagnostics]").ConfigureAwait(false);
+        await _output.WriteLineAsync("skeletonkey <version|plugins|validate|analyze|plan|run|resume|install-browsers> [--file <workflow.json>|-] [--workflow-directory <path>] [--locator-directory <path>] [--plugin-directory <path>] [--inputs <json>] [--inputs-file <inputs.json>] [--execution-id <id>] [--checkpoint-directory <path>] [--state-database <path>] [--state-host-namespace <name>] [--browser <name>] [--format <json|ndjson>] [--diagnostics]").ConfigureAwait(false);
     }
 
     private static bool IsHelp(string value)
@@ -668,6 +687,10 @@ internal sealed class RunnerOptions
 
     public string? CheckpointDirectory { get; private init; }
 
+    public string? StateDatabase { get; private init; }
+
+    public string StateHostNamespace { get; private init; } = "default";
+
     public string? Browser { get; private init; }
 
     public IReadOnlyList<string> PluginDirectories { get; private init; } = Array.AsReadOnly(Array.Empty<string>());
@@ -685,6 +708,8 @@ internal sealed class RunnerOptions
         string? inputsPath = null;
         string? executionId = null;
         string? checkpointDirectory = null;
+        string? stateDatabase = null;
+        string stateHostNamespace = "default";
         string? browser = null;
         List<string> pluginDirectories = [];
         RunnerOutputFormat outputFormat = RunnerOutputFormat.Json;
@@ -726,6 +751,17 @@ internal sealed class RunnerOptions
                     break;
                 case "--checkpoint-directory":
                     checkpointDirectory = Next();
+                    break;
+                case "--state-database":
+                    stateDatabase = Next();
+                    break;
+                case "--state-host-namespace":
+                    stateHostNamespace = Next();
+                    if (string.IsNullOrWhiteSpace(stateHostNamespace))
+                    {
+                        throw new RunnerUsageException("State host namespace cannot be empty.");
+                    }
+
                     break;
                 case "--browser":
                     browser = Next();
@@ -774,6 +810,8 @@ internal sealed class RunnerOptions
             InputsPath = inputsPath,
             ExecutionId = executionId,
             CheckpointDirectory = checkpointDirectory,
+            StateDatabase = stateDatabase,
+            StateHostNamespace = stateHostNamespace,
             Browser = browser,
             PluginDirectories = pluginDirectories.AsReadOnly(),
             OutputFormat = outputFormat,

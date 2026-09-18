@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using SkeletonKey.Desktop.FlaUI;
 using SkeletonKey.Runner.Core;
@@ -23,6 +24,7 @@ try
     StandaloneEmbeddedPayload payload = await StandaloneEmbeddedPayload.MaterializeAsync(Assembly.GetExecutingAssembly(), shutdown.Token).ConfigureAwait(false);
     workspace = payload.Workspace;
     StandaloneExecutionSettings settings = StandaloneExecutionSettings.Parse(await File.ReadAllTextAsync(payload.SettingsPath, shutdown.Token).ConfigureAwait(false));
+    string stateDatabase = StandaloneStateDatabasePath(payload.Manifest.PackageId);
 
     DateTimeOffset startedAtUtc = DateTimeOffset.UtcNow;
     StandaloneScheduleCursor cursor = new(settings.Schedule, startedAtUtc);
@@ -31,7 +33,7 @@ try
     async ValueTask<int> RunOccurrenceAsync()
     {
         string executionId = payload.Manifest.PackageId + ":" + Interlocked.Increment(ref sequence).ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + DateTimeOffset.UtcNow.ToString("yyyyMMddTHHmmssfffffffZ", System.Globalization.CultureInfo.InvariantCulture);
-        List<string> runnerArgs = ["run", "--file", payload.WorkflowPath, "--execution-id", executionId, "--format", "json"];
+        List<string> runnerArgs = ["run", "--file", payload.WorkflowPath, "--execution-id", executionId, "--format", "json", "--state-database", stateDatabase, "--state-host-namespace", payload.Manifest.PackageId];
         if (payload.LocatorDirectory is not null)
         {
             runnerArgs.Add("--locator-directory");
@@ -140,6 +142,20 @@ finally
         {
         }
     }
+}
+
+static string StandaloneStateDatabasePath(string packageId)
+{
+    string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    if (string.IsNullOrWhiteSpace(root))
+    {
+        root = AppContext.BaseDirectory;
+    }
+
+    string identity = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(packageId)));
+    string directory = Path.Combine(root, "SkeletonKey", "standalone", identity);
+    Directory.CreateDirectory(directory);
+    return Path.Combine(directory, "state.db");
 }
 
 internal sealed record StandaloneEmbeddedPayload(

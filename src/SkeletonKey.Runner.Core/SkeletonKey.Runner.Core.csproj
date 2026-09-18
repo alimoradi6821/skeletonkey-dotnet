@@ -11,6 +11,9 @@
     <ProjectReference Include="..\SkeletonKey.BuiltIns.Runtime\SkeletonKey.BuiltIns.Runtime.csproj" />
     <ProjectReference Include="..\SkeletonKey.Catalog.Validation\SkeletonKey.Catalog.Validation.csproj" />
     <ProjectReference Include="..\SkeletonKey.Desktop.BuiltIns\SkeletonKey.Desktop.BuiltIns.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Http.Abstractions\SkeletonKey.Http.Abstractions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Http.BuiltIns\SkeletonKey.Http.BuiltIns.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Http.HttpClient\SkeletonKey.Http.HttpClient.csproj" />
     <ProjectReference Include="..\SkeletonKey.Locators.Json\SkeletonKey.Locators.Json.csproj" />
     <ProjectReference Include="..\SkeletonKey.Locators.Runtime\SkeletonKey.Locators.Runtime.csproj" />
     <ProjectReference Include="..\SkeletonKey.Locators.Validation\SkeletonKey.Locators.Validation.csproj" />
@@ -19,6 +22,9 @@
     <ProjectReference Include="..\SkeletonKey.Runtime.Default\SkeletonKey.Runtime.Default.csproj" />
     <ProjectReference Include="..\SkeletonKey.Runtime.Invocation\SkeletonKey.Runtime.Invocation.csproj" />
     <ProjectReference Include="..\SkeletonKey.Serialization.Json\SkeletonKey.Serialization.Json.csproj" />
+    <ProjectReference Include="..\SkeletonKey.State.Abstractions\SkeletonKey.State.Abstractions.csproj" />
+    <ProjectReference Include="..\SkeletonKey.State.BuiltIns\SkeletonKey.State.BuiltIns.csproj" />
+    <ProjectReference Include="..\SkeletonKey.State.Sqlite\SkeletonKey.State.Sqlite.csproj" />
     <ProjectReference Include="..\SkeletonKey.Validation\SkeletonKey.Validation.csproj" />
     <ProjectReference Include="..\SkeletonKey.Web.BuiltIns\SkeletonKey.Web.BuiltIns.csproj" />
     <ProjectReference Include="..\SkeletonKey.Web.Playwright\SkeletonKey.Web.Playwright.csproj" />
