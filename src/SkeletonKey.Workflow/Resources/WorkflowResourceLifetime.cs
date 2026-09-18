@@ -11,12 +11,12 @@ public enum WorkflowResourceLifetime
     Execution,
 
     /// <summary>
-    /// A resolved resource belongs to the owning host and may be reused across independent workflow executions.
-    /// </summary>
-    Host,
-
-    /// <summary>
     /// A resolved resource belongs to one workflow invocation and is not inherited by child workflows.
     /// </summary>
     Invocation,
+
+    /// <summary>
+    /// A resolved resource belongs to the owning host and may be reused across independent workflow executions.
+    /// </summary>
+    Host,
 }
