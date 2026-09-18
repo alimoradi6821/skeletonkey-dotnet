@@ -178,4 +178,25 @@ public sealed class ResourceLocatorInteractionSerializationTests
             currentIndex = nextIndex;
         }
     }
+
+
+    /// <summary>Verifies host lifetime round-trips through the 0.1 workflow JSON contract.</summary>
+    [Fact]
+    public void RoundTripsHostResourceLifetime()
+    {
+        WorkflowDocument workflow = Workflow(resources: new Dictionary<string, WorkflowResourceDefinition>
+        {
+            ["browser"] = new WorkflowResourceDefinition(
+                StandardWorkflowResourceKinds.WebBrowser,
+                WorkflowResourceLifetime.Host,
+                WorkflowResourceAccessMode.Exclusive),
+        });
+
+        string json = RoundTrip(workflow);
+        WorkflowDocument parsed = _serializer.Deserialize(json);
+
+        Assert.Contains("\"lifetime\": \"host\"", json, StringComparison.Ordinal);
+        Assert.Equal(WorkflowResourceLifetime.Host, parsed.Resources["browser"].Lifetime);
+    }
+
 }

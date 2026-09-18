@@ -65,4 +65,29 @@ public sealed class ResourceAccessorTests
 
         Assert.True(disposed);
     }
+
+
+    /// <summary>Verifies exclusive access is coordinated across separate accessors over the same runtime instance.</summary>
+    [Fact]
+    public async Task ExclusiveLeaseIsSharedAcrossAccessors()
+    {
+        WorkflowRuntimeResourceInstance resource = new("resource", "demo.resource", "instance", WorkflowResourceAccessMode.Exclusive);
+        IReadOnlyDictionary<string, IWorkflowRuntimeResourceInstance> resources = new Dictionary<string, IWorkflowRuntimeResourceInstance>(StringComparer.Ordinal)
+        {
+            ["resource"] = resource,
+        };
+        NodeResourceBinding binding = new("slot", "resource", "demo.resource", WorkflowResourceAccessMode.Exclusive);
+        RuntimeNodeResourceAccessor firstAccessor = new([binding], resources);
+        RuntimeNodeResourceAccessor secondAccessor = new([binding], resources);
+
+        INodeResourceLease first = await firstAccessor.AcquireAsync("slot");
+        Task<INodeResourceLease> pending = secondAccessor.AcquireAsync("slot").AsTask();
+        await Task.Delay(50);
+
+        Assert.False(pending.IsCompleted);
+        await first.DisposeAsync();
+        await using INodeResourceLease second = await pending.WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.Equal("instance", second.Resource.InstanceId);
+    }
+
 }
