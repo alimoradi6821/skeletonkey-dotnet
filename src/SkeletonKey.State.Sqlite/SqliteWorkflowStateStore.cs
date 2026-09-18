@@ -35,7 +35,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IDisposable
             DataSource = fullPath,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared,
-            Pooling = true,
+            Pooling = false,
             DefaultTimeout = busyTimeoutSeconds,
         };
         _connectionString = builder.ToString();
