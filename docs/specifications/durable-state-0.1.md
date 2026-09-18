@@ -2,7 +2,7 @@
 
 ## Status
 
-Preview implementation contract for the Phase 1 cross-execution durable state capability defined by ADR 0030.
+Implemented Phase 1 contract for the cross-execution durable state capability defined by ADR 0030.
 
 ## Purpose
 
@@ -167,3 +167,24 @@ IReadOnlyList<WorkflowNodeDefinition> definitions = StateBuiltInWorkflowNodeCata
 ```
 
 The consuming host owns the state-store lifetime and storage path.
+
+## Default Runner Integration
+
+The default runner catalog always recognizes the `state.*` definitions. A concrete SQLite store is composed for execution when the host supplies:
+
+```text
+--state-database <path>
+--state-host-namespace <name>
+```
+
+`--state-host-namespace` defaults to `default` for direct runner use. The database path is host configuration and is never serialized into `WorkflowDocument`.
+
+The standalone host provisions the state database automatically under the current user's local application-data directory:
+
+```text
+SkeletonKey/standalone/<sha256(workflow-id)>/state.db
+```
+
+The workflow identifier, rather than the content-addressed standalone package identifier, is used as the persistence identity. Re-exporting or upgrading the same logical workflow therefore continues to observe its prior durable state. The standalone host also uses the workflow identifier as its host-state namespace.
+
+SQLite connection pooling is disabled by this provider so disposing the store releases its local database file deterministically on Windows. This does not change WAL or compare/exchange semantics.

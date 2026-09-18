@@ -75,6 +75,23 @@ Freeze the architectural boundaries before introducing new capability packages.
 
 # Phase 1 — External HTTP I/O and Durable State
 
+## Implementation Status
+
+Phase 1 is implemented through provider-neutral HTTP and durable-state contracts, built-in node catalogs/handlers, the concrete `SystemHttpTransport` and SQLite providers, default Runner composition, standalone durable-state provisioning, and architecture guardrails.
+
+Verification coverage is intentionally concentrated at both capability and host-composition boundaries:
+
+- HTTP handler serialization and catalog coverage;
+- concrete local HTTP round-trip and cancellation coverage;
+- a real Runner workflow that POSTs JSON, binds the parsed response into durable state, and verifies sensitive response-header redaction;
+- SQLite persistence across independent provider instances;
+- atomic create-if-absent compare/exchange under concurrency;
+- stale-version replacement protection after delete/recreate;
+- workflow-scope persistence across independent executions;
+- contract-safety checks preventing concrete HTTP/SQLite types from leaking into capability abstractions.
+
+The Phase 1 implementation does not add application-, social-network-, AI-provider-, or business-domain concepts to reusable SkeletonKey contracts.
+
 ## 1.1 HTTP Capability
 
 ### Proposed Projects

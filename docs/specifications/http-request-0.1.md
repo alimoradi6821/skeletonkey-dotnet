@@ -2,7 +2,7 @@
 
 ## Status
 
-Preview implementation contract for the Phase 1 generic HTTP capability defined by ADR 0030.
+Implemented Phase 1 contract for the generic HTTP capability defined by ADR 0030.
 
 ## Purpose
 
@@ -92,3 +92,9 @@ IReadOnlyList<WorkflowNodeDefinition> definitions = HttpBuiltInWorkflowNodeCatal
 ```
 
 The host remains responsible for the transport lifetime.
+
+## Default Runner Integration
+
+The default runner catalog includes `http.request` and composes one `SystemHttpTransport` for each runner execution boundary. The transport is disposed after the command completes. Consumers that embed lower-level runtime packages may still provide their own `IHttpTransport` implementation.
+
+The standalone host inherits this runner composition automatically; no workflow-specific HTTP provider configuration is required.
