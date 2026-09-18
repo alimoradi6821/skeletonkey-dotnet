@@ -84,7 +84,7 @@ public sealed class WebStructuredBuiltInHandlerTests
     [Fact]
     public void ExtractCollectionCatalogDeclaresBoundedFieldSlots()
     {
-        var definition = WebBuiltInWorkflowNodeCatalog.Document.Definitions.Single(static item => item.Type == "web.extractCollection");
+        WorkflowNodeDefinition definition = WebBuiltInWorkflowNodeCatalog.Document.Definitions.Single(static item => item.Type == "web.extractCollection");
 
         Assert.True(definition.Locators.ContainsKey("target"));
         for (int index = 1; index <= 16; index++)
