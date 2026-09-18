@@ -8,7 +8,7 @@ namespace SkeletonKey.State.Sqlite;
 /// <summary>Implements durable cross-execution workflow state with a local SQLite database.</summary>
 public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IDisposable
 {
-    private const int SchemaVersion = 1;
+    private const int _schemaVersion = 1;
     private readonly string _connectionString;
     private readonly SemaphoreSlim _initializationGate = new(1, 1);
     private bool _initialized;
@@ -191,7 +191,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IDisposable
             versionCommand.CommandText = "PRAGMA user_version;";
             object? result = await versionCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
             int version = Convert.ToInt32(result, CultureInfo.InvariantCulture);
-            if (version > SchemaVersion)
+            if (version > _schemaVersion)
             {
                 throw new WorkflowStateStoreException(WorkflowStateErrorCodes.UnsupportedSchema, "Durable state database schema is newer than this SkeletonKey provider supports.");
             }

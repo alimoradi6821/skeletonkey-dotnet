@@ -42,7 +42,7 @@ public sealed class HttpCapabilityException : Exception
 /// <summary>Represents one bounded provider-neutral HTTP request.</summary>
 public sealed class HttpTransportRequest
 {
-    private const int MaximumAllowedResponseBytes = 16 * 1024 * 1024;
+    private const int _maximumAllowedResponseBytes = 16 * 1024 * 1024;
     private readonly IReadOnlyDictionary<string, string> _headers;
 
     /// <summary>Initializes an HTTP request.</summary>
@@ -68,7 +68,7 @@ public sealed class HttpTransportRequest
             throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), timeoutMilliseconds, "HTTP timeout must be between 1 and 300000 milliseconds.");
         }
 
-        if (maximumResponseBytes is < 1 or > MaximumAllowedResponseBytes)
+        if (maximumResponseBytes is < 1 or > _maximumAllowedResponseBytes)
         {
             throw new ArgumentOutOfRangeException(nameof(maximumResponseBytes), maximumResponseBytes, "Maximum response bytes must be between 1 and 16777216.");
         }
