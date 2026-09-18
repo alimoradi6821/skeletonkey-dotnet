@@ -86,7 +86,7 @@ public sealed class WebCollectionItem
     public WebCollectionItem(IReadOnlyDictionary<string, string?> fields)
     {
         ArgumentNullException.ThrowIfNull(fields);
-        Fields = new ReadOnlyDictionary<string, string?>(new Dictionary<string, string?>(fields, StringComparer.Ordinal));
+        Fields = new ReadOnlyDictionary<string, string?>(fields.ToDictionary(static pair => pair.Key, static pair => pair.Value, StringComparer.Ordinal));
     }
 
     /// <summary>Gets extracted field values by field name.</summary>

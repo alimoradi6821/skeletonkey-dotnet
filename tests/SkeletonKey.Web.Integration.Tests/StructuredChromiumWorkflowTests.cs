@@ -133,19 +133,19 @@ public sealed class StructuredChromiumWorkflowTests
 
         await adapter.FillAsync(box, new WebFillRequest("A"));
         string afterFill = Assert.Single(await adapter.GetTextAsync(log))!;
-        Assert.DoesNotContain("keydown:A", afterFill, StringComparison.Ordinal);
+        Assert.False(afterFill.Contains("keydown:A", StringComparison.Ordinal));
 
         await adapter.ClearAsync(box, new WebElementActionRequest());
         await adapter.TypeAsync(box, new WebTypeRequest("BC"));
         string afterType = Assert.Single(await adapter.GetTextAsync(log))!;
-        Assert.Contains("keydown:B", afterType, StringComparison.Ordinal);
-        Assert.Contains("keydown:C", afterType, StringComparison.Ordinal);
+        Assert.True(afterType.Contains("keydown:B", StringComparison.Ordinal));
+        Assert.True(afterType.Contains("keydown:C", StringComparison.Ordinal));
 
         await adapter.ClearAsync(box, new WebElementActionRequest());
         await adapter.FocusAsync(box, new WebElementActionRequest());
         await adapter.InsertTextAsync(box, new WebInsertTextRequest("D"));
         string afterInsert = Assert.Single(await adapter.GetTextAsync(log))!;
-        Assert.DoesNotContain("keydown:D", afterInsert, StringComparison.Ordinal);
+        Assert.False(afterInsert.Contains("keydown:D", StringComparison.Ordinal));
 
         await adapter.ClickAsync(asyncButton, new WebClickRequest());
         WebWaitConditionResult wait = await adapter.WaitForConditionAsync(box, new WebWaitForConditionRequest(
