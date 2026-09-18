@@ -44,12 +44,20 @@ public static class WebBuiltInWorkflowNodeCatalog
             Definition("web.importStorageState", outputs: DataOutput("context"), capabilities: [StandardWorkflowResourceCapabilities.WebNavigation]),
             Definition("web.waitForUrl", capabilities: [StandardWorkflowResourceCapabilities.WebNavigation]),
             Definition("web.waitForLoadState", capabilities: [StandardWorkflowResourceCapabilities.WebNavigation]),
+            Definition("web.extractCollection", locatorRequired: true, locatorUsage: LocatorUsageMode.Collection, outputs: CollectionExtractionOutputs(), capabilities: [StandardWorkflowResourceCapabilities.WebLocators, StandardWorkflowResourceCapabilities.WebText, StandardWorkflowResourceCapabilities.WebAttributes, StandardWorkflowResourceCapabilities.WebForms], additionalLocators: CollectionFieldLocators()),
+            Definition("web.scroll", locatorRequired: false, outputs: DataOutput("result"), capabilities: [StandardWorkflowResourceCapabilities.WebActions, StandardWorkflowResourceCapabilities.WebLocators]),
+            Definition("web.scrollIntoView", locatorRequired: true, capabilities: [StandardWorkflowResourceCapabilities.WebActions, StandardWorkflowResourceCapabilities.WebLocators]),
+            Definition("web.type", locatorRequired: true, capabilities: [StandardWorkflowResourceCapabilities.WebForms, StandardWorkflowResourceCapabilities.WebLocators]),
+            Definition("web.insertText", locatorRequired: true, capabilities: [StandardWorkflowResourceCapabilities.WebForms, StandardWorkflowResourceCapabilities.WebLocators]),
+            Definition("web.clear", locatorRequired: true, capabilities: [StandardWorkflowResourceCapabilities.WebForms, StandardWorkflowResourceCapabilities.WebLocators]),
+            Definition("web.focus", locatorRequired: true, capabilities: [StandardWorkflowResourceCapabilities.WebForms, StandardWorkflowResourceCapabilities.WebLocators]),
+            Definition("web.waitForCondition", locatorRequired: true, locatorUsage: LocatorUsageMode.Collection, outputs: DataOutput("result"), capabilities: [StandardWorkflowResourceCapabilities.WebLocators, StandardWorkflowResourceCapabilities.WebText, StandardWorkflowResourceCapabilities.WebAttributes, StandardWorkflowResourceCapabilities.WebForms]),
         ]);
 
     /// <summary>Gets the immutable web built-in catalog lookup.</summary>
     public static WorkflowNodeDefinitionCatalog Catalog { get; } = new(Document.Definitions);
 
-    private static WorkflowNodeDefinition Definition(string type, bool locatorRequired = false, LocatorUsageMode locatorUsage = LocatorUsageMode.Single, IReadOnlyDictionary<string, WorkflowPortDefinition>? outputs = null, IReadOnlyList<string>? capabilities = null)
+    private static WorkflowNodeDefinition Definition(string type, bool locatorRequired = false, LocatorUsageMode locatorUsage = LocatorUsageMode.Single, IReadOnlyDictionary<string, WorkflowPortDefinition>? outputs = null, IReadOnlyList<string>? capabilities = null, IReadOnlyDictionary<string, NodeLocatorSlotDefinition>? additionalLocators = null)
     {
         Dictionary<string, WorkflowPortDefinition> allOutputs = new(StringComparer.Ordinal)
         {
@@ -75,6 +83,14 @@ public static class WebBuiltInWorkflowNodeCatalog
             {
                 string name = "frame" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 locators[name] = new(name, "/" + name, required: false, LocatorUsageMode.Single, [LocatorCardinality.One], "Optional frame locator.");
+            }
+        }
+
+        if (additionalLocators is not null)
+        {
+            foreach (KeyValuePair<string, NodeLocatorSlotDefinition> item in additionalLocators)
+            {
+                locators.Add(item.Key, item.Value);
             }
         }
 
@@ -113,6 +129,28 @@ public static class WebBuiltInWorkflowNodeCatalog
             StringComparer.Ordinal);
     }
 
+    private static IReadOnlyDictionary<string, WorkflowPortDefinition> CollectionExtractionOutputs()
+    {
+        return new Dictionary<string, WorkflowPortDefinition>(StringComparer.Ordinal)
+        {
+            ["items"] = new("items", WorkflowPortDirection.Output, allowsMultiple: true, roles: ["data"]),
+            ["totalMatchedCount"] = new("totalMatchedCount", WorkflowPortDirection.Output, roles: ["data"]),
+            ["truncated"] = new("truncated", WorkflowPortDirection.Output, roles: ["data"]),
+        };
+    }
+
+    private static IReadOnlyDictionary<string, NodeLocatorSlotDefinition> CollectionFieldLocators()
+    {
+        Dictionary<string, NodeLocatorSlotDefinition> result = new(StringComparer.Ordinal);
+        for (int index = 0; index < 16; index++)
+        {
+            string name = "field" + (index + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            result[name] = new(name, "/fields/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/locator", required: false, LocatorUsageMode.Single, Accepted(LocatorUsageMode.Single), "Field locator resolved relative to the current collection item.");
+        }
+
+        return result;
+    }
+
     private static IReadOnlyList<LocatorCardinality> Accepted(LocatorUsageMode usage)
     {
         return usage == LocatorUsageMode.Single
@@ -123,7 +161,8 @@ public static class WebBuiltInWorkflowNodeCatalog
     private static bool SupportsFrameSlots(string type)
     {
         return type is "web.click" or "web.fill" or "web.press" or "web.selectOption" or "web.setChecked" or "web.wait" or "web.getText" or "web.getAttribute" or "web.getCount" or "web.screenshot" or
-            "web.uploadFiles" or "web.clickAndWaitForDownload" or "web.clickAndWaitForPopup" or "web.clickAndWaitForDialog";
+            "web.uploadFiles" or "web.clickAndWaitForDownload" or "web.clickAndWaitForPopup" or "web.clickAndWaitForDialog" or "web.extractCollection" or "web.scroll" or "web.scrollIntoView" or
+            "web.type" or "web.insertText" or "web.clear" or "web.focus" or "web.waitForCondition";
     }
 
     private static JsonObject Resource(string name)

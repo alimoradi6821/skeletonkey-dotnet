@@ -96,6 +96,12 @@ public abstract class WebHandlerBase(string type) : INodeHandler
         return parameters[name] is JsonValue value && value.GetValueKind() == JsonValueKind.Number ? value.GetValue<int>() : fallback;
     }
 
+    /// <summary>Reads an optional floating-point parameter.</summary>
+    protected static double OptionalDouble(JsonObject parameters, string name, double fallback)
+    {
+        return parameters[name] is JsonValue value && value.GetValueKind() == JsonValueKind.Number ? value.GetValue<double>() : fallback;
+    }
+
     /// <summary>Reads an optional nullable integer parameter.</summary>
     protected static int? OptionalNullableInt(JsonObject parameters, string name)
     {

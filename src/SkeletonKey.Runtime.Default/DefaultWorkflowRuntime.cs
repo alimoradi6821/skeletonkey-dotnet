@@ -2213,15 +2213,39 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             for (int index = 0; index < segments.Length - 1; index++)
             {
                 string segment = Unescape(segments[index]);
-                if (current is not JsonObject currentObject || !currentObject.TryGetPropertyValue(segment, out current))
+                if (current is JsonObject currentObject)
                 {
-                    return;
+                    if (!currentObject.TryGetPropertyValue(segment, out current))
+                    {
+                        return;
+                    }
+
+                    continue;
                 }
+
+                if (current is JsonArray currentArray &&
+                    int.TryParse(segment, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int arrayIndex) &&
+                    arrayIndex >= 0 &&
+                    arrayIndex < currentArray.Count)
+                {
+                    current = currentArray[arrayIndex];
+                    continue;
+                }
+
+                return;
             }
 
+            string finalSegment = Unescape(segments[^1]);
             if (current is JsonObject parent)
             {
-                parent.Remove(Unescape(segments[^1]));
+                parent.Remove(finalSegment);
+            }
+            else if (current is JsonArray parentArray &&
+                int.TryParse(finalSegment, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int finalIndex) &&
+                finalIndex >= 0 &&
+                finalIndex < parentArray.Count)
+            {
+                parentArray.RemoveAt(finalIndex);
             }
         }
 

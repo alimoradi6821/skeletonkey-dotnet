@@ -39,6 +39,14 @@ public static class WebBuiltInRuntimeHandlers
             new WebImportStorageStateHandler(),
             new WebWaitForUrlHandler(),
             new WebWaitForLoadStateHandler(),
+            new WebExtractCollectionHandler(),
+            new WebScrollHandler(),
+            new WebScrollIntoViewHandler(),
+            new WebTypeHandler(),
+            new WebInsertTextHandler(),
+            new WebClearHandler(),
+            new WebFocusHandler(),
+            new WebWaitForConditionHandler(),
         ]);
     }
 }

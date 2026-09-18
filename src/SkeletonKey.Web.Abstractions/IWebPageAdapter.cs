@@ -41,6 +41,30 @@ public interface IWebPageAdapter
     /// <summary>Captures a page or target screenshot.</summary>
     public ValueTask<WebScreenshotResult> ScreenshotAsync(ResolvedLocatorPlan? locator, WebScreenshotRequest request, CancellationToken cancellationToken = default);
 
+    /// <summary>Extracts bounded structured fields relative to each matched parent item.</summary>
+    public ValueTask<WebCollectionExtractionResult> ExtractCollectionAsync(ResolvedLocatorPlan items, IReadOnlyList<WebCollectionFieldDefinition> fields, WebCollectionExtractionRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException("Structured collection extraction is unavailable.");
+
+    /// <summary>Scrolls the page or one target and returns observable scroll metrics.</summary>
+    public ValueTask<WebScrollResult> ScrollAsync(ResolvedLocatorPlan? locator, WebScrollRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException("Structured scrolling is unavailable.");
+
+    /// <summary>Scrolls one target into view.</summary>
+    public ValueTask ScrollIntoViewAsync(ResolvedLocatorPlan locator, WebElementActionRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException("Scroll-into-view is unavailable.");
+
+    /// <summary>Types text key-by-key with keyboard events.</summary>
+    public ValueTask TypeAsync(ResolvedLocatorPlan locator, WebTypeRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException("Sequential typing is unavailable.");
+
+    /// <summary>Inserts text directly after focusing the target.</summary>
+    public ValueTask InsertTextAsync(ResolvedLocatorPlan locator, WebInsertTextRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException("Text insertion is unavailable.");
+
+    /// <summary>Clears one target using provider-native clear semantics.</summary>
+    public ValueTask ClearAsync(ResolvedLocatorPlan locator, WebElementActionRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException("Clear is unavailable.");
+
+    /// <summary>Focuses one target.</summary>
+    public ValueTask FocusAsync(ResolvedLocatorPlan locator, WebElementActionRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException("Focus is unavailable.");
+
+    /// <summary>Waits for a bounded observable condition without exposing provider-specific assertions.</summary>
+    public ValueTask<WebWaitConditionResult> WaitForConditionAsync(ResolvedLocatorPlan locator, WebWaitForConditionRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException("Observable condition waits are unavailable.");
+
     /// <summary>Opens a new page in the existing browser context.</summary>
     public ValueTask<(WebPageReference Page, string Url)> OpenPageAsync(WebNavigationRequest request, bool activate = true, CancellationToken cancellationToken = default) => throw new NotSupportedException("Multiple page support is unavailable.");
 
