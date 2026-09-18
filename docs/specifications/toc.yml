@@ -9,6 +9,8 @@ items:
   href: durable-state-0.1.md
 - name: "Host-Lifetime Resources and Health 0.1"
   href: host-lifetime-resources-0.1.md
+- name: "Structured Web Primitives 0.1"
+  href: structured-web-primitives-0.1.md
 - name: "Built-in Node Catalog 0.1"
   href: built-in-node-catalog-0.1.md
 - name: "Compatibility Policy 0.1"

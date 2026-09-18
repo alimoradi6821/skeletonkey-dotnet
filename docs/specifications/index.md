@@ -26,6 +26,10 @@ For the GA 0.1.0 support boundary, start with:
 
 - [Host-Lifetime Resources and Health 0.1](host-lifetime-resources-0.1.md) defines host-owned resource reuse, health, recycle, cross-execution lease coordination, checkpoint separation, and Playwright health behavior.
 
+## Phase 3 Web Contract
+
+- [Structured Web Primitives 0.1](structured-web-primitives-0.1.md) defines parent-relative collection extraction, observable scrolling, distinct text-input operations, and bounded condition waits.
+
 ## Proposed Packaging Contracts
 
 - [Standalone Export 0.1](standalone-export-0.1.md) defines the scenario-specific sealed executable output mode. It is intentionally separate from the workflow schema and remains proposed until implementation verification is complete.

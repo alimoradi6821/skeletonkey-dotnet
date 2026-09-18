@@ -333,6 +333,12 @@ host stop
 
 # Phase 3 — Structured Web Primitives
 
+## Implementation Status
+
+Phase 3 is implemented through `web.extractCollection`, `web.scroll`, `web.scrollIntoView`, `web.type`, `web.insertText`, `web.clear`, `web.focus`, and `web.waitForCondition`.
+
+Verification covers parent-relative field alignment, nested locator wrappers inside field arrays, a real Chromium virtualized-list continuation loop, event-sensitive input semantics, observable asynchronous waits, and the no-Playwright-public-type abstraction boundary.
+
 ## Purpose
 
 Make modern SPA and virtualized-list automation possible through typed provider-neutral web operations instead of application-specific code or arbitrary scripts.
