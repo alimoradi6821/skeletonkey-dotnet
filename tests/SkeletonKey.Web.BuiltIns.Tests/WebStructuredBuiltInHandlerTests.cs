@@ -1,6 +1,8 @@
 using System.Text.Json.Nodes;
 using SkeletonKey.Abstractions.Events;
+using SkeletonKey.Catalog;
 using SkeletonKey.Execution;
+using SkeletonKey.Handlers;
 using SkeletonKey.Locators;
 using SkeletonKey.Locators.Runtime;
 using SkeletonKey.Web.Abstractions;

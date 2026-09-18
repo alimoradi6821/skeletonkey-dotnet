@@ -533,8 +533,8 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
     {
         if (request.TimeoutMilliseconds <= 0 || request.TimeoutMilliseconds > 300000 ||
             request.PollIntervalMilliseconds is < 10 or > 1000 ||
-            (request.Condition is WebWaitConditionKind.CountEquals or WebWaitConditionKind.CountGreaterThan && request.ExpectedCount is null or < 0) ||
-            (request.Condition is WebWaitConditionKind.TextEquals or WebWaitConditionKind.TextContains or WebWaitConditionKind.AttributeEquals or WebWaitConditionKind.ValueEquals && request.ExpectedValue is null) ||
+            ((request.Condition is WebWaitConditionKind.CountEquals or WebWaitConditionKind.CountGreaterThan) && (request.ExpectedCount is null or < 0)) ||
+            ((request.Condition is WebWaitConditionKind.TextEquals or WebWaitConditionKind.TextContains or WebWaitConditionKind.AttributeEquals or WebWaitConditionKind.ValueEquals) && request.ExpectedValue is null) ||
             (request.Condition == WebWaitConditionKind.AttributeEquals && string.IsNullOrWhiteSpace(request.AttributeName)))
         {
             throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.AdvancedWaitFailed, "Wait bounds or expected values are invalid.", "waitForCondition"));
