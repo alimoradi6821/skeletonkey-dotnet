@@ -532,9 +532,12 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
         CancellationToken cancellationToken = default)
     {
         if (request.TimeoutMilliseconds <= 0 || request.TimeoutMilliseconds > 300000 ||
-            request.PollIntervalMilliseconds is < 10 or > 1000)
+            request.PollIntervalMilliseconds is < 10 or > 1000 ||
+            (request.Condition is WebWaitConditionKind.CountEquals or WebWaitConditionKind.CountGreaterThan && request.ExpectedCount is null or < 0) ||
+            (request.Condition is WebWaitConditionKind.TextEquals or WebWaitConditionKind.TextContains or WebWaitConditionKind.AttributeEquals or WebWaitConditionKind.ValueEquals && request.ExpectedValue is null) ||
+            (request.Condition == WebWaitConditionKind.AttributeEquals && string.IsNullOrWhiteSpace(request.AttributeName)))
         {
-            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.AdvancedWaitFailed, "Wait bounds are invalid.", "waitForCondition"));
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.AdvancedWaitFailed, "Wait bounds or expected values are invalid.", "waitForCondition"));
         }
 
         Stopwatch stopwatch = Stopwatch.StartNew();
@@ -1153,12 +1156,12 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
 
         if (request.Condition == WebWaitConditionKind.CountEquals)
         {
-            return new ConditionEvaluation(count == request.ExpectedCount, count, count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            return new ConditionEvaluation(count == request.ExpectedCount!.Value, count, count.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
 
         if (request.Condition == WebWaitConditionKind.CountGreaterThan)
         {
-            return new ConditionEvaluation(count > request.ExpectedCount, count, count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            return new ConditionEvaluation(count > request.ExpectedCount!.Value, count, count.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
 
         if (locator is null || count == 0)
