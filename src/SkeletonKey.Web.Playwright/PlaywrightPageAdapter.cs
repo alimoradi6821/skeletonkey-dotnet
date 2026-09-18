@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.Playwright;
 using SkeletonKey.Artifacts;
 using SkeletonKey.Locators;
@@ -325,6 +327,248 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
         }
 
         return new WebScreenshotResult(request.Format == WebScreenshotFormat.Jpeg ? "image/jpeg" : "image/png", bytes);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<WebCollectionExtractionResult> ExtractCollectionAsync(
+        ResolvedLocatorPlan items,
+        IReadOnlyList<WebCollectionFieldDefinition> fields,
+        WebCollectionExtractionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(fields);
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.MaximumItems is < 1 or > 1000 || request.MaximumOutputCharacters is < 1 or > 4 * 1024 * 1024)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.WebQueryFailed, "Structured extraction limits are invalid.", "extractCollection"));
+        }
+
+        try
+        {
+            LocatorRoot root = await ResolveTargetRootAsync(request.TargetContext, request.TimeoutMilliseconds, "extractCollection", cancellationToken).ConfigureAwait(false);
+            ILocator parents = await ResolveCollectionInRootAsync(items, root, request.TimeoutMilliseconds, "extractCollection", cancellationToken).ConfigureAwait(false);
+            int total = await parents.CountAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+            int take = Math.Min(total, request.MaximumItems);
+            int outputCharacters = 0;
+            List<WebCollectionItem> result = new(take);
+            for (int itemIndex = 0; itemIndex < take; itemIndex++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                ILocator parent = parents.Nth(itemIndex);
+                Dictionary<string, string?> values = new(StringComparer.Ordinal);
+                foreach (WebCollectionFieldDefinition field in fields)
+                {
+                    ILocator? relative = await ResolveImmediateRelativeAsync(field.Locator, root, parent, cancellationToken).ConfigureAwait(false);
+                    string? value = await ReadRelativeFieldAsync(relative, field, request.TimeoutMilliseconds, cancellationToken).ConfigureAwait(false);
+                    if (value is null && field.Required)
+                    {
+                        throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.LocatorNotFound, "Required collection field was not found relative to its parent item.", "extractCollection"));
+                    }
+
+                    if (value is not null)
+                    {
+                        outputCharacters += value.Length;
+                        if (outputCharacters > request.MaximumOutputCharacters)
+                        {
+                            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.WebQueryFailed, "Structured collection output exceeded the configured character limit.", "extractCollection"));
+                        }
+                    }
+
+                    values.Add(field.Name, value);
+                }
+
+                result.Add(new WebCollectionItem(values));
+            }
+
+            return new WebCollectionExtractionResult(result, total, total > take);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (WebAutomationException)
+        {
+            throw;
+        }
+        catch (TimeoutException exception)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.LocatorOperationTimeout, "Structured collection extraction timed out.", "extractCollection"), exception);
+        }
+        catch (PlaywrightException exception)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.WebQueryFailed, "Structured collection extraction failed.", "extractCollection"), exception);
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<WebScrollResult> ScrollAsync(ResolvedLocatorPlan? locator, WebScrollRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        try
+        {
+            JsonElement metrics;
+            if (locator is null)
+            {
+                LocatorRoot root = await ResolveTargetRootAsync(request.TargetContext, request.TimeoutMilliseconds, "scroll", cancellationToken).ConfigureAwait(false);
+                const string script = """
+                    delta => {
+                      const element = document.scrollingElement || document.documentElement;
+                      window.scrollBy(delta.x, delta.y);
+                      return {
+                        offsetX: element.scrollLeft,
+                        offsetY: element.scrollTop,
+                        extentWidth: element.scrollWidth,
+                        extentHeight: element.scrollHeight,
+                        viewportWidth: element.clientWidth,
+                        viewportHeight: element.clientHeight
+                      };
+                    }
+                    """;
+                object delta = new { x = request.DeltaX, y = request.DeltaY };
+                metrics = root.Frame is null
+                    ? await root.Page.EvaluateAsync<JsonElement>(script, delta).WaitAsync(cancellationToken).ConfigureAwait(false)
+                    : await root.Frame.EvaluateAsync<JsonElement>(script, delta).WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                ILocator target = await ResolveSingleAsync(locator, request.TimeoutMilliseconds, request.ElementIndex, "scroll", cancellationToken, request.TargetContext).ConfigureAwait(false);
+                const string script = """
+                    (element, delta) => {
+                      element.scrollBy(delta.x, delta.y);
+                      return {
+                        offsetX: element.scrollLeft,
+                        offsetY: element.scrollTop,
+                        extentWidth: element.scrollWidth,
+                        extentHeight: element.scrollHeight,
+                        viewportWidth: element.clientWidth,
+                        viewportHeight: element.clientHeight
+                      };
+                    }
+                    """;
+                metrics = await target.EvaluateAsync<JsonElement>(script, new { x = request.DeltaX, y = request.DeltaY }).WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            return ParseScrollResult(metrics);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (WebAutomationException)
+        {
+            throw;
+        }
+        catch (PlaywrightException exception)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.WebActionFailed, "Scroll operation failed.", "scroll"), exception);
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask ScrollIntoViewAsync(ResolvedLocatorPlan locator, WebElementActionRequest request, CancellationToken cancellationToken = default)
+    {
+        ILocator target = await ResolveSingleAsync(locator, request.TimeoutMilliseconds, request.ElementIndex, "scrollIntoView", cancellationToken, request.TargetContext).ConfigureAwait(false);
+        await RunActionAsync(
+            async () => await target.ScrollIntoViewIfNeededAsync(new LocatorScrollIntoViewIfNeededOptions { Timeout = BoundedTimeout(request.TimeoutMilliseconds) }).ConfigureAwait(false),
+            "scrollIntoView",
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask TypeAsync(ResolvedLocatorPlan locator, WebTypeRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request.DelayMilliseconds is < 0 or > 5000)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.WebActionFailed, "Sequential typing delay is invalid.", "type"));
+        }
+
+        ILocator target = await ResolveSingleAsync(locator, request.TimeoutMilliseconds, request.ElementIndex, "type", cancellationToken, request.TargetContext).ConfigureAwait(false);
+        await RunActionAsync(
+            async () => await target.PressSequentiallyAsync(request.Value, new LocatorPressSequentiallyOptions
+            {
+                Delay = request.DelayMilliseconds,
+                Timeout = BoundedTimeout(request.TimeoutMilliseconds),
+            }).ConfigureAwait(false),
+            "type",
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask InsertTextAsync(ResolvedLocatorPlan locator, WebInsertTextRequest request, CancellationToken cancellationToken = default)
+    {
+        ILocator target = await ResolveSingleAsync(locator, request.TimeoutMilliseconds, request.ElementIndex, "insertText", cancellationToken, request.TargetContext).ConfigureAwait(false);
+        await RunActionAsync(async () =>
+        {
+            await target.FocusAsync(new LocatorFocusOptions { Timeout = BoundedTimeout(request.TimeoutMilliseconds) }).ConfigureAwait(false);
+            await target.Page.Keyboard.InsertTextAsync(request.Value).ConfigureAwait(false);
+        }, "insertText", cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask ClearAsync(ResolvedLocatorPlan locator, WebElementActionRequest request, CancellationToken cancellationToken = default)
+    {
+        ILocator target = await ResolveSingleAsync(locator, request.TimeoutMilliseconds, request.ElementIndex, "clear", cancellationToken, request.TargetContext).ConfigureAwait(false);
+        await RunActionAsync(
+            async () => await target.ClearAsync(new LocatorClearOptions { Timeout = BoundedTimeout(request.TimeoutMilliseconds) }).ConfigureAwait(false),
+            "clear",
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask FocusAsync(ResolvedLocatorPlan locator, WebElementActionRequest request, CancellationToken cancellationToken = default)
+    {
+        ILocator target = await ResolveSingleAsync(locator, request.TimeoutMilliseconds, request.ElementIndex, "focus", cancellationToken, request.TargetContext).ConfigureAwait(false);
+        await RunActionAsync(
+            async () => await target.FocusAsync(new LocatorFocusOptions { Timeout = BoundedTimeout(request.TimeoutMilliseconds) }).ConfigureAwait(false),
+            "focus",
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<WebWaitConditionResult> WaitForConditionAsync(
+        ResolvedLocatorPlan locator,
+        WebWaitForConditionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (request.TimeoutMilliseconds <= 0 || request.TimeoutMilliseconds > 300000 ||
+            request.PollIntervalMilliseconds is < 10 or > 1000)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.AdvancedWaitFailed, "Wait bounds are invalid.", "waitForCondition"));
+        }
+
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        while (stopwatch.ElapsedMilliseconds < request.TimeoutMilliseconds)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                LocatorRoot root = await ResolveTargetRootAsync(request.TargetContext, Math.Min(request.TimeoutMilliseconds, 1000), "waitForCondition", cancellationToken).ConfigureAwait(false);
+                ILocator? target = await ResolveImmediateRelativeAsync(locator, root, initialScope: null, cancellationToken).ConfigureAwait(false);
+                ConditionEvaluation evaluation = await EvaluateConditionAsync(target, request, cancellationToken).ConfigureAwait(false);
+                if (evaluation.Matched)
+                {
+                    return new WebWaitConditionResult(evaluation.Count, evaluation.ActualValue);
+                }
+            }
+            catch (WebAutomationException exception) when (
+                exception.Error.Code is WebAutomationErrorCodes.LocatorNotFound or WebAutomationErrorCodes.LocatorCardinalityMismatch &&
+                request.Condition == WebWaitConditionKind.Hidden)
+            {
+                return new WebWaitConditionResult(0);
+            }
+
+            long remaining = request.TimeoutMilliseconds - stopwatch.ElapsedMilliseconds;
+            if (remaining <= 0)
+            {
+                break;
+            }
+
+            int delay = (int)Math.Min(request.PollIntervalMilliseconds, remaining);
+            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+        }
+
+        throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.AdvancedWaitFailed, "Observable web condition did not become true before timeout.", "waitForCondition"));
     }
 
     /// <inheritdoc />
@@ -751,6 +995,214 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
         await ActivePage().WaitForLoadStateAsync(MapLoadState(state), new PageWaitForLoadStateOptions { Timeout = BoundedTimeout(timeoutMilliseconds) }).WaitAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    private async ValueTask<ILocator?> ResolveImmediateRelativeAsync(
+        ResolvedLocatorPlan plan,
+        LocatorRoot root,
+        ILocator? initialScope,
+        CancellationToken cancellationToken)
+    {
+        ILocator? scope = initialScope;
+        foreach (ResolvedLocatorScope item in plan.Scopes)
+        {
+            scope = await ResolveImmediateFallbackAsync(item.Strategies, root, scope, requireMatch: true, cancellationToken).ConfigureAwait(false);
+            if (scope is null)
+            {
+                return null;
+            }
+        }
+
+        return await ResolveImmediateFallbackAsync(plan.Strategies, root, scope, requireMatch: false, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<ILocator?> ResolveImmediateFallbackAsync(
+        IReadOnlyList<ResolvedLocatorStrategy> strategies,
+        LocatorRoot root,
+        ILocator? scope,
+        bool requireMatch,
+        CancellationToken cancellationToken)
+    {
+        ILocator? first = null;
+        foreach (ResolvedLocatorStrategy strategy in strategies)
+        {
+            ILocator candidate = CreateLocator(root, scope, strategy);
+            first ??= candidate;
+            int count = await candidate.CountAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (count > 0)
+            {
+                return candidate;
+            }
+        }
+
+        return requireMatch ? null : first;
+    }
+
+    private static async ValueTask<string?> ReadRelativeFieldAsync(
+        ILocator? locator,
+        WebCollectionFieldDefinition field,
+        int timeoutMilliseconds,
+        CancellationToken cancellationToken)
+    {
+        if (locator is null)
+        {
+            return null;
+        }
+
+        int count = await locator.CountAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (count == 0)
+        {
+            return null;
+        }
+
+        ILocator target;
+        if (field.ElementIndex is int index)
+        {
+            if (index < 0 || index >= count)
+            {
+                return null;
+            }
+
+            target = locator.Nth(index);
+        }
+        else
+        {
+            if (count != 1)
+            {
+                throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.LocatorCardinalityMismatch, "Relative collection field matched multiple elements without an element index.", "extractCollection"));
+            }
+
+            target = locator;
+        }
+
+        return field.ReadMode switch
+        {
+            WebCollectionFieldReadMode.Text => await target.TextContentAsync(new LocatorTextContentOptions { Timeout = BoundedTimeout(timeoutMilliseconds) }).WaitAsync(cancellationToken).ConfigureAwait(false),
+            WebCollectionFieldReadMode.Attribute => await target.GetAttributeAsync(field.AttributeName!, new LocatorGetAttributeOptions { Timeout = BoundedTimeout(timeoutMilliseconds) }).WaitAsync(cancellationToken).ConfigureAwait(false),
+            WebCollectionFieldReadMode.Value => await target.InputValueAsync(new LocatorInputValueOptions { Timeout = BoundedTimeout(timeoutMilliseconds) }).WaitAsync(cancellationToken).ConfigureAwait(false),
+            _ => throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.WebQueryFailed, "Unsupported collection field read mode.", "extractCollection")),
+        };
+    }
+
+    private static WebScrollResult ParseScrollResult(JsonElement metrics)
+    {
+        double offsetX = metrics.GetProperty("offsetX").GetDouble();
+        double offsetY = metrics.GetProperty("offsetY").GetDouble();
+        double extentWidth = metrics.GetProperty("extentWidth").GetDouble();
+        double extentHeight = metrics.GetProperty("extentHeight").GetDouble();
+        double viewportWidth = metrics.GetProperty("viewportWidth").GetDouble();
+        double viewportHeight = metrics.GetProperty("viewportHeight").GetDouble();
+        const double epsilon = 1.0;
+        return new WebScrollResult(
+            offsetX,
+            offsetY,
+            extentWidth,
+            extentHeight,
+            viewportWidth,
+            viewportHeight,
+            offsetX <= epsilon,
+            offsetX + viewportWidth >= extentWidth - epsilon,
+            offsetY <= epsilon,
+            offsetY + viewportHeight >= extentHeight - epsilon);
+    }
+
+    private static async ValueTask<ConditionEvaluation> EvaluateConditionAsync(
+        ILocator? locator,
+        WebWaitForConditionRequest request,
+        CancellationToken cancellationToken)
+    {
+        int count = locator is null ? 0 : await locator.CountAsync().WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (request.Condition == WebWaitConditionKind.Exists)
+        {
+            return new ConditionEvaluation(count > 0, count, null);
+        }
+
+        if (request.Condition == WebWaitConditionKind.Visible)
+        {
+            if (locator is null)
+            {
+                return new ConditionEvaluation(false, 0, null);
+            }
+
+            for (int index = 0; index < count; index++)
+            {
+                if (await locator.Nth(index).IsVisibleAsync().WaitAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    return new ConditionEvaluation(true, count, null);
+                }
+            }
+
+            return new ConditionEvaluation(false, count, null);
+        }
+
+        if (request.Condition == WebWaitConditionKind.Hidden)
+        {
+            if (locator is null || count == 0)
+            {
+                return new ConditionEvaluation(true, count, null);
+            }
+
+            for (int index = 0; index < count; index++)
+            {
+                if (await locator.Nth(index).IsVisibleAsync().WaitAsync(cancellationToken).ConfigureAwait(false))
+                {
+                    return new ConditionEvaluation(false, count, null);
+                }
+            }
+
+            return new ConditionEvaluation(true, count, null);
+        }
+
+        if (request.Condition == WebWaitConditionKind.CountEquals)
+        {
+            return new ConditionEvaluation(count == request.ExpectedCount, count, count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        if (request.Condition == WebWaitConditionKind.CountGreaterThan)
+        {
+            return new ConditionEvaluation(count > request.ExpectedCount, count, count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        if (locator is null || count == 0)
+        {
+            return new ConditionEvaluation(false, count, null);
+        }
+
+        ILocator target;
+        if (request.ElementIndex is int elementIndex)
+        {
+            if (elementIndex < 0 || elementIndex >= count)
+            {
+                return new ConditionEvaluation(false, count, null);
+            }
+
+            target = locator.Nth(elementIndex);
+        }
+        else
+        {
+            if (count != 1)
+            {
+                throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.LocatorCardinalityMismatch, "Observable value condition requires exactly one element or an explicit element index.", "waitForCondition"));
+            }
+
+            target = locator;
+        }
+
+        string? actual = request.Condition switch
+        {
+            WebWaitConditionKind.TextEquals or WebWaitConditionKind.TextContains => await target.TextContentAsync().WaitAsync(cancellationToken).ConfigureAwait(false),
+            WebWaitConditionKind.AttributeEquals => await target.GetAttributeAsync(request.AttributeName!).WaitAsync(cancellationToken).ConfigureAwait(false),
+            WebWaitConditionKind.ValueEquals => await target.InputValueAsync().WaitAsync(cancellationToken).ConfigureAwait(false),
+            _ => null,
+        };
+        bool matched = request.Condition switch
+        {
+            WebWaitConditionKind.TextEquals => string.Equals(actual, request.ExpectedValue, StringComparison.Ordinal),
+            WebWaitConditionKind.TextContains => actual?.Contains(request.ExpectedValue ?? string.Empty, StringComparison.Ordinal) == true,
+            WebWaitConditionKind.AttributeEquals or WebWaitConditionKind.ValueEquals => string.Equals(actual, request.ExpectedValue, StringComparison.Ordinal),
+            _ => false,
+        };
+        return new ConditionEvaluation(matched, count, actual);
+    }
+
     private async ValueTask<ILocator> ResolveSingleAsync(ResolvedLocatorPlan plan, int timeoutMilliseconds, int? elementIndex, string operation, CancellationToken cancellationToken, WebTargetContext? targetContext = null)
     {
         ILocator locator = await ResolveCollectionAsync(plan, timeoutMilliseconds, operation, cancellationToken, targetContext).ConfigureAwait(false);
@@ -1160,6 +1612,8 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
     }
 
     private sealed record DialogSlot(IDialog Dialog, int Generation);
+
+    private sealed record ConditionEvaluation(bool Matched, int Count, string? ActualValue);
 
     private sealed record LocatorRoot(IPage Page, IFrame? Frame);
 }
