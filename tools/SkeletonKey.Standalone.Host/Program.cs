@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using SkeletonKey.Desktop.FlaUI;
 using SkeletonKey.Runner.Core;
+using SkeletonKey.Serialization.Json;
 
 if (args.Length != 0)
 {
@@ -24,7 +25,8 @@ try
     StandaloneEmbeddedPayload payload = await StandaloneEmbeddedPayload.MaterializeAsync(Assembly.GetExecutingAssembly(), shutdown.Token).ConfigureAwait(false);
     workspace = payload.Workspace;
     StandaloneExecutionSettings settings = StandaloneExecutionSettings.Parse(await File.ReadAllTextAsync(payload.SettingsPath, shutdown.Token).ConfigureAwait(false));
-    string stateDatabase = StandaloneStateDatabasePath(payload.Manifest.PackageId);
+    string workflowIdentity = new WorkflowJsonSerializer().Deserialize(await File.ReadAllTextAsync(payload.WorkflowPath, shutdown.Token).ConfigureAwait(false)).Id;
+    string stateDatabase = StandaloneStateDatabasePath(workflowIdentity);
 
     DateTimeOffset startedAtUtc = DateTimeOffset.UtcNow;
     StandaloneScheduleCursor cursor = new(settings.Schedule, startedAtUtc);
@@ -33,7 +35,7 @@ try
     async ValueTask<int> RunOccurrenceAsync()
     {
         string executionId = payload.Manifest.PackageId + ":" + Interlocked.Increment(ref sequence).ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + DateTimeOffset.UtcNow.ToString("yyyyMMddTHHmmssfffffffZ", System.Globalization.CultureInfo.InvariantCulture);
-        List<string> runnerArgs = ["run", "--file", payload.WorkflowPath, "--execution-id", executionId, "--format", "json", "--state-database", stateDatabase, "--state-host-namespace", payload.Manifest.PackageId];
+        List<string> runnerArgs = ["run", "--file", payload.WorkflowPath, "--execution-id", executionId, "--format", "json", "--state-database", stateDatabase, "--state-host-namespace", workflowIdentity];
         if (payload.LocatorDirectory is not null)
         {
             runnerArgs.Add("--locator-directory");
@@ -144,7 +146,7 @@ finally
     }
 }
 
-static string StandaloneStateDatabasePath(string packageId)
+static string StandaloneStateDatabasePath(string workflowIdentity)
 {
     string root = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     if (string.IsNullOrWhiteSpace(root))
@@ -152,7 +154,7 @@ static string StandaloneStateDatabasePath(string packageId)
         root = AppContext.BaseDirectory;
     }
 
-    string identity = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(packageId)));
+    string identity = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(workflowIdentity)));
     string directory = Path.Combine(root, "SkeletonKey", "standalone", identity);
     Directory.CreateDirectory(directory);
     return Path.Combine(directory, "state.db");

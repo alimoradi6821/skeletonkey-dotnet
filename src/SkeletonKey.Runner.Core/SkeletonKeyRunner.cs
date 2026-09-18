@@ -754,6 +754,11 @@ internal sealed class RunnerOptions
                     break;
                 case "--state-database":
                     stateDatabase = Next();
+                    if (string.IsNullOrWhiteSpace(stateDatabase))
+                    {
+                        throw new RunnerUsageException("State database path cannot be empty.");
+                    }
+
                     break;
                 case "--state-host-namespace":
                     stateHostNamespace = Next();
