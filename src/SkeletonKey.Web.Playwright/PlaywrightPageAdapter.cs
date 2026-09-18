@@ -540,7 +540,7 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
             throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.AdvancedWaitFailed, "Wait bounds or expected values are invalid.", "waitForCondition"));
         }
 
-        Stopwatch stopwatch = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         while (stopwatch.ElapsedMilliseconds < request.TimeoutMilliseconds)
         {
             cancellationToken.ThrowIfCancellationRequested();
