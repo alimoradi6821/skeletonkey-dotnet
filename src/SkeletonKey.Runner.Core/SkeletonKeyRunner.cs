@@ -257,7 +257,8 @@ public sealed class SkeletonKeyRunner
                 resourceProviders: resourceProviders,
                 locatorResolver: locatorResolver,
                 hostResourceRegistry: hostResourceRegistry,
-                secretProvider: secretProvider);
+                secretProvider: secretProvider,
+                diagnosticContributors: [new PlaywrightFailureDiagnosticContributor()]);
 
             string executionId = options.ExecutionId ?? "execution";
             string planId = ComputePlanId(workflow);
