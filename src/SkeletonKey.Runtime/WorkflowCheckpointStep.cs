@@ -22,7 +22,8 @@ public sealed class WorkflowCheckpointStep
         NodeExecutionStatus? resultStatus = null,
         WorkflowError? error = null,
         int retryAttempt = 0,
-        DateTimeOffset? retryNotBeforeUtc = null)
+        DateTimeOffset? retryNotBeforeUtc = null,
+        WorkflowSideEffectCheckpointState sideEffectState = WorkflowSideEffectCheckpointState.None)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(stepId);
         ArgumentException.ThrowIfNullOrWhiteSpace(nodeId);
@@ -59,6 +60,7 @@ public sealed class WorkflowCheckpointStep
         Error = error;
         RetryAttempt = retryAttempt;
         RetryNotBeforeUtc = retryNotBeforeUtc;
+        SideEffectState = sideEffectState;
     }
 
     /// <summary>Gets the planned step identifier.</summary>
@@ -96,4 +98,7 @@ public sealed class WorkflowCheckpointStep
 
     /// <summary>Gets the earliest UTC time at which the next policy-controlled attempt may start.</summary>
     public DateTimeOffset? RetryNotBeforeUtc { get; }
+
+    /// <summary>Gets durable external side-effect dispatch certainty for the current attempt.</summary>
+    public WorkflowSideEffectCheckpointState SideEffectState { get; }
 }

@@ -29,4 +29,7 @@ public static class WorkflowCheckpointErrorCodes
 
     /// <summary>A resumable runtime resource could not be captured or reconstructed.</summary>
     public const string ResourceRecoveryFailed = "SKR3009";
+
+    /// <summary>An external side effect may have been dispatched and requires explicit reconciliation.</summary>
+    public const string ExternalSideEffectOutcomeUncertain = "SKR3010";
 }

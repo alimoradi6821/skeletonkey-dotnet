@@ -8,13 +8,16 @@ namespace SkeletonKey.Runtime;
 public sealed class WorkflowExecutionCheckpoint
 {
     /// <summary>The checkpoint contract version implemented by this runtime.</summary>
-    public const string CurrentFormatVersion = "0.3";
+    public const string CurrentFormatVersion = "0.4";
 
-    /// <summary>The legacy checkpoint contract version accepted for safe migration.</summary>
-    public const string PreviousFormatVersion = "0.2";
+    /// <summary>The immediately previous checkpoint contract version accepted for safe migration.</summary>
+    public const string PreviousFormatVersion = "0.3";
 
-    /// <summary>The previous checkpoint contract version accepted for safe migration.</summary>
-    public const string LegacyFormatVersion = "0.1";
+    /// <summary>An older checkpoint contract version accepted for safe migration.</summary>
+    public const string LegacyFormatVersion = "0.2";
+
+    /// <summary>The oldest checkpoint contract version accepted for safe migration.</summary>
+    public const string OldestLegacyFormatVersion = "0.1";
 
     private readonly IReadOnlyList<WorkflowCheckpointStep> _steps;
     private readonly IReadOnlyDictionary<string, int> _nodeActivationOrdinals;
@@ -180,6 +183,7 @@ public sealed class WorkflowExecutionCheckpoint
     {
         return string.Equals(formatVersion, CurrentFormatVersion, StringComparison.Ordinal) ||
             string.Equals(formatVersion, PreviousFormatVersion, StringComparison.Ordinal) ||
-            string.Equals(formatVersion, LegacyFormatVersion, StringComparison.Ordinal);
+            string.Equals(formatVersion, LegacyFormatVersion, StringComparison.Ordinal) ||
+            string.Equals(formatVersion, OldestLegacyFormatVersion, StringComparison.Ordinal);
     }
 }

@@ -322,6 +322,8 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 (step.Status == WorkflowStepRuntimeStatus.Ready && step.RetryAttempt > 0 && (step.RetryNotBeforeUtc is null || step.ResultStatus != NodeExecutionStatus.Failed)) ||
                 (step.RetryNotBeforeUtc is not null && (step.RetryNotBeforeUtc.Value.Offset != TimeSpan.Zero || step.RetryAttempt < 1 || step.Status != WorkflowStepRuntimeStatus.Ready || step.ResultStatus != NodeExecutionStatus.Failed)) ||
                 (step.ResultStatus is null && step.Status is (WorkflowStepRuntimeStatus.Succeeded or WorkflowStepRuntimeStatus.Failed or WorkflowStepRuntimeStatus.Cancelled or WorkflowStepRuntimeStatus.Skipped)) ||
+                (step.SideEffectState != WorkflowSideEffectCheckpointState.None && step.Attempt < 1) ||
+                (step.Status != WorkflowStepRuntimeStatus.Running && step.SideEffectState is WorkflowSideEffectCheckpointState.NotDispatched or WorkflowSideEffectCheckpointState.DispatchUncertain) ||
                 (step.ResultStatus is not null && (step.Attempt < 1 || !checkpoint.NodeResults.Any(result =>
                     string.Equals(result.NodeId, step.NodeId, StringComparison.Ordinal) &&
                     result.Attempt == step.Attempt &&
@@ -330,9 +332,27 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             return new WorkflowError(WorkflowCheckpointErrorCodes.InvalidCheckpoint, "The checkpoint contains invalid step state or activation metadata.");
         }
 
-        WorkflowCheckpointStep? interrupted = checkpoint.Steps.FirstOrDefault(static step => step.Status == WorkflowStepRuntimeStatus.Running);
-        if (interrupted is not null)
+        foreach (WorkflowCheckpointStep interrupted in checkpoint.Steps.Where(static step => step.Status == WorkflowStepRuntimeStatus.Running))
         {
+            if (interrupted.SideEffectState == WorkflowSideEffectCheckpointState.NotDispatched)
+            {
+                continue;
+            }
+
+            if (interrupted.SideEffectState == WorkflowSideEffectCheckpointState.DispatchUncertain)
+            {
+                WorkflowExecutionPlanStep planStep = plan.Steps.Single(step => string.Equals(step.StepId, interrupted.StepId, StringComparison.Ordinal));
+                if (!_handlerResolver.TryResolve(planStep.DefinitionKey, out INodeHandler? handler) || handler is not INodeSideEffectRecoveryHandler)
+                {
+                    return new WorkflowError(
+                        WorkflowCheckpointErrorCodes.ExternalSideEffectOutcomeUncertain,
+                        "An external side effect may have been dispatched; explicit reconciliation is required before resume.",
+                        interrupted.NodeId);
+                }
+
+                continue;
+            }
+
             return new WorkflowError(WorkflowCheckpointErrorCodes.InterruptedStepRequiresRecovery, "The process stopped while a node was running; explicit node recovery is required.", interrupted.NodeId);
         }
 
@@ -746,6 +766,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 {
                     RestoreCheckpointState(_request.ResumeCheckpoint);
                     await RestoreRuntimeResourcesAsync(_request.ResumeCheckpoint, cancellationToken).ConfigureAwait(false);
+                    await ReconcileInterruptedSideEffectsAsync(handlerResolver, parameterMaterializer, cancellationToken).ConfigureAwait(false);
                     await EmitAsync(RuntimeWorkflowEventKind.ExecutionResumed, "Execution resumed from a durable checkpoint.", cancellationToken: cancellationToken).ConfigureAwait(false);
                 }
 
@@ -830,6 +851,160 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             }
 
             return new WorkflowRuntimeResult(result, execution, invocation, OrderedNodeResults(), OrderedNodeSnapshots());
+        }
+
+        private async ValueTask ReconcileInterruptedSideEffectsAsync(
+            INodeHandlerResolver handlerResolver,
+            NodeParameterMaterializer parameterMaterializer,
+            CancellationToken cancellationToken)
+        {
+            StepState[] interrupted = _steps.Values
+                .Where(static step => step.Status == WorkflowStepRuntimeStatus.Running)
+                .OrderBy(step => _stepOrder[step.Step.StepId])
+                .ToArray();
+
+            foreach (StepState step in interrupted)
+            {
+                if (step.SideEffectState == WorkflowSideEffectCheckpointState.NotDispatched)
+                {
+                    ResetInterruptedStepForReplay(step);
+                    continue;
+                }
+
+                if (step.SideEffectState != WorkflowSideEffectCheckpointState.DispatchUncertain)
+                {
+                    throw new WorkflowCheckpointStoreException(
+                        WorkflowCheckpointErrorCodes.InterruptedStepRequiresRecovery,
+                        "A running checkpoint step requires explicit recovery.");
+                }
+
+                if (!handlerResolver.TryResolve(step.Step.DefinitionKey, out INodeHandler? handler) ||
+                    handler is not INodeSideEffectRecoveryHandler recoveryHandler)
+                {
+                    throw new WorkflowCheckpointStoreException(
+                        WorkflowCheckpointErrorCodes.ExternalSideEffectOutcomeUncertain,
+                        "An external side effect may have been dispatched; explicit reconciliation is required before resume.");
+                }
+
+                WorkflowNode node = _nodesById[step.Step.NodeId];
+                int attempt = Math.Max(1, _nodeActivationOrdinals.TryGetValue(node.Id, out int savedAttempt) ? savedAttempt : 1);
+                NodeExecutionIdentity identity = new(
+                    _request.ExecutionId,
+                    _invocationId,
+                    null,
+                    _request.Workflow.Id,
+                    node.Id,
+                    step.Step.DefinitionKey,
+                    _request.PlanId,
+                    step.Step.StepId,
+                    attempt);
+                WorkflowValueResolutionContext valueContext = new(
+                    _request.Inputs,
+                    MergeVariables(),
+                    _completedNodeOutputs,
+                    new Dictionary<string, WorkflowIterationContext>(StringComparer.Ordinal));
+                PreparedNodeResult prepared = await PrepareNodeParametersAsync(
+                    step.Step,
+                    node,
+                    parameterMaterializer,
+                    valueContext,
+                    cancellationToken).ConfigureAwait(false);
+                if (!prepared.IsSuccess || prepared.Parameters is null)
+                {
+                    throw new WorkflowCheckpointStoreException(
+                        WorkflowCheckpointErrorCodes.ExternalSideEffectOutcomeUncertain,
+                        "Side-effect reconciliation could not prepare the original node parameters.");
+                }
+
+                INodeResourceAccessor resourceAccessor = await PrepareResourceAccessorAsync(
+                    step.Step,
+                    prepared.Parameters.ResourceBindings,
+                    cancellationToken).ConfigureAwait(false);
+                DefaultNodeExecutionContext context = new(
+                    identity,
+                    new RuntimeNodeExecutionEventWriter(_events, node.Id),
+                    resourceAccessor,
+                    new RuntimeNodeLocatorAccessor(prepared.Parameters.LocatorBindings));
+                NodeExecutionRequest request = new(
+                    identity,
+                    prepared.Parameters.MaterializedParameters,
+                    step.ActivatedControlInputs.ToArray(),
+                    BuildDataInputs(step),
+                    new Dictionary<string, WorkflowIterationContext>(StringComparer.Ordinal));
+
+                NodeSideEffectRecoveryResult reconciliation;
+                try
+                {
+                    reconciliation = await recoveryHandler.ReconcileAsync(request, context, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    throw new WorkflowCheckpointStoreException(
+                        WorkflowCheckpointErrorCodes.ExternalSideEffectOutcomeUncertain,
+                        "External side-effect reconciliation failed and the operation will not be replayed automatically.",
+                        exception);
+                }
+
+                if (reconciliation.Status == NodeSideEffectRecoveryStatus.NotAttempted)
+                {
+                    ResetInterruptedStepForReplay(step);
+                    continue;
+                }
+
+                if (reconciliation.Status != NodeSideEffectRecoveryStatus.Completed || reconciliation.Outputs is null)
+                {
+                    throw new WorkflowCheckpointStoreException(
+                        WorkflowCheckpointErrorCodes.ExternalSideEffectOutcomeUncertain,
+                        "The external side-effect outcome remains uncertain and will not be replayed automatically.");
+                }
+
+                WorkflowError? contractError = ValidateOutputs(step, reconciliation.Outputs);
+                if (contractError is not null)
+                {
+                    throw new WorkflowCheckpointStoreException(
+                        WorkflowCheckpointErrorCodes.ExternalSideEffectOutcomeUncertain,
+                        "Reconciled side-effect outputs do not satisfy the node contract.");
+                }
+
+                PropagateOutputs(step, reconciliation.Outputs);
+                NodeExecutionResult result = new(
+                    _request.ExecutionId,
+                    _request.Workflow.Id,
+                    _invocationId,
+                    node.Id,
+                    node.Type,
+                    NodeExecutionStatus.Succeeded,
+                    attempt,
+                    ProjectOutputs(reconciliation.Outputs.DataOutputs));
+                step.Result = result;
+                step.Outputs = new NodePortValueMap(reconciliation.Outputs.DataOutputs);
+                step.Status = WorkflowStepRuntimeStatus.Succeeded;
+                step.SideEffectState = WorkflowSideEffectCheckpointState.Completed;
+                step.RetryNotBeforeUtc = null;
+                _completedNodeOutputs[node.Id] = step.Outputs;
+                string nodeExecutionId = $"node-execution:{_request.ExecutionId}:{node.Id}:{attempt.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+                _stateStore.CreateNode(identity, nodeExecutionId, _clock.UtcNow);
+                _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Ready, _clock.UtcNow);
+                _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Running, _clock.UtcNow);
+                _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
+                StoreNodeResult(nodeExecutionId, result);
+                StoreNodeSnapshot(nodeExecutionId);
+                await EmitAsync(RuntimeWorkflowEventKind.NodeCompleted, "Node completion recovered by explicit side-effect reconciliation.", node.Id, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        private static void ResetInterruptedStepForReplay(StepState step)
+        {
+            step.Status = WorkflowStepRuntimeStatus.Ready;
+            step.Result = null;
+            step.Outputs = new NodePortValueMap();
+            step.RetryAttempt = Math.Max(0, step.RetryAttempt - 1);
+            step.RetryNotBeforeUtc = null;
+            step.SideEffectState = WorkflowSideEffectCheckpointState.None;
         }
 
         private async ValueTask DisposeRuntimeResourcesAsync()
@@ -1105,6 +1280,15 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 }
 
                 DefaultNodeExecutionContext context = new(attempt.Identity, new RuntimeNodeExecutionEventWriter(_events, node.Id), resourceAccessor, new RuntimeNodeLocatorAccessor(prepared.Parameters.LocatorBindings));
+                bool externalSideEffect = handler is IExternalSideEffectNodeHandler;
+                if (externalSideEffect)
+                {
+                    step.SideEffectState = WorkflowSideEffectCheckpointState.NotDispatched;
+                    await SaveCheckpointAsync(terminalResult: null, cancellationToken).ConfigureAwait(false);
+                    step.SideEffectState = WorkflowSideEffectCheckpointState.DispatchUncertain;
+                    await SaveCheckpointAsync(terminalResult: null, cancellationToken).ConfigureAwait(false);
+                }
+
                 HandlerInvocationOutcome invocation;
                 try
                 {
@@ -1118,9 +1302,15 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
                 if (invocation.Error is not null)
                 {
-                    WorkflowError error = await AttachFailureDiagnosticsAsync(invocation.Error, step.Step.DefinitionKey, context, cancellationToken).ConfigureAwait(false);
+                    WorkflowError originalError = externalSideEffect
+                        ? new WorkflowError(
+                            WorkflowCheckpointErrorCodes.ExternalSideEffectOutcomeUncertain,
+                            "The external side-effect handler did not return a definitive result after dispatch began.",
+                            node.Id)
+                        : invocation.Error;
+                    WorkflowError error = await AttachFailureDiagnosticsAsync(originalError, step.Step.DefinitionKey, context, cancellationToken).ConfigureAwait(false);
                     CompleteFailedAttempt(step, attempt.NodeExecutionId, attempt.Identity, error, cancellationToken);
-                    if (invocation.Retryable && retryAttempt < maximumAttempts)
+                    if (!externalSideEffect && invocation.Retryable && retryAttempt < maximumAttempts)
                     {
                         await ScheduleRetryAsync(step, node, retryAttempt, maximumAttempts, policy?.Retry, error, cancellationToken).ConfigureAwait(false);
                         retryAttempt++;
@@ -1129,6 +1319,11 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
                     ApplyOnErrorPolicy(step, node, error, cancellationToken);
                     return;
+                }
+
+                if (externalSideEffect)
+                {
+                    step.SideEffectState = WorkflowSideEffectCheckpointState.Completed;
                 }
 
                 NodeHandlerResult handlerResult = invocation.Result!;
@@ -2841,6 +3036,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 state.EntryActivated = savedStep.EntryActivated;
                 state.RetryAttempt = savedStep.RetryAttempt;
                 state.RetryNotBeforeUtc = savedStep.RetryNotBeforeUtc;
+                state.SideEffectState = savedStep.SideEffectState;
                 state.ActivatedControlInputs.Clear();
                 state.ActivatedControlInputs.UnionWith(savedStep.ActivatedControlInputs);
                 var outputs = savedStep.Outputs.ToDictionary(
@@ -2910,7 +3106,8 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                     state.Result?.Status,
                     state.Result?.Error,
                     state.RetryAttempt,
-                    state.RetryNotBeforeUtc);
+                    state.RetryNotBeforeUtc,
+                    state.SideEffectState);
             }).ToArray();
             IReadOnlyList<WorkflowCheckpointResource> resources = await CaptureRuntimeResourcesAsync(cancellationToken).ConfigureAwait(false);
             WorkflowExecutionCheckpoint checkpoint = new(
@@ -3331,6 +3528,8 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         public int RetryAttempt { get; set; }
 
         public DateTimeOffset? RetryNotBeforeUtc { get; set; }
+
+        public WorkflowSideEffectCheckpointState SideEffectState { get; set; }
 
         public bool IsTerminalSuccess => Status == WorkflowStepRuntimeStatus.Succeeded;
     }
