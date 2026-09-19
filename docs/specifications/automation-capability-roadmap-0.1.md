@@ -534,6 +534,12 @@ Initial outputs should include UTC time in an unambiguous representation. Additi
 
 # Phase 5 — Production Hardening
 
+## Implementation Status
+
+Phase 5 is implemented through bounded/redacted node-failure diagnostics, SQLite-backed fenced leases exposed through generic state nodes, and checkpoint-format-0.4 external side-effect recovery semantics.
+
+Crash-injection verification covers safe pre-dispatch replay, uncertain dispatch without a reconciler, recovered completion without replay, and reconciliation that proves the operation was not attempted.
+
 ## 5.1 Automatic Diagnostics
 
 Introduce a provider-neutral diagnostic contributor abstraction so providers can attach useful bounded evidence when an operation fails.

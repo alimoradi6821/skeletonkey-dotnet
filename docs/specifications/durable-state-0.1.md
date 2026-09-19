@@ -28,6 +28,9 @@ state.put
 state.exists
 state.delete
 state.compareExchange
+state.leaseAcquire
+state.leaseRenew
+state.leaseRelease
 ```
 
 Every node has a `main` control input and activates `continue` on success.
@@ -129,11 +132,17 @@ Semantics:
 
 This operation is the Phase 1 primitive for race-safe deduplication/claiming. A read followed by a separate write is not equivalent.
 
+### Durable leases
+
+`state.leaseAcquire`, `state.leaseRenew`, and `state.leaseRelease` provide bounded exclusive ownership for longer-running work. Acquisition returns an opaque `leaseId`, monotonically increasing `fencingToken`, and UTC expiry. Renewal and release require both the current lease identity and fencing token. Expired or explicitly released ownership may be reclaimed with a strictly newer fencing token.
+
+Lease correctness is implemented by the durable provider and does not depend on a process-local mutex.
+
 ## SQLite Provider
 
 The SQLite provider owns a local database path supplied by host configuration. The path is not workflow business semantics.
 
-Schema version 1 contains one table keyed by `(scope, namespace, key)`. The provider:
+Schema version 2 contains the original key/value table and a separate lease table keyed by `(scope, namespace, key)`. Version-1 databases are upgraded in place. The provider:
 
 - creates the database and schema deterministically;
 - enables WAL mode;
@@ -142,7 +151,10 @@ Schema version 1 contains one table keyed by `(scope, namespace, key)`. The prov
 - generates a fresh opaque version token for every successful mutation;
 - implements create-if-absent with atomic `INSERT ... ON CONFLICT DO NOTHING`;
 - implements versioned replace with atomic `UPDATE ... WHERE version = expectedVersion`;
-- never reuses a deleted entry's stale version token when the key is recreated.
+- never reuses a deleted entry's stale version token when the key is recreated;
+- atomically acquires absent/expired lease ownership with database-side conflict handling;
+- increments fencing tokens when lease ownership is reacquired;
+- rejects renew/release from stale or expired owners.
 
 ## Failure Codes
 
@@ -151,6 +163,7 @@ Schema version 1 contains one table keyed by `(scope, namespace, key)`. The prov
 - `SKS1003` — store remained busy/locked beyond the configured bound.
 - `SKS1004` — caller cancellation.
 - `SKS1005` — unsupported store schema.
+- `SKS1006` — invalid lease request.
 
 ## Checkpoint Separation
 

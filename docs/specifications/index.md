@@ -34,6 +34,10 @@ For the GA 0.1.0 support boundary, start with:
 
 - [Secrets, Hashing, and Workflow-Visible Time 0.1](secrets-hash-time-0.1.md) defines host-owned `$secret` resolution, deterministic `data.hash`, and runtime-clock-backed `time.now`.
 
+## Phase 5 Production Hardening Contract
+
+- [Production Hardening: Diagnostics, Leases, and Side-Effect Recovery 0.1](production-hardening-0.1.md) defines bounded/redacted failure evidence, durable fenced leases, and fail-closed external side-effect reconciliation.
+
 ## Proposed Packaging Contracts
 
 - [Standalone Export 0.1](standalone-export-0.1.md) defines the scenario-specific sealed executable output mode. It is intentionally separate from the workflow schema and remains proposed until implementation verification is complete.

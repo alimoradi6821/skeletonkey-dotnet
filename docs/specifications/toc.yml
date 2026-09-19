@@ -13,6 +13,8 @@ items:
   href: structured-web-primitives-0.1.md
 - name: "Secrets, Hashing, and Workflow-Visible Time 0.1"
   href: secrets-hash-time-0.1.md
+- name: "Production Hardening: Diagnostics, Leases, and Side-Effect Recovery 0.1"
+  href: production-hardening-0.1.md
 - name: "Built-in Node Catalog 0.1"
   href: built-in-node-catalog-0.1.md
 - name: "Compatibility Policy 0.1"

@@ -1,12 +1,12 @@
 # Durable Workflow Checkpoints 0.1
 
-Phase 0-17 adds optional durable execution checkpoints and process-restart resume at deterministic safe boundaries. Phase 18 extends retry metadata, and Phase 24 adds provider-owned runtime-resource reconstruction. The host supplies `IWorkflowCheckpointStore`; workflow documents never choose checkpoint paths.
+Phase 0-17 adds optional durable execution checkpoints and process-restart resume at deterministic safe boundaries. Phase 18 extends retry metadata, Phase 24 adds provider-owned runtime-resource reconstruction, and Phase 5 production hardening adds explicit external side-effect dispatch certainty and reconciliation. The host supplies `IWorkflowCheckpointStore`; workflow documents never choose checkpoint paths.
 
 ## Contract
 
 A checkpoint contains:
 
-- format version `0.3` (`0.1` and `0.2` remain readable);
+- format version `0.4` (`0.1`, `0.2`, and `0.3` remain readable);
 - execution, workflow, workflow-specification, and plan identities;
 - a SHA-256 fingerprint of inputs and variable overrides;
 - a monotonically increasing revision and host-clock timestamp;
@@ -15,7 +15,8 @@ A checkpoint contains:
 - terminal node-result and lifecycle-snapshot history in deterministic execution order, including repeated loop activations;
 - execution attempt, activation, invocation, event-sequence, streamed-record, and duration counters;
 - accumulated outcome/error state and an immutable final result for terminal checkpoints.
-- ordered live-resource entries containing resource name, kind, resumability, and an immutable provider-versioned JSON state payload.
+- ordered live-resource entries containing resource name, kind, resumability, and an immutable provider-versioned JSON state payload;
+- per-step side-effect dispatch state: `None`, `NotDispatched`, `DispatchUncertain`, or `Completed`.
 
 The filesystem store hashes execution IDs before using them as filenames, confines files to one host-owned root, verifies a SHA-256 payload checksum, serializes concurrent writers through an exclusive lock, rejects stale revisions, and replaces an existing checkpoint atomically.
 
@@ -27,13 +28,16 @@ The runtime persists a `Running` checkpoint before invoking a node handler. It p
 
 - a completed step present in a safe checkpoint is never executed again during resume;
 - a crash before a handler begins resumes from the previous safe checkpoint;
-- a crash after a handler may have begun leaves that step as `Running` and resume fails with `SKR3006` instead of risking a duplicate side effect;
+- ordinary interrupted handlers still fail with `SKR3006`;
+- external side-effect handlers persist `NotDispatched` before dispatch and `DispatchUncertain` immediately before handler invocation;
+- `NotDispatched` may replay safely;
+- `DispatchUncertain` requires an `INodeSideEffectRecoveryHandler` or fails with `SKR3010`; it is never blindly replayed;
 - terminal checkpoint resume returns the original immutable result without invoking handlers;
 - workflow/plan/input mismatches fail before execution.
 - live resources are reconstructed before the next remaining step is scheduled;
 - a previously activated resource without a resumable snapshot or recovery provider fails closed instead of being silently recreated empty.
 
-`SKR3006` requires a future node-specific recovery policy or a deliberate new execution identity. Phase 0-17 does not guess whether an interrupted external side effect committed.
+`SKR3006` remains the fail-closed result for interrupted nodes without an explicit side-effect recovery contract. `SKR3010` represents a specifically identified external operation whose dispatch may have occurred but whose external result is not durably known.
 
 ## Runner
 
@@ -64,9 +68,10 @@ The same workflow content, inputs, variable overrides, execution ID, and checkpo
 | `SKR3007` | Persisted step set differs from the current plan |
 | `SKR3008` | Non-terminal resume requires unsupported live resource recovery |
 | `SKR3009` | Runtime resource checkpoint capture or reconstruction failed |
+| `SKR3010` | External side-effect outcome is uncertain and explicit reconciliation is required |
 
 ## Explicit exclusions
 
-Checkpoint format 0.2 adds safe retry-attempt and not-before metadata. Format 0.3 adds resource checkpoint entries and keeps 0.1/0.2 read compatibility. Legacy non-terminal checkpoints that already used runtime resources fail with `SKR3008` because they contain no reconstruction state.
+Checkpoint format 0.2 adds safe retry-attempt and not-before metadata. Format 0.3 adds resource checkpoint entries. Format 0.4 adds side-effect dispatch certainty while retaining 0.1/0.2/0.3 read compatibility. Format 0.3 resource checkpoints remain reconstructable. Legacy non-terminal checkpoints that already used runtime resources fail with `SKR3008` because they contain no reconstruction state.
 
 Phase 24 reconstructs ephemeral Playwright pages only when no dialog is pending. It does not persist raw browser objects, persistent-profile ownership, desktop application handles, pending in-memory interaction continuations, handler-local memory, interrupted external operations, or arbitrary external transactions. Page recovery imports bounded storage state and re-navigates captured open-page URLs under the configured navigation policy. Parallel/distributed execution, node-specific compensation, and database checkpoint providers remain future work.
