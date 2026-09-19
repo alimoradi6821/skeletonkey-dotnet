@@ -7,7 +7,7 @@ using SkeletonKey.Web.Abstractions;
 namespace SkeletonKey.Web.BuiltIns;
 
 /// <summary>Executes <c>web.navigate</c>.</summary>
-public sealed class WebNavigateHandler : WebHandlerBase
+public sealed class WebNavigateHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebNavigateHandler() : base("web.navigate") { }
@@ -34,7 +34,7 @@ public sealed class WebNavigateHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.click</c>.</summary>
-public sealed class WebClickHandler : WebHandlerBase
+public sealed class WebClickHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebClickHandler() : base("web.click") { }
@@ -49,7 +49,7 @@ public sealed class WebClickHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.fill</c>.</summary>
-public sealed class WebFillHandler : WebHandlerBase
+public sealed class WebFillHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebFillHandler() : base("web.fill") { }
@@ -64,7 +64,7 @@ public sealed class WebFillHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.press</c>.</summary>
-public sealed class WebPressHandler : WebHandlerBase
+public sealed class WebPressHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebPressHandler() : base("web.press") { }
@@ -79,7 +79,7 @@ public sealed class WebPressHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.selectOption</c>.</summary>
-public sealed class WebSelectOptionHandler : WebHandlerBase
+public sealed class WebSelectOptionHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebSelectOptionHandler() : base("web.selectOption") { }
@@ -97,7 +97,7 @@ public sealed class WebSelectOptionHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.setChecked</c>.</summary>
-public sealed class WebSetCheckedHandler : WebHandlerBase
+public sealed class WebSetCheckedHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebSetCheckedHandler() : base("web.setChecked") { }

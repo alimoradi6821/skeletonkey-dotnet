@@ -118,7 +118,7 @@ public sealed class WebExtractCollectionHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.scroll</c>.</summary>
-public sealed class WebScrollHandler : WebHandlerBase
+public sealed class WebScrollHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebScrollHandler() : base("web.scroll") { }
@@ -162,7 +162,7 @@ public sealed class WebScrollHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.scrollIntoView</c>.</summary>
-public sealed class WebScrollIntoViewHandler : WebHandlerBase
+public sealed class WebScrollIntoViewHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebScrollIntoViewHandler() : base("web.scrollIntoView") { }
@@ -180,7 +180,7 @@ public sealed class WebScrollIntoViewHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.type</c>.</summary>
-public sealed class WebTypeHandler : WebHandlerBase
+public sealed class WebTypeHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebTypeHandler() : base("web.type") { }
@@ -204,7 +204,7 @@ public sealed class WebTypeHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.insertText</c>.</summary>
-public sealed class WebInsertTextHandler : WebHandlerBase
+public sealed class WebInsertTextHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebInsertTextHandler() : base("web.insertText") { }
@@ -222,7 +222,7 @@ public sealed class WebInsertTextHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.clear</c>.</summary>
-public sealed class WebClearHandler : WebHandlerBase
+public sealed class WebClearHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebClearHandler() : base("web.clear") { }
@@ -240,7 +240,7 @@ public sealed class WebClearHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.focus</c>.</summary>
-public sealed class WebFocusHandler : WebHandlerBase
+public sealed class WebFocusHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebFocusHandler() : base("web.focus") { }

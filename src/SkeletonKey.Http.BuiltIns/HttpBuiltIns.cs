@@ -74,7 +74,7 @@ public static class HttpBuiltInRuntimeHandlers
 }
 
 /// <summary>Executes <c>http.request</c>.</summary>
-public sealed class HttpRequestHandler(IHttpTransport transport) : INodeHandler
+public sealed class HttpRequestHandler(IHttpTransport transport) : IExternalSideEffectNodeHandler
 {
     private readonly IHttpTransport _transport = transport ?? throw new ArgumentNullException(nameof(transport));
 

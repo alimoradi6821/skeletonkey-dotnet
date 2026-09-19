@@ -227,6 +227,12 @@ public abstract class StateHandlerBase : INodeHandler
     }
 }
 
+/// <summary>Base class for state operations that mutate external durable state.</summary>
+public abstract class StateSideEffectHandlerBase(string type, IWorkflowStateStore store, string hostNamespace)
+    : StateHandlerBase(type, store, hostNamespace), IExternalSideEffectNodeHandler
+{
+}
+
 /// <summary>Executes <c>state.get</c>.</summary>
 public sealed class StateGetHandler(IWorkflowStateStore store, string hostNamespace = "default") : StateHandlerBase("state.get", store, hostNamespace)
 {
@@ -241,7 +247,7 @@ public sealed class StateGetHandler(IWorkflowStateStore store, string hostNamesp
 }
 
 /// <summary>Executes <c>state.put</c>.</summary>
-public sealed class StatePutHandler(IWorkflowStateStore store, string hostNamespace = "default") : StateHandlerBase("state.put", store, hostNamespace)
+public sealed class StatePutHandler(IWorkflowStateStore store, string hostNamespace = "default") : StateSideEffectHandlerBase("state.put", store, hostNamespace)
 {
     /// <inheritdoc />
     protected override async ValueTask<NodeHandlerResult> ExecuteStateAsync(NodeExecutionRequest request, WorkflowStateAddress address, CancellationToken cancellationToken)
@@ -273,7 +279,7 @@ public sealed class StateExistsHandler(IWorkflowStateStore store, string hostNam
 }
 
 /// <summary>Executes <c>state.delete</c>.</summary>
-public sealed class StateDeleteHandler(IWorkflowStateStore store, string hostNamespace = "default") : StateHandlerBase("state.delete", store, hostNamespace)
+public sealed class StateDeleteHandler(IWorkflowStateStore store, string hostNamespace = "default") : StateSideEffectHandlerBase("state.delete", store, hostNamespace)
 {
     /// <inheritdoc />
     protected override async ValueTask<NodeHandlerResult> ExecuteStateAsync(NodeExecutionRequest request, WorkflowStateAddress address, CancellationToken cancellationToken)
@@ -287,7 +293,7 @@ public sealed class StateDeleteHandler(IWorkflowStateStore store, string hostNam
 }
 
 /// <summary>Executes <c>state.compareExchange</c>.</summary>
-public sealed class StateCompareExchangeHandler(IWorkflowStateStore store, string hostNamespace = "default") : StateHandlerBase("state.compareExchange", store, hostNamespace)
+public sealed class StateCompareExchangeHandler(IWorkflowStateStore store, string hostNamespace = "default") : StateSideEffectHandlerBase("state.compareExchange", store, hostNamespace)
 {
     /// <inheritdoc />
     protected override async ValueTask<NodeHandlerResult> ExecuteStateAsync(NodeExecutionRequest request, WorkflowStateAddress address, CancellationToken cancellationToken)
@@ -311,7 +317,7 @@ public sealed class StateCompareExchangeHandler(IWorkflowStateStore store, strin
 public sealed class StateLeaseAcquireHandler(
     IWorkflowStateStore store,
     IWorkflowLeaseStore leaseStore,
-    string hostNamespace = "default") : StateHandlerBase("state.leaseAcquire", store, hostNamespace)
+    string hostNamespace = "default") : StateSideEffectHandlerBase("state.leaseAcquire", store, hostNamespace)
 {
     /// <inheritdoc />
     protected override async ValueTask<NodeHandlerResult> ExecuteStateAsync(NodeExecutionRequest request, WorkflowStateAddress address, CancellationToken cancellationToken)
@@ -339,7 +345,7 @@ public sealed class StateLeaseAcquireHandler(
 public sealed class StateLeaseRenewHandler(
     IWorkflowStateStore store,
     IWorkflowLeaseStore leaseStore,
-    string hostNamespace = "default") : StateHandlerBase("state.leaseRenew", store, hostNamespace)
+    string hostNamespace = "default") : StateSideEffectHandlerBase("state.leaseRenew", store, hostNamespace)
 {
     /// <inheritdoc />
     protected override async ValueTask<NodeHandlerResult> ExecuteStateAsync(NodeExecutionRequest request, WorkflowStateAddress address, CancellationToken cancellationToken)
@@ -364,7 +370,7 @@ public sealed class StateLeaseRenewHandler(
 public sealed class StateLeaseReleaseHandler(
     IWorkflowStateStore store,
     IWorkflowLeaseStore leaseStore,
-    string hostNamespace = "default") : StateHandlerBase("state.leaseRelease", store, hostNamespace)
+    string hostNamespace = "default") : StateSideEffectHandlerBase("state.leaseRelease", store, hostNamespace)
 {
     /// <inheritdoc />
     protected override async ValueTask<NodeHandlerResult> ExecuteStateAsync(NodeExecutionRequest request, WorkflowStateAddress address, CancellationToken cancellationToken)

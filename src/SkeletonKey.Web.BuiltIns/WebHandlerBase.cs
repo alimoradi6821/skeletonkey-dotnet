@@ -216,3 +216,9 @@ public abstract class WebHandlerBase(string type) : INodeHandler
         return new NodePortValueSet(values);
     }
 }
+
+
+/// <summary>Base class for web actions that may produce externally observable side effects.</summary>
+public abstract class WebSideEffectHandlerBase(string type) : WebHandlerBase(type), IExternalSideEffectNodeHandler
+{
+}

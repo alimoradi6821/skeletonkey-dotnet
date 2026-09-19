@@ -11,7 +11,7 @@ using static SkeletonKey.Web.BuiltIns.WebAdvancedHandlerJson;
 namespace SkeletonKey.Web.BuiltIns;
 
 /// <summary>Executes <c>web.openPage</c>.</summary>
-public sealed class WebOpenPageHandler : WebHandlerBase
+public sealed class WebOpenPageHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebOpenPageHandler() : base("web.openPage") { }
@@ -51,7 +51,7 @@ public sealed class WebListPagesHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.activatePage</c>.</summary>
-public sealed class WebActivatePageHandler : WebHandlerBase
+public sealed class WebActivatePageHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebActivatePageHandler() : base("web.activatePage") { }
@@ -65,7 +65,7 @@ public sealed class WebActivatePageHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.closePage</c>.</summary>
-public sealed class WebClosePageHandler : WebHandlerBase
+public sealed class WebClosePageHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebClosePageHandler() : base("web.closePage") { }
@@ -79,7 +79,7 @@ public sealed class WebClosePageHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.clickAndWaitForPopup</c>.</summary>
-public sealed class WebClickAndWaitForPopupHandler : WebHandlerBase
+public sealed class WebClickAndWaitForPopupHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebClickAndWaitForPopupHandler() : base("web.clickAndWaitForPopup") { }
@@ -105,7 +105,7 @@ public sealed class WebClickAndWaitForPopupHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.uploadFiles</c>.</summary>
-public sealed class WebUploadFilesHandler : WebHandlerBase
+public sealed class WebUploadFilesHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebUploadFilesHandler() : base("web.uploadFiles") { }
@@ -134,7 +134,7 @@ public sealed class WebUploadFilesHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.clickAndWaitForDownload</c>.</summary>
-public sealed class WebClickAndWaitForDownloadHandler : WebHandlerBase
+public sealed class WebClickAndWaitForDownloadHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebClickAndWaitForDownloadHandler() : base("web.clickAndWaitForDownload") { }
@@ -153,7 +153,7 @@ public sealed class WebClickAndWaitForDownloadHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.clickAndWaitForDialog</c>.</summary>
-public sealed class WebClickAndWaitForDialogHandler : WebHandlerBase
+public sealed class WebClickAndWaitForDialogHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebClickAndWaitForDialogHandler() : base("web.clickAndWaitForDialog") { }
@@ -171,7 +171,7 @@ public sealed class WebClickAndWaitForDialogHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.respondDialog</c>.</summary>
-public sealed class WebRespondDialogHandler : WebHandlerBase
+public sealed class WebRespondDialogHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebRespondDialogHandler() : base("web.respondDialog") { }
@@ -200,7 +200,7 @@ public sealed class WebGetCookiesHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.setCookies</c>.</summary>
-public sealed class WebSetCookiesHandler : WebHandlerBase
+public sealed class WebSetCookiesHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebSetCookiesHandler() : base("web.setCookies") { }
@@ -214,7 +214,7 @@ public sealed class WebSetCookiesHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.clearCookies</c>.</summary>
-public sealed class WebClearCookiesHandler : WebHandlerBase
+public sealed class WebClearCookiesHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebClearCookiesHandler() : base("web.clearCookies") { }
@@ -243,7 +243,7 @@ public sealed class WebExportStorageStateHandler : WebHandlerBase
 }
 
 /// <summary>Executes <c>web.importStorageState</c>.</summary>
-public sealed class WebImportStorageStateHandler : WebHandlerBase
+public sealed class WebImportStorageStateHandler : WebSideEffectHandlerBase
 {
     /// <summary>Initializes the handler.</summary>
     public WebImportStorageStateHandler() : base("web.importStorageState") { }
