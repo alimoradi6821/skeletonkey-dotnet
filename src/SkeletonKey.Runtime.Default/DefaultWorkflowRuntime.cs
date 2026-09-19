@@ -63,6 +63,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
     private readonly IReadOnlyDictionary<string, IWorkflowRuntimeResourceProvider> _resourceProviders;
     private readonly IWorkflowRuntimeHostResourceRegistry? _hostResourceRegistry;
     private readonly IWorkflowSecretProvider? _secretProvider;
+    private readonly IReadOnlyList<INodeFailureDiagnosticContributor> _diagnosticContributors;
     private readonly ILocatorPlanResolver? _locatorResolver;
     private readonly IWorkflowRuntimeDelay _delay;
 
@@ -99,6 +100,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
     /// <param name="delay">Optional host-supplied retry delay implementation.</param>
     /// <param name="hostResourceRegistry">Optional host-owned registry used for resources declared with host lifetime.</param>
     /// <param name="secretProvider">Optional host-owned provider used to resolve <c>$secret</c> wrappers immediately before node execution.</param>
+    /// <param name="diagnosticContributors">Optional provider-neutral contributors used to attach bounded evidence to node failures.</param>
     public DefaultWorkflowRuntime(
         IWorkflowValidator validator,
         IWorkflowAnalyzer analyzer,
@@ -113,7 +115,8 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         ILocatorPlanResolver? locatorResolver = null,
         IWorkflowRuntimeDelay? delay = null,
         IWorkflowRuntimeHostResourceRegistry? hostResourceRegistry = null,
-        IWorkflowSecretProvider? secretProvider = null)
+        IWorkflowSecretProvider? secretProvider = null,
+        IReadOnlyList<INodeFailureDiagnosticContributor>? diagnosticContributors = null)
     {
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         _analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
@@ -128,6 +131,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             .ToDictionary(static provider => provider.Kind, StringComparer.Ordinal);
         _hostResourceRegistry = hostResourceRegistry;
         _secretProvider = secretProvider;
+        _diagnosticContributors = Array.AsReadOnly([.. diagnosticContributors ?? Array.AsReadOnly(Array.Empty<INodeFailureDiagnosticContributor>())]);
         _locatorResolver = locatorResolver;
         _delay = delay ?? SystemWorkflowRuntimeDelay.Instance;
     }
@@ -219,7 +223,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         }
 
         DefaultWorkflowExecutionSession session = new(request.ExecutionId, _clock);
-        ExecutionSession execution = new(request, invocationId, planning.Plan, analysis, _validator, _analyzer, _planner, _catalog, _clock, _options, _workflowRepository, _resourceProviders, _hostResourceRegistry, _secretProvider, _locatorResolver, _delay, session);
+        ExecutionSession execution = new(request, invocationId, planning.Plan, analysis, _validator, _analyzer, _planner, _catalog, _clock, _options, _workflowRepository, _resourceProviders, _hostResourceRegistry, _secretProvider, _diagnosticContributors, _locatorResolver, _delay, session);
         session.Start(execution.ExecuteAsync(_handlerResolver, _parameterMaterializer, cancellationToken));
         return session;
     }
@@ -629,6 +633,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         private readonly IReadOnlyDictionary<string, IWorkflowRuntimeResourceProvider> _resourceProviders;
         private readonly IWorkflowRuntimeHostResourceRegistry? _hostResourceRegistry;
         private readonly IWorkflowSecretProvider? _secretProvider;
+        private readonly IReadOnlyList<INodeFailureDiagnosticContributor> _diagnosticContributors;
         private readonly ILocatorPlanResolver? _locatorResolver;
         private readonly IWorkflowRuntimeDelay _delay;
         private readonly DefaultWorkflowExecutionSession? _ownerSession;
@@ -674,6 +679,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             IReadOnlyDictionary<string, IWorkflowRuntimeResourceProvider> resourceProviders,
             IWorkflowRuntimeHostResourceRegistry? hostResourceRegistry,
             IWorkflowSecretProvider? secretProvider,
+            IReadOnlyList<INodeFailureDiagnosticContributor> diagnosticContributors,
             ILocatorPlanResolver? locatorResolver,
             IWorkflowRuntimeDelay delay,
             DefaultWorkflowExecutionSession? ownerSession)
@@ -692,6 +698,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             _resourceProviders = resourceProviders;
             _hostResourceRegistry = hostResourceRegistry;
             _secretProvider = secretProvider;
+            _diagnosticContributors = diagnosticContributors;
             _locatorResolver = locatorResolver;
             _delay = delay;
             _ownerSession = ownerSession;
@@ -1111,15 +1118,16 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
                 if (invocation.Error is not null)
                 {
-                    CompleteFailedAttempt(step, attempt.NodeExecutionId, attempt.Identity, invocation.Error, cancellationToken);
+                    WorkflowError error = await AttachFailureDiagnosticsAsync(invocation.Error, step.Step.DefinitionKey, context, cancellationToken).ConfigureAwait(false);
+                    CompleteFailedAttempt(step, attempt.NodeExecutionId, attempt.Identity, error, cancellationToken);
                     if (invocation.Retryable && retryAttempt < maximumAttempts)
                     {
-                        await ScheduleRetryAsync(step, node, retryAttempt, maximumAttempts, policy?.Retry, invocation.Error, cancellationToken).ConfigureAwait(false);
+                        await ScheduleRetryAsync(step, node, retryAttempt, maximumAttempts, policy?.Retry, error, cancellationToken).ConfigureAwait(false);
                         retryAttempt++;
                         continue;
                     }
 
-                    ApplyOnErrorPolicy(step, node, invocation.Error, cancellationToken);
+                    ApplyOnErrorPolicy(step, node, error, cancellationToken);
                     return;
                 }
 
@@ -1134,7 +1142,8 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
                 if (handlerResult.Status == NodeHandlerCompletionStatus.Failed)
                 {
-                    WorkflowError error = handlerResult.Error ?? new WorkflowError(WorkflowRuntimeErrorCodes.HandlerUnexpectedException, "Node handler failed.", node.Id);
+                    WorkflowError originalError = handlerResult.Error ?? new WorkflowError(WorkflowRuntimeErrorCodes.HandlerUnexpectedException, "Node handler failed.", node.Id);
+                    WorkflowError error = await AttachFailureDiagnosticsAsync(originalError, step.Step.DefinitionKey, context, cancellationToken).ConfigureAwait(false);
                     CompleteFailedAttempt(step, attempt.NodeExecutionId, attempt.Identity, error, cancellationToken);
                     if (retryAttempt < maximumAttempts)
                     {
@@ -1150,8 +1159,9 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 WorkflowError? contractError = ValidateOutputs(step, handlerResult.Outputs);
                 if (contractError is not null)
                 {
-                    CompleteFailedAttempt(step, attempt.NodeExecutionId, attempt.Identity, contractError, cancellationToken);
-                    ApplyOnErrorPolicy(step, node, contractError, cancellationToken);
+                    WorkflowError diagnosedContractError = await AttachFailureDiagnosticsAsync(contractError, step.Step.DefinitionKey, context, cancellationToken).ConfigureAwait(false);
+                    CompleteFailedAttempt(step, attempt.NodeExecutionId, attempt.Identity, diagnosedContractError, cancellationToken);
+                    ApplyOnErrorPolicy(step, node, diagnosedContractError, cancellationToken);
                     return;
                 }
 
@@ -1279,6 +1289,166 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             {
                 return HandlerInvocationOutcome.Failed(new WorkflowError(WorkflowRuntimeErrorCodes.HandlerUnexpectedException, "Node handler threw an unexpected exception.", request.Identity.NodeId), retryable: true);
             }
+        }
+
+        private async ValueTask<WorkflowError> AttachFailureDiagnosticsAsync(
+            WorkflowError error,
+            WorkflowNodeDefinitionKey definition,
+            INodeExecutionContext context,
+            CancellationToken cancellationToken)
+        {
+            if (!_options.EnableFailureDiagnostics || _diagnosticContributors.Count == 0)
+            {
+                return error;
+            }
+
+            JsonArray entries = [];
+            int characters = 0;
+            foreach (INodeFailureDiagnosticContributor contributor in _diagnosticContributors.Take(_options.MaximumFailureDiagnosticContributors))
+            {
+                JsonObject entry;
+                try
+                {
+                    if (!contributor.AppliesTo(definition))
+                    {
+                        continue;
+                    }
+
+                    NodeFailureDiagnosticContribution? contribution = await contributor
+                        .CaptureAsync(context.Identity, error, context, cancellationToken)
+                        .ConfigureAwait(false);
+                    if (contribution is null)
+                    {
+                        continue;
+                    }
+
+                    entry = new JsonObject
+                    {
+                        ["contributor"] = BoundDiagnosticString(contribution.ContributorId, 128),
+                        ["data"] = SanitizeDiagnosticNode(contribution.Data, depth: 0),
+                    };
+                }
+                catch (Exception)
+                {
+                    string contributorId;
+                    try
+                    {
+                        contributorId = contributor.Id;
+                    }
+                    catch (Exception)
+                    {
+                        contributorId = "unknown";
+                    }
+
+                    entry = new JsonObject
+                    {
+                        ["contributor"] = BoundDiagnosticString(contributorId, 128),
+                        ["captureFailed"] = true,
+                    };
+                }
+
+                int entryCharacters = entry.ToJsonString().Length;
+                if (characters + entryCharacters > _options.MaximumFailureDiagnosticCharacters)
+                {
+                    JsonObject truncated = new()
+                    {
+                        ["truncated"] = true,
+                    };
+                    if (characters + truncated.ToJsonString().Length <= _options.MaximumFailureDiagnosticCharacters)
+                    {
+                        entries.Add(truncated);
+                    }
+
+                    break;
+                }
+
+                entries.Add(entry);
+                characters += entryCharacters;
+            }
+
+            if (entries.Count == 0)
+            {
+                return error;
+            }
+
+            JsonObject details = error.Details ?? [];
+            string propertyName = details.ContainsKey("diagnostics") ? "runtimeDiagnostics" : "diagnostics";
+            details[propertyName] = entries;
+            return new WorkflowError(error.Code, error.Message, error.NodeId, error.Retryable, details);
+        }
+
+        private static JsonNode? SanitizeDiagnosticNode(JsonNode? node, int depth)
+        {
+            if (node is null)
+            {
+                return null;
+            }
+
+            if (depth >= 6)
+            {
+                return JsonValue.Create("[TRUNCATED]");
+            }
+
+            if (node is JsonObject sourceObject)
+            {
+                JsonObject result = [];
+                foreach (KeyValuePair<string, JsonNode?> property in sourceObject.Take(32))
+                {
+                    result[property.Key] = IsSensitiveDiagnosticKey(property.Key)
+                        ? JsonValue.Create("[REDACTED]")
+                        : SanitizeDiagnosticNode(property.Value, depth + 1);
+                }
+
+                if (sourceObject.Count > 32)
+                {
+                    result["truncated"] = true;
+                }
+
+                return result;
+            }
+
+            if (node is JsonArray sourceArray)
+            {
+                JsonArray result = [];
+                foreach (JsonNode? item in sourceArray.Take(32))
+                {
+                    result.Add(SanitizeDiagnosticNode(item, depth + 1));
+                }
+
+                if (sourceArray.Count > 32)
+                {
+                    result.Add("[TRUNCATED]");
+                }
+
+                return result;
+            }
+
+            if (node is JsonValue value && value.GetValueKind() == JsonValueKind.String)
+            {
+                return JsonValue.Create(BoundDiagnosticString(value.GetValue<string>(), 512));
+            }
+
+            return node.DeepClone();
+        }
+
+        private static bool IsSensitiveDiagnosticKey(string key)
+        {
+            return key.Contains("password", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("secret", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("token", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("authorization", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("cookie", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("credential", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("storageState", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("promptText", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("apiKey", StringComparison.OrdinalIgnoreCase) ||
+                key.Contains("api-key", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string BoundDiagnosticString(string value, int maximumCharacters)
+        {
+            string singleLine = value.Replace('\r', ' ').Replace('\n', ' ');
+            return singleLine.Length <= maximumCharacters ? singleLine : singleLine[..maximumCharacters];
         }
 
         private async ValueTask ScheduleRetryAsync(
@@ -2003,7 +2173,8 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 _locatorResolver,
                 _delay,
                 _hostResourceRegistry,
-                _secretProvider);
+                _secretProvider,
+                _diagnosticContributors);
             WorkflowRuntimeResult child = await childRuntime.ExecuteAsync(childRequest, cancellationToken).ConfigureAwait(false);
             if (child.Result.Status != WorkflowExecutionStatus.Succeeded)
             {

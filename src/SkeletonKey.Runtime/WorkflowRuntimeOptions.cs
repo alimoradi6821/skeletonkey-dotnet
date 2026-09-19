@@ -34,7 +34,10 @@ public sealed class WorkflowRuntimeOptions
         int maximumRuntimeActivations = 100_000,
         int maximumInvocationDepth = 64,
         int maximumInvocations = 10_000,
-        int maximumParallelSteps = 4)
+        int maximumParallelSteps = 4,
+        bool enableFailureDiagnostics = true,
+        int maximumFailureDiagnosticContributors = 8,
+        int maximumFailureDiagnosticCharacters = 16_384)
     {
         if (maximumExecutedNodeAttempts < 1)
         {
@@ -81,6 +84,16 @@ public sealed class WorkflowRuntimeOptions
             throw new ArgumentOutOfRangeException(nameof(maximumParallelSteps), maximumParallelSteps, "The parallel-step limit must be positive.");
         }
 
+        if (maximumFailureDiagnosticContributors < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumFailureDiagnosticContributors), maximumFailureDiagnosticContributors, "The diagnostic contributor limit must be positive.");
+        }
+
+        if (maximumFailureDiagnosticCharacters < 256)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumFailureDiagnosticCharacters), maximumFailureDiagnosticCharacters, "The diagnostic character limit must be at least 256.");
+        }
+
         MaximumExecutedNodeAttempts = maximumExecutedNodeAttempts;
         MaximumReadySteps = maximumReadySteps;
         MaximumStoredNodeResults = maximumStoredNodeResults;
@@ -92,6 +105,9 @@ public sealed class WorkflowRuntimeOptions
         MaximumInvocationDepth = maximumInvocationDepth;
         MaximumInvocations = maximumInvocations;
         MaximumParallelSteps = maximumParallelSteps;
+        EnableFailureDiagnostics = enableFailureDiagnostics;
+        MaximumFailureDiagnosticContributors = maximumFailureDiagnosticContributors;
+        MaximumFailureDiagnosticCharacters = maximumFailureDiagnosticCharacters;
     }
 
     /// <summary>
@@ -148,4 +164,13 @@ public sealed class WorkflowRuntimeOptions
     /// Gets the maximum number of independent handler steps or foreach iterations executed concurrently.
     /// </summary>
     public int MaximumParallelSteps { get; }
+
+    /// <summary>Gets whether provider failure diagnostics are captured when contributors are configured.</summary>
+    public bool EnableFailureDiagnostics { get; }
+
+    /// <summary>Gets the maximum number of diagnostic contributors evaluated for one node failure.</summary>
+    public int MaximumFailureDiagnosticContributors { get; }
+
+    /// <summary>Gets the maximum serialized diagnostic characters attached to one node failure.</summary>
+    public int MaximumFailureDiagnosticCharacters { get; }
 }
