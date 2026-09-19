@@ -32,6 +32,9 @@ public static class WorkflowStateErrorCodes
 
     /// <summary>The durable store schema is newer or otherwise unsupported.</summary>
     public const string UnsupportedSchema = "SKS1005";
+
+    /// <summary>A durable lease request is invalid.</summary>
+    public const string InvalidLeaseRequest = "SKS1006";
 }
 
 /// <summary>Represents an expected durable state provider failure.</summary>
@@ -144,5 +147,132 @@ public interface IWorkflowStateStore
         WorkflowStateAddress address,
         string? expectedVersion,
         JsonNode? value,
+        CancellationToken cancellationToken = default);
+}
+
+
+/// <summary>Represents one active durable lease with an opaque identity and monotonic fencing token.</summary>
+public sealed class WorkflowLease
+{
+    /// <summary>Initializes an active durable lease.</summary>
+    public WorkflowLease(
+        WorkflowStateAddress address,
+        string leaseId,
+        string ownerId,
+        long fencingToken,
+        DateTimeOffset acquiredAtUtc,
+        DateTimeOffset expiresAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(address);
+        ArgumentException.ThrowIfNullOrWhiteSpace(leaseId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerId);
+        if (fencingToken < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(fencingToken));
+        }
+
+        if (acquiredAtUtc.Offset != TimeSpan.Zero || expiresAtUtc.Offset != TimeSpan.Zero || expiresAtUtc <= acquiredAtUtc)
+        {
+            throw new ArgumentException("Lease timestamps must be UTC and expiry must be later than acquisition.");
+        }
+
+        Address = address;
+        LeaseId = leaseId;
+        OwnerId = ownerId;
+        FencingToken = fencingToken;
+        AcquiredAtUtc = acquiredAtUtc;
+        ExpiresAtUtc = expiresAtUtc;
+    }
+
+    /// <summary>Gets the leased durable address.</summary>
+    public WorkflowStateAddress Address { get; }
+
+    /// <summary>Gets the opaque lease identity.</summary>
+    public string LeaseId { get; }
+
+    /// <summary>Gets the consumer-supplied owner identity.</summary>
+    public string OwnerId { get; }
+
+    /// <summary>Gets the monotonically increasing fencing token for this address.</summary>
+    public long FencingToken { get; }
+
+    /// <summary>Gets the UTC acquisition timestamp.</summary>
+    public DateTimeOffset AcquiredAtUtc { get; }
+
+    /// <summary>Gets the UTC expiry timestamp.</summary>
+    public DateTimeOffset ExpiresAtUtc { get; }
+}
+
+/// <summary>Represents one atomic durable lease acquisition attempt.</summary>
+public sealed class WorkflowLeaseAcquireResult
+{
+    /// <summary>Initializes an acquisition result.</summary>
+    public WorkflowLeaseAcquireResult(bool acquired, WorkflowLease? lease, WorkflowLease? current)
+    {
+        if (acquired && lease is null)
+        {
+            throw new ArgumentException("A successful acquisition requires a lease.", nameof(lease));
+        }
+
+        Acquired = acquired;
+        Lease = Clone(lease);
+        Current = Clone(current);
+    }
+
+    /// <summary>Gets whether this caller atomically acquired ownership.</summary>
+    public bool Acquired { get; }
+
+    /// <summary>Gets the acquired lease on success.</summary>
+    public WorkflowLease? Lease { get; }
+
+    /// <summary>Gets the currently active lease when acquisition lost the race.</summary>
+    public WorkflowLease? Current { get; }
+
+    private static WorkflowLease? Clone(WorkflowLease? lease)
+    {
+        return lease is null ? null : new WorkflowLease(lease.Address, lease.LeaseId, lease.OwnerId, lease.FencingToken, lease.AcquiredAtUtc, lease.ExpiresAtUtc);
+    }
+}
+
+/// <summary>Represents renewal or release of an existing durable lease.</summary>
+public sealed class WorkflowLeaseMutationResult
+{
+    /// <summary>Initializes a lease mutation result.</summary>
+    public WorkflowLeaseMutationResult(bool succeeded, WorkflowLease? current)
+    {
+        Succeeded = succeeded;
+        Current = current is null ? null : new WorkflowLease(current.Address, current.LeaseId, current.OwnerId, current.FencingToken, current.AcquiredAtUtc, current.ExpiresAtUtc);
+    }
+
+    /// <summary>Gets whether the supplied lease identity still owned the address.</summary>
+    public bool Succeeded { get; }
+
+    /// <summary>Gets the active lease observed after a failed ownership check, when one exists.</summary>
+    public WorkflowLease? Current { get; }
+}
+
+/// <summary>Defines durable exclusive lease operations independent of any one persistence provider.</summary>
+public interface IWorkflowLeaseStore
+{
+    /// <summary>Atomically acquires an absent or expired lease.</summary>
+    public ValueTask<WorkflowLeaseAcquireResult> TryAcquireLeaseAsync(
+        WorkflowStateAddress address,
+        string ownerId,
+        TimeSpan duration,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Renews only when lease identity and fencing token still own an unexpired lease.</summary>
+    public ValueTask<WorkflowLeaseMutationResult> RenewLeaseAsync(
+        WorkflowStateAddress address,
+        string leaseId,
+        long fencingToken,
+        TimeSpan duration,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Releases only when lease identity and fencing token still own an unexpired lease.</summary>
+    public ValueTask<WorkflowLeaseMutationResult> ReleaseLeaseAsync(
+        WorkflowStateAddress address,
+        string leaseId,
+        long fencingToken,
         CancellationToken cancellationToken = default);
 }
