@@ -45,7 +45,7 @@ public sealed class NodeCatalogSemanticValidatorTests
                     1,
                     locators: new Dictionary<string, NodeLocatorSlotDefinition>
                     {
-                        ["field1"] = new("field1", "/fields/0/locator", acceptedCardinalities: [Locators.LocatorCardinality.One]),
+                        ["field1"] = new("field1", "/fields/0/locator", acceptedCardinalities: [SkeletonKey.Locators.LocatorCardinality.One]),
                     }),
             ]);
 
@@ -68,7 +68,7 @@ public sealed class NodeCatalogSemanticValidatorTests
                     1,
                     locators: new Dictionary<string, NodeLocatorSlotDefinition>
                     {
-                        ["field1"] = new("field1", "/fields//locator", acceptedCardinalities: [Locators.LocatorCardinality.One]),
+                        ["field1"] = new("field1", "/fields//locator", acceptedCardinalities: [SkeletonKey.Locators.LocatorCardinality.One]),
                     }),
             ]);
 
