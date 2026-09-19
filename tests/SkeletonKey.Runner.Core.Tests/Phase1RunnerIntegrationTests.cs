@@ -405,7 +405,7 @@ public sealed class Phase1RunnerIntegrationTests
         Environment.SetEnvironmentVariable(environmentName, secret);
         try
         {
-            await File.WriteAllTextAsync(workflowPath, $"""
+            await File.WriteAllTextAsync(workflowPath, $$"""
                 {
                   "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
                   "specVersion": "0.1.0",
