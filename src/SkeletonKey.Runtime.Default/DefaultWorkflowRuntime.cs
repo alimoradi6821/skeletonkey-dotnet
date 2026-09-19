@@ -323,7 +323,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 (step.RetryNotBeforeUtc is not null && (step.RetryNotBeforeUtc.Value.Offset != TimeSpan.Zero || step.RetryAttempt < 1 || step.Status != WorkflowStepRuntimeStatus.Ready || step.ResultStatus != NodeExecutionStatus.Failed)) ||
                 (step.ResultStatus is null && step.Status is (WorkflowStepRuntimeStatus.Succeeded or WorkflowStepRuntimeStatus.Failed or WorkflowStepRuntimeStatus.Cancelled or WorkflowStepRuntimeStatus.Skipped)) ||
                 (step.SideEffectState != WorkflowSideEffectCheckpointState.None && step.Attempt < 1) ||
-                (step.Status != WorkflowStepRuntimeStatus.Running && step.SideEffectState is WorkflowSideEffectCheckpointState.NotDispatched or WorkflowSideEffectCheckpointState.DispatchUncertain) ||
+                (step.Status != WorkflowStepRuntimeStatus.Running && step.SideEffectState == WorkflowSideEffectCheckpointState.NotDispatched) ||
                 (step.ResultStatus is not null && (step.Attempt < 1 || !checkpoint.NodeResults.Any(result =>
                     string.Equals(result.NodeId, step.NodeId, StringComparison.Ordinal) &&
                     result.Attempt == step.Attempt &&
@@ -361,13 +361,17 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             return new WorkflowError(WorkflowCheckpointErrorCodes.InvalidCheckpoint, "A non-terminal resume requires a checkpoint store.");
         }
 
-        if (!checkpoint.IsTerminal && request.Workflow.Resources.Values.Any(static definition => definition.Lifetime != WorkflowResourceLifetime.Host) &&
-            !string.Equals(checkpoint.FormatVersion, WorkflowExecutionCheckpoint.CurrentFormatVersion, StringComparison.Ordinal))
+        bool supportsResourceCheckpointState =
+            string.Equals(checkpoint.FormatVersion, WorkflowExecutionCheckpoint.CurrentFormatVersion, StringComparison.Ordinal) ||
+            string.Equals(checkpoint.FormatVersion, WorkflowExecutionCheckpoint.PreviousFormatVersion, StringComparison.Ordinal);
+        if (!checkpoint.IsTerminal &&
+            request.Workflow.Resources.Values.Any(static definition => definition.Lifetime != WorkflowResourceLifetime.Host) &&
+            !supportsResourceCheckpointState)
         {
             return new WorkflowError(WorkflowCheckpointErrorCodes.ResourceResumeNotSupported, "This checkpoint version does not contain reconstructable runtime resource state.");
         }
 
-        if (string.Equals(checkpoint.FormatVersion, WorkflowExecutionCheckpoint.CurrentFormatVersion, StringComparison.Ordinal))
+        if (supportsResourceCheckpointState)
         {
             if (checkpoint.Resources.Select(static resource => resource.ResourceName).Distinct(StringComparer.Ordinal).Count() != checkpoint.Resources.Count)
             {
@@ -920,6 +924,15 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                     step.Step,
                     prepared.Parameters.ResourceBindings,
                     cancellationToken).ConfigureAwait(false);
+                if (step.Step.Resources.Count > 0 && _terminalError is not null)
+                {
+                    _terminalError = null;
+                    _terminalStatus = WorkflowExecutionStatus.Succeeded;
+                    throw new WorkflowCheckpointStoreException(
+                        WorkflowCheckpointErrorCodes.ExternalSideEffectOutcomeUncertain,
+                        "Side-effect reconciliation could not reconstruct the required runtime resource.");
+                }
+
                 DefaultNodeExecutionContext context = new(
                     identity,
                     new RuntimeNodeExecutionEventWriter(_events, node.Id),
@@ -1317,7 +1330,15 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                         continue;
                     }
 
-                    ApplyOnErrorPolicy(step, node, error, cancellationToken);
+                    if (externalSideEffect)
+                    {
+                        SetTerminalFailure(step.Step.StepId, error);
+                    }
+                    else
+                    {
+                        ApplyOnErrorPolicy(step, node, error, cancellationToken);
+                    }
+
                     return;
                 }
 
@@ -1430,6 +1451,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             step.Status = WorkflowStepRuntimeStatus.Running;
             step.RetryAttempt = retryAttempt;
             step.RetryNotBeforeUtc = null;
+            step.SideEffectState = WorkflowSideEffectCheckpointState.None;
             _stateStore.CreateNode(identity, nodeExecutionId, _clock.UtcNow);
             await SaveCheckpointAsync(terminalResult: null, cancellationToken).ConfigureAwait(false);
             _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Ready, _clock.UtcNow);
