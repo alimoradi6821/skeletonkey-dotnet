@@ -23,6 +23,9 @@ public sealed class WorkflowRuntimeOptions
     /// <param name="maximumInvocationDepth">The maximum nested workflow invocation depth.</param>
     /// <param name="maximumInvocations">The maximum number of workflow invocations in one root execution.</param>
     /// <param name="maximumParallelSteps">The maximum number of independent handler steps or foreach iterations executed concurrently.</param>
+    /// <param name="enableFailureDiagnostics">Whether configured failure diagnostic contributors may run after a node failure.</param>
+    /// <param name="maximumFailureDiagnosticContributors">The maximum number of contributors evaluated for one node failure.</param>
+    /// <param name="maximumFailureDiagnosticCharacters">The maximum serialized diagnostic characters attached to one node failure.</param>
     public WorkflowRuntimeOptions(
         int maximumExecutedNodeAttempts = 10_000,
         int maximumReadySteps = 10_000,

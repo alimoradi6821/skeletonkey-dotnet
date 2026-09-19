@@ -32,7 +32,7 @@ public sealed class PlaywrightFailureDiagnosticContributor : INodeFailureDiagnos
             return null;
         }
 
-        using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(1));
         await using INodeResourceLease lease = await context.Resources.AcquireAsync("page", timeout.Token).ConfigureAwait(false);
         IWebPageAdapter adapter = lease.Resource.GetRequiredAdapter<IWebPageAdapter>();
