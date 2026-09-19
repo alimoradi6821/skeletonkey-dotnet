@@ -203,14 +203,20 @@ public abstract class StateHandlerBase : INodeHandler
     /// <summary>Reads a required positive integer parameter.</summary>
     protected static long RequiredPositiveLong(JsonObject parameters, string name)
     {
-        if (parameters[name] is not JsonValue value ||
-            (!value.TryGetValue(out long result) && !(value.TryGetValue(out int intValue) && (result = intValue) >= 0)) ||
-            result < 1)
+        if (parameters[name] is JsonValue value)
         {
-            throw new InvalidOperationException($"Parameter '{name}' must be a positive integer.");
+            if (value.TryGetValue(out long longValue) && longValue > 0)
+            {
+                return longValue;
+            }
+
+            if (value.TryGetValue(out int intValue) && intValue > 0)
+            {
+                return intValue;
+            }
         }
 
-        return result;
+        throw new InvalidOperationException($"Parameter '{name}' must be a positive integer.");
     }
 
     /// <summary>Projects an active lease into stable workflow outputs.</summary>
