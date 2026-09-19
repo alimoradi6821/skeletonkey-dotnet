@@ -21,6 +21,7 @@
     <ProjectReference Include="..\SkeletonKey.Planning.Default\SkeletonKey.Planning.Default.csproj" />
     <ProjectReference Include="..\SkeletonKey.Runtime.Default\SkeletonKey.Runtime.Default.csproj" />
     <ProjectReference Include="..\SkeletonKey.Runtime.Invocation\SkeletonKey.Runtime.Invocation.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Secrets.Abstractions\SkeletonKey.Secrets.Abstractions.csproj" />
     <ProjectReference Include="..\SkeletonKey.Serialization.Json\SkeletonKey.Serialization.Json.csproj" />
     <ProjectReference Include="..\SkeletonKey.State.Abstractions\SkeletonKey.State.Abstractions.csproj" />
     <ProjectReference Include="..\SkeletonKey.State.BuiltIns\SkeletonKey.State.BuiltIns.csproj" />

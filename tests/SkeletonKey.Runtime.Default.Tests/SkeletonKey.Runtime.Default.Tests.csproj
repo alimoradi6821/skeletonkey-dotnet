@@ -25,5 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SkeletonKey.BuiltIns.Runtime\SkeletonKey.BuiltIns.Runtime.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Runtime.Default\SkeletonKey.Runtime.Default.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Secrets.Abstractions\SkeletonKey.Secrets.Abstractions.csproj" />
   </ItemGroup>
 </Project>

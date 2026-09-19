@@ -13,6 +13,8 @@ public sealed class BuiltInWorkflowNodeCatalogTests
         "core.start",
         "core.end",
         "core.return",
+        "data.hash",
+        "time.now",
         "workflow.invoke",
         "flow.if",
         "flow.switch",
@@ -56,6 +58,8 @@ public sealed class BuiltInWorkflowNodeCatalogTests
         WorkflowNodeDefinition invoke = Definition("workflow.invoke");
         WorkflowNodeDefinition returnNode = Definition("core.return");
         WorkflowNodeDefinition interaction = Definition("interaction.request");
+        WorkflowNodeDefinition hash = Definition("data.hash");
+        WorkflowNodeDefinition time = Definition("time.now");
 
         Assert.Equal(["default"], switchNode.Outputs.Keys);
         Assert.Single(switchNode.DynamicPorts);
@@ -65,6 +69,8 @@ public sealed class BuiltInWorkflowNodeCatalogTests
         Assert.True(returnNode.Behavior.Terminal);
         Assert.Equal(["result"], interaction.Outputs.Keys);
         Assert.True(interaction.Behavior.MaySuspend);
+        Assert.Equal(["algorithm", "continue", "hash"], hash.Outputs.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(["continue", "unixTimeMilliseconds", "utc"], time.Outputs.Keys.Order(StringComparer.Ordinal));
     }
 
     /// <summary>

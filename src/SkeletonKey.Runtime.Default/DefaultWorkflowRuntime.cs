@@ -26,6 +26,7 @@ using SkeletonKey.Runtime;
 using SkeletonKey.Runtime.Interactions;
 using SkeletonKey.Runtime.Invocation;
 using SkeletonKey.Runtime.Resources;
+using SkeletonKey.Secrets.Abstractions;
 using SkeletonKey.Validation;
 using SkeletonKey.Workflow.Documents;
 using SkeletonKey.Workflow.Invocation;
@@ -61,6 +62,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
     private readonly IWorkflowRepository? _workflowRepository;
     private readonly IReadOnlyDictionary<string, IWorkflowRuntimeResourceProvider> _resourceProviders;
     private readonly IWorkflowRuntimeHostResourceRegistry? _hostResourceRegistry;
+    private readonly IWorkflowSecretProvider? _secretProvider;
     private readonly ILocatorPlanResolver? _locatorResolver;
     private readonly IWorkflowRuntimeDelay _delay;
 
@@ -96,6 +98,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
     /// <param name="locatorResolver">Optional explicit locator plan resolver used for `$locator` wrapper preparation.</param>
     /// <param name="delay">Optional host-supplied retry delay implementation.</param>
     /// <param name="hostResourceRegistry">Optional host-owned registry used for resources declared with host lifetime.</param>
+    /// <param name="secretProvider">Optional host-owned provider used to resolve <c>$secret</c> wrappers immediately before node execution.</param>
     public DefaultWorkflowRuntime(
         IWorkflowValidator validator,
         IWorkflowAnalyzer analyzer,
@@ -109,7 +112,8 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         IReadOnlyList<IWorkflowRuntimeResourceProvider>? resourceProviders = null,
         ILocatorPlanResolver? locatorResolver = null,
         IWorkflowRuntimeDelay? delay = null,
-        IWorkflowRuntimeHostResourceRegistry? hostResourceRegistry = null)
+        IWorkflowRuntimeHostResourceRegistry? hostResourceRegistry = null,
+        IWorkflowSecretProvider? secretProvider = null)
     {
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         _analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
@@ -123,6 +127,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         _resourceProviders = (resourceProviders ?? Array.AsReadOnly(Array.Empty<IWorkflowRuntimeResourceProvider>()))
             .ToDictionary(static provider => provider.Kind, StringComparer.Ordinal);
         _hostResourceRegistry = hostResourceRegistry;
+        _secretProvider = secretProvider;
         _locatorResolver = locatorResolver;
         _delay = delay ?? SystemWorkflowRuntimeDelay.Instance;
     }
@@ -214,7 +219,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         }
 
         DefaultWorkflowExecutionSession session = new(request.ExecutionId, _clock);
-        ExecutionSession execution = new(request, invocationId, planning.Plan, analysis, _validator, _analyzer, _planner, _catalog, _clock, _options, _workflowRepository, _resourceProviders, _hostResourceRegistry, _locatorResolver, _delay, session);
+        ExecutionSession execution = new(request, invocationId, planning.Plan, analysis, _validator, _analyzer, _planner, _catalog, _clock, _options, _workflowRepository, _resourceProviders, _hostResourceRegistry, _secretProvider, _locatorResolver, _delay, session);
         session.Start(execution.ExecuteAsync(_handlerResolver, _parameterMaterializer, cancellationToken));
         return session;
     }
@@ -623,6 +628,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
         private readonly IWorkflowRepository? _workflowRepository;
         private readonly IReadOnlyDictionary<string, IWorkflowRuntimeResourceProvider> _resourceProviders;
         private readonly IWorkflowRuntimeHostResourceRegistry? _hostResourceRegistry;
+        private readonly IWorkflowSecretProvider? _secretProvider;
         private readonly ILocatorPlanResolver? _locatorResolver;
         private readonly IWorkflowRuntimeDelay _delay;
         private readonly DefaultWorkflowExecutionSession? _ownerSession;
@@ -667,6 +673,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             IWorkflowRepository? workflowRepository,
             IReadOnlyDictionary<string, IWorkflowRuntimeResourceProvider> resourceProviders,
             IWorkflowRuntimeHostResourceRegistry? hostResourceRegistry,
+            IWorkflowSecretProvider? secretProvider,
             ILocatorPlanResolver? locatorResolver,
             IWorkflowRuntimeDelay delay,
             DefaultWorkflowExecutionSession? ownerSession)
@@ -684,6 +691,7 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             _workflowRepository = workflowRepository;
             _resourceProviders = resourceProviders;
             _hostResourceRegistry = hostResourceRegistry;
+            _secretProvider = secretProvider;
             _locatorResolver = locatorResolver;
             _delay = delay;
             _ownerSession = ownerSession;
@@ -1049,6 +1057,12 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                     return;
                 }
 
+                if (string.Equals(node.Type, "time.now", StringComparison.Ordinal))
+                {
+                    await CompleteTimeNowStepAsync(step, attempt.NodeExecutionId, attempt.Identity, node, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+
                 if (!handlerResolver.TryResolve(step.Step.DefinitionKey, out INodeHandler? handler) || handler is null)
                 {
                     if (step.Step.Kind == WorkflowExecutionPlanStepKind.Interaction && string.Equals(node.Type, "interaction.request", StringComparison.Ordinal) && _ownerSession is not null)
@@ -1161,6 +1175,40 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
                 return;
             }
+        }
+
+        private async ValueTask CompleteTimeNowStepAsync(
+            StepState step,
+            string nodeExecutionId,
+            NodeExecutionIdentity identity,
+            WorkflowNode node,
+            CancellationToken cancellationToken)
+        {
+            DateTimeOffset now = _clock.UtcNow.ToUniversalTime();
+            NodeHandlerOutputs outputs = new(["continue"], new Dictionary<string, NodePortValueSet>(StringComparer.Ordinal)
+            {
+                ["utc"] = new([JsonValue.Create(now.ToString("O", System.Globalization.CultureInfo.InvariantCulture))]),
+                ["unixTimeMilliseconds"] = new([JsonValue.Create(now.ToUnixTimeMilliseconds())]),
+            });
+            WorkflowError? contractError = ValidateOutputs(step, outputs);
+            if (contractError is not null)
+            {
+                CompleteFailedAttempt(step, nodeExecutionId, identity, contractError, cancellationToken);
+                ApplyOnErrorPolicy(step, node, contractError, cancellationToken);
+                return;
+            }
+
+            PropagateOutputs(step, outputs);
+            NodeExecutionResult result = new(_request.ExecutionId, _request.Workflow.Id, _invocationId, node.Id, node.Type, NodeExecutionStatus.Succeeded, identity.Attempt, ProjectOutputs(outputs.DataOutputs));
+            step.Result = result;
+            step.Outputs = new NodePortValueMap(outputs.DataOutputs);
+            step.Status = WorkflowStepRuntimeStatus.Succeeded;
+            step.RetryNotBeforeUtc = null;
+            _completedNodeOutputs[node.Id] = step.Outputs;
+            StoreNodeResult(nodeExecutionId, result);
+            _stateStore.TransitionNode(nodeExecutionId, ExecutionLifecycleState.Completed, _clock.UtcNow, result);
+            StoreNodeSnapshot(nodeExecutionId);
+            await EmitAsync(RuntimeWorkflowEventKind.NodeCompleted, "Node completed.", node.Id, cancellationToken).ConfigureAwait(false);
         }
 
         private async ValueTask<NodeAttempt?> StartNodeAttemptAsync(StepState step, WorkflowNode node, int retryAttempt, CancellationToken cancellationToken)
@@ -1907,7 +1955,18 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
             WorkflowNode node = _nodesById[step.Step.NodeId];
             WorkflowValueResolutionContext valueContext = new(_request.Inputs, MergeVariables(), _completedNodeOutputs, new Dictionary<string, WorkflowIterationContext>(StringComparer.Ordinal));
-            WorkflowValueResult materialized = parameterMaterializer.MaterializeParameters(node.Parameters, valueContext);
+            JsonObject invocationParameters;
+            try
+            {
+                invocationParameters = (JsonObject)(await ResolveSecretsAsync(node.Parameters, cancellationToken).ConfigureAwait(false))!;
+            }
+            catch (SecretPreparationException exception)
+            {
+                CompleteFailedStep(step, nodeExecutionId, identity, exception.Code, exception.Message, cancellationToken);
+                return;
+            }
+
+            WorkflowValueResult materialized = parameterMaterializer.MaterializeParameters(invocationParameters, valueContext);
             if (!materialized.IsSuccess || materialized.Value is not JsonObject parameters)
             {
                 CompleteFailedStep(step, nodeExecutionId, identity, WorkflowRuntimeErrorCodes.ParameterMaterializationFailed, materialized.Error?.Message ?? "Invocation parameter materialization failed.", cancellationToken);
@@ -1930,7 +1989,21 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
 
             Dictionary<string, JsonNode?> inputs = BuildInvocationInputs(parameters["inputs"] as JsonObject);
             WorkflowExecutionRequest childRequest = new(lookup.Workflow, _request.ExecutionId + ":child:" + identity.Attempt.ToString(System.Globalization.CultureInfo.InvariantCulture), _request.PlanId + ":child", inputs, eventSink: _request.EventSink);
-            DefaultWorkflowRuntime childRuntime = new(_validator, _analyzer, _planner, _catalog, handlerResolver, parameterMaterializer, _clock, _options, _workflowRepository, _resourceProviders.Values.ToArray(), _locatorResolver, _delay);
+            DefaultWorkflowRuntime childRuntime = new(
+                _validator,
+                _analyzer,
+                _planner,
+                _catalog,
+                handlerResolver,
+                parameterMaterializer,
+                _clock,
+                _options,
+                _workflowRepository,
+                _resourceProviders.Values.ToArray(),
+                _locatorResolver,
+                _delay,
+                _hostResourceRegistry,
+                _secretProvider);
             WorkflowRuntimeResult child = await childRuntime.ExecuteAsync(childRequest, cancellationToken).ConfigureAwait(false);
             if (child.Result.Status != WorkflowExecutionStatus.Succeeded)
             {
@@ -2109,6 +2182,15 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
                 return PreparedNodeResult.Failure(new WorkflowError(WorkflowRuntimeErrorCodes.ParameterMaterializationFailed, exception.Message, node.Id));
             }
 
+            try
+            {
+                stripped = (JsonObject)(await ResolveSecretsAsync(stripped, cancellationToken).ConfigureAwait(false))!;
+            }
+            catch (SecretPreparationException exception)
+            {
+                return PreparedNodeResult.Failure(new WorkflowError(exception.Code, exception.Message, node.Id));
+            }
+
             WorkflowValueResult materialized = parameterMaterializer.MaterializeParameters(stripped, valueContext);
             if (!materialized.IsSuccess)
             {
@@ -2116,6 +2198,78 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
             }
 
             return PreparedNodeResult.Success(new PreparedNodeParameters((JsonObject)materialized.Value!, resourceBindings, locatorBindings));
+        }
+
+        private async ValueTask<JsonNode?> ResolveSecretsAsync(JsonNode? node, CancellationToken cancellationToken)
+        {
+            if (node is null || node is JsonValue)
+            {
+                return node?.DeepClone();
+            }
+
+            if (node is JsonArray array)
+            {
+                JsonArray result = [];
+                foreach (JsonNode? item in array)
+                {
+                    result.Add(await ResolveSecretsAsync(item, cancellationToken).ConfigureAwait(false));
+                }
+
+                return result;
+            }
+
+            JsonObject obj = node.AsObject();
+            if (obj.Count == 1 && obj.ContainsKey("$literal"))
+            {
+                return obj.DeepClone();
+            }
+
+            if (obj.ContainsKey("$secret"))
+            {
+                WorkflowSecretReference reference;
+                try
+                {
+                    reference = new WorkflowSecretReferenceReader().Read(obj);
+                }
+                catch (WorkflowSecretReferenceFormatException exception)
+                {
+                    throw new SecretPreparationException(WorkflowRuntimeErrorCodes.ParameterMaterializationFailed, exception.Message);
+                }
+
+                if (_secretProvider is null)
+                {
+                    throw new SecretPreparationException(WorkflowRuntimeErrorCodes.RuntimeSecretProviderUnavailable, "A node parameter references a secret but no workflow secret provider is configured.");
+                }
+
+                WorkflowSecretValue? secret;
+                try
+                {
+                    secret = await _secretProvider.ResolveAsync(reference.Name, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    throw;
+                }
+                catch (Exception)
+                {
+                    throw new SecretPreparationException(WorkflowRuntimeErrorCodes.RuntimeSecretResolutionFailed, "The workflow secret provider failed to resolve a referenced secret.");
+                }
+
+                if (secret is null)
+                {
+                    throw new SecretPreparationException(WorkflowRuntimeErrorCodes.RuntimeSecretNotFound, "A referenced workflow secret was not found.");
+                }
+
+                return JsonValue.Create(secret.Reveal());
+            }
+
+            JsonObject resolved = [];
+            foreach (KeyValuePair<string, JsonNode?> property in obj)
+            {
+                resolved[property.Key] = await ResolveSecretsAsync(property.Value, cancellationToken).ConfigureAwait(false);
+            }
+
+            return resolved;
         }
 
         private async ValueTask<INodeResourceAccessor> PrepareResourceAccessorAsync(WorkflowExecutionPlanStep step, IReadOnlyList<NodeResourceBinding> preparedBindings, CancellationToken cancellationToken)
@@ -3011,6 +3165,11 @@ public sealed class DefaultWorkflowRuntime : IWorkflowRuntime
     }
 
     private sealed record NodeAttempt(NodeExecutionIdentity Identity, string NodeExecutionId);
+
+    private sealed class SecretPreparationException(string code, string message) : Exception(message)
+    {
+        public string Code { get; } = code;
+    }
 
     private sealed class HandlerInvocationOutcome
     {

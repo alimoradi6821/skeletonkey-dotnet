@@ -271,6 +271,123 @@ public sealed class Phase1RunnerIntegrationTests
         }
     }
 
+    /// <summary>Verifies the default runner resolves secret wrappers from the configured environment prefix without echoing plaintext.</summary>
+    [Fact]
+    public async Task RunnerResolvesEnvironmentSecretForDataHash()
+    {
+        const string secret = "phase4-runner-sensitive-value";
+        const string environmentName = "PHASE4_TEST_API_KEY";
+        string? previous = Environment.GetEnvironmentVariable(environmentName);
+        string root = Path.Combine(Path.GetTempPath(), "skeletonkey-phase4-secret-runner", Guid.NewGuid().ToString("N"));
+        string workflowPath = Path.Combine(root, "secret.workflow.json");
+        Directory.CreateDirectory(root);
+        Environment.SetEnvironmentVariable(environmentName, secret);
+        try
+        {
+            await File.WriteAllTextAsync(workflowPath, """
+                {
+                  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+                  "specVersion": "0.1.0",
+                  "id": "phase4-secret-runner",
+                  "name": "phase4-secret-runner",
+                  "inputs": {},
+                  "variables": {},
+                  "nodes": [
+                    {
+                      "id": "start",
+                      "type": "core.start",
+                      "typeVersion": 1,
+                      "disabled": false,
+                      "parameters": {}
+                    },
+                    {
+                      "id": "hash",
+                      "type": "data.hash",
+                      "typeVersion": 1,
+                      "disabled": false,
+                      "parameters": {
+                        "value": {
+                          "$secret": "API_KEY"
+                        }
+                      }
+                    },
+                    {
+                      "id": "return",
+                      "type": "core.return",
+                      "typeVersion": 1,
+                      "disabled": false,
+                      "parameters": {
+                        "outcome": {
+                          "kind": "success",
+                          "code": "phase4-secret-complete"
+                        }
+                      }
+                    }
+                  ],
+                  "connections": [
+                    {
+                      "from": {
+                        "node": "start",
+                        "port": "main"
+                      },
+                      "to": {
+                        "node": "hash",
+                        "port": "main"
+                      }
+                    },
+                    {
+                      "from": {
+                        "node": "hash",
+                        "port": "continue"
+                      },
+                      "to": {
+                        "node": "return",
+                        "port": "main"
+                      }
+                    }
+                  ],
+                  "outputs": {
+                    "hash": {
+                      "mode": "single",
+                      "from": {
+                        "node": "hash",
+                        "port": "hash"
+                      }
+                    }
+                  }
+                }
+                """);
+
+            using StringReader input = new(string.Empty);
+            using StringWriter output = new();
+            using StringWriter error = new();
+            SkeletonKeyRunner runner = new(input, output, error);
+
+            int exitCode = await runner.ExecuteAsync(
+            [
+                "run",
+                "--file",
+                workflowPath,
+                "--execution-id",
+                "phase4-secret-execution",
+                "--secret-env-prefix",
+                "PHASE4_TEST_",
+            ]);
+
+            Assert.Equal(RunnerExitCodes.Success, exitCode);
+            Assert.DoesNotContain(secret, output.ToString(), StringComparison.Ordinal);
+            Assert.Contains("\"hash\"", output.ToString(), StringComparison.Ordinal);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(environmentName, previous);
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
     private static async Task<string> ServeJsonResponseAsync(TcpListener listener)
     {
         using TcpClient client = await listener.AcceptTcpClientAsync();

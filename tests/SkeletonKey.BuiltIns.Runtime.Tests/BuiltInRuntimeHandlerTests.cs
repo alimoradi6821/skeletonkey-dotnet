@@ -163,6 +163,52 @@ public sealed class BuiltInRuntimeHandlerTests
         Assert.Equal(["customer_email"], result.Outputs.ActivatedControlOutputs);
     }
 
+    /// <summary>Verifies data.hash canonicalizes object property order while preserving array order.</summary>
+    [Fact]
+    public async Task DataHashIsCanonicalAndDeterministic()
+    {
+        DataHashHandler handler = new();
+        JsonObject first = new()
+        {
+            ["value"] = new JsonObject
+            {
+                ["b"] = 2,
+                ["a"] = new JsonArray(1, 2),
+            },
+        };
+        JsonObject second = new()
+        {
+            ["value"] = new JsonObject
+            {
+                ["a"] = new JsonArray(1, 2),
+                ["b"] = 2,
+            },
+        };
+        JsonObject reorderedArray = new()
+        {
+            ["value"] = new JsonObject
+            {
+                ["a"] = new JsonArray(2, 1),
+                ["b"] = 2,
+            },
+        };
+
+        NodeHandlerResult firstResult = await handler.ExecuteAsync(Request("data.hash", first), Context("data.hash"));
+        NodeHandlerResult secondResult = await handler.ExecuteAsync(Request("data.hash", second), Context("data.hash"));
+        NodeHandlerResult thirdResult = await handler.ExecuteAsync(Request("data.hash", reorderedArray), Context("data.hash"));
+
+        string firstHash = firstResult.Outputs.DataOutputs["hash"].Values[0]!.GetValue<string>();
+        string secondHash = secondResult.Outputs.DataOutputs["hash"].Values[0]!.GetValue<string>();
+        string thirdHash = thirdResult.Outputs.DataOutputs["hash"].Values[0]!.GetValue<string>();
+
+        Assert.Equal(64, firstHash.Length);
+        Assert.Equal(firstHash, firstHash.ToLowerInvariant());
+        Assert.Equal(firstHash, secondHash);
+        Assert.NotEqual(firstHash, thirdHash);
+        Assert.Equal("sha256", firstResult.Outputs.DataOutputs["algorithm"].Values[0]!.GetValue<string>());
+        Assert.Equal(["continue"], firstResult.Outputs.ActivatedControlOutputs);
+    }
+
     /// <summary>
     /// Verifies interaction.request propagates cancellation when a host handler is supplied.
     /// </summary>
@@ -185,7 +231,7 @@ public sealed class BuiltInRuntimeHandlerTests
     {
         IReadOnlyList<INodeHandler> handlers = BuiltInRuntimeHandlers.Create();
 
-        Assert.Equal(["core.end", "core.return", "core.start", "flow.foreach", "flow.if", "flow.repeat", "flow.switch", "flow.while"], handlers.Select(static handler => handler.Definition.Type));
+        Assert.Equal(["core.end", "core.return", "core.start", "data.hash", "flow.foreach", "flow.if", "flow.repeat", "flow.switch", "flow.while"], handlers.Select(static handler => handler.Definition.Type));
         Assert.All(handlers, handler => Assert.True(BuiltInWorkflowNodeCatalog.Catalog.TryGetDefinition(handler.Definition.Type, handler.Definition.Version, out _)));
         Assert.DoesNotContain(handlers, static handler => handler.Definition.Type == "workflow.invoke");
     }

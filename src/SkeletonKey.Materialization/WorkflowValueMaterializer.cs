@@ -6,6 +6,7 @@ using SkeletonKey.Evaluation;
 using SkeletonKey.Expressions;
 using SkeletonKey.Locators;
 using SkeletonKey.Resources;
+using SkeletonKey.Secrets.Abstractions;
 using SkeletonKey.Workflow.Bindings;
 
 namespace SkeletonKey.Materialization;
@@ -24,6 +25,7 @@ public sealed class WorkflowValueMaterializer : IWorkflowValueMaterializer
     private readonly WorkflowExpressionReader _expressionReader;
     private readonly WorkflowResourceReferenceReader _resourceReader;
     private readonly LocatorReferenceReader _locatorReader;
+    private readonly WorkflowSecretReferenceReader _secretReader;
     private readonly IWorkflowBindingResolver _bindingResolver;
     private readonly IWorkflowExpressionEvaluator _expressionEvaluator;
 
@@ -40,6 +42,7 @@ public sealed class WorkflowValueMaterializer : IWorkflowValueMaterializer
         _expressionReader = new WorkflowExpressionReader();
         _resourceReader = new WorkflowResourceReferenceReader();
         _locatorReader = new LocatorReferenceReader();
+        _secretReader = new WorkflowSecretReferenceReader();
         _bindingResolver = bindingResolver ?? new WorkflowBindingResolver();
         _expressionEvaluator = expressionEvaluator ?? new WorkflowExpressionEvaluator();
     }
@@ -181,6 +184,20 @@ public sealed class WorkflowValueMaterializer : IWorkflowValueMaterializer
             }
         }
 
+        if (jsonObject.ContainsKey("$secret"))
+        {
+            try
+            {
+                _secretReader.Read(jsonObject);
+            }
+            catch (WorkflowSecretReferenceFormatException exception)
+            {
+                return Failure(WorkflowValueErrorCode.MalformedWorkflowValueWrapper, exception.Message, exception.JsonPath);
+            }
+
+            return Failure(WorkflowValueErrorCode.SecretReferenceCannotBeJsonMaterialized, "Secret references require the runtime secret boundary and cannot be JSON-materialized directly.", jsonPath);
+        }
+
         if (jsonObject.ContainsKey("$resource"))
         {
             try
@@ -268,7 +285,7 @@ public sealed class WorkflowValueMaterializer : IWorkflowValueMaterializer
 
     private static bool IsReserved(string propertyName)
     {
-        return propertyName is "$literal" or "$binding" or "$expression" or "$resource" or "$locator";
+        return propertyName is "$literal" or "$binding" or "$expression" or "$resource" or "$locator" or "$secret";
     }
 
     private static WorkflowValueResult Failure(string code, string message, string path)

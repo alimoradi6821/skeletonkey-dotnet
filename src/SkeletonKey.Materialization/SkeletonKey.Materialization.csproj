@@ -11,6 +11,7 @@
     <ProjectReference Include="..\SkeletonKey.Expressions\SkeletonKey.Expressions.csproj" />
     <ProjectReference Include="..\SkeletonKey.Locators\SkeletonKey.Locators.csproj" />
     <ProjectReference Include="..\SkeletonKey.Resources\SkeletonKey.Resources.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Secrets.Abstractions\SkeletonKey.Secrets.Abstractions.csproj" />
     <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
   </ItemGroup>
 </Project>

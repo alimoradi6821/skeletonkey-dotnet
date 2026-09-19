@@ -104,11 +104,13 @@ Ordinary node parameters remain literal JSON except for reserved language node t
 
 ## Workflow Values and Bindings
 
-Workflow values may contain literal JSON, nested arrays and objects, `$binding` wrappers, `$expression` wrappers, and `$literal` wrappers.
+Workflow values may contain literal JSON, nested arrays and objects, `$binding` wrappers, `$expression` wrappers, `$secret` wrappers, and `$literal` wrappers.
 
 `$binding` property order is `source`, `name`, `node`, `port`, `iteration`, `path`, `onMissing`, `default`.
 
 `$expression` preserves expression text exactly as a JSON string value. JSON string escaping is canonicalized by `System.Text.Json`, but the deserialized expression text is not parsed or reformatted by serialization.
+
+`$secret` is an exact object wrapper containing one non-empty logical secret name. The serialized workflow stores only the logical name; a host provider resolves plaintext at the runtime execution boundary.
 
 `$literal` escapes reserved wrapper names for literal application data.
 
@@ -218,4 +220,4 @@ Deserialization does not validate start nodes, graph reachability, cycle rules, 
 The normative Workflow Language 0.1 JSON Schema describes public document structure for tools and cross-runtime conformance. It does not replace strict parsing or semantic validation.
 ## Phase 0-7D Addendum
 
-Reserved workflow-value wrappers are `$binding`, `$expression`, `$resource`, `$locator`, and `$literal`. `$literal` prevents interpretation of reserved wrapper names as structured workflow values. `workflow.invoke` parameters are serialized in canonical order `workflow`, `inputs`, `resources`, then `streams`.
+Reserved workflow-value wrappers are `$binding`, `$expression`, `$resource`, `$locator`, `$secret`, and `$literal`. `$literal` prevents interpretation of reserved wrapper names as structured workflow values. `workflow.invoke` parameters are serialized in canonical order `workflow`, `inputs`, `resources`, then `streams`.

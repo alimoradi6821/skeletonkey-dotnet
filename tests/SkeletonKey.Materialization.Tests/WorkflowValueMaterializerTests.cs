@@ -148,6 +148,8 @@ public sealed class WorkflowValueMaterializerTests
             { new JsonObject { ["$literal"] = true, ["extra"] = false }, WorkflowValueErrorCode.MalformedWorkflowValueWrapper },
             { new JsonObject { ["$resource"] = new JsonObject { ["name"] = "browser" } }, WorkflowValueErrorCode.ResourceReferenceCannotBeJsonMaterialized },
             { new JsonObject { ["$locator"] = new JsonObject { ["catalog"] = "main", ["id"] = "save" } }, WorkflowValueErrorCode.LocatorReferenceCannotBeJsonMaterialized },
+            { new JsonObject { ["$secret"] = "api-key" }, WorkflowValueErrorCode.SecretReferenceCannotBeJsonMaterialized },
+            { new JsonObject { ["$secret"] = "api-key", ["extra"] = true }, WorkflowValueErrorCode.MalformedWorkflowValueWrapper },
         };
     }
 

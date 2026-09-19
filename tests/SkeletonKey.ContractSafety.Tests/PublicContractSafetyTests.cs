@@ -12,6 +12,7 @@ using SkeletonKey.Planning;
 using SkeletonKey.Planning.Default;
 using SkeletonKey.Runtime;
 using SkeletonKey.Runtime.Default;
+using SkeletonKey.Secrets.Abstractions;
 using SkeletonKey.State.Abstractions;
 
 namespace SkeletonKey.ContractSafety.Tests;
@@ -39,6 +40,7 @@ public sealed class PublicContractSafetyTests
     [
         typeof(IHttpTransport).Assembly,
         typeof(IWorkflowStateStore).Assembly,
+        typeof(IWorkflowSecretProvider).Assembly,
     ];
 
     private static readonly Assembly[] _runtimeAssemblies =

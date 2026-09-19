@@ -11,6 +11,8 @@ items:
   href: host-lifetime-resources-0.1.md
 - name: "Structured Web Primitives 0.1"
   href: structured-web-primitives-0.1.md
+- name: "Secrets, Hashing, and Workflow-Visible Time 0.1"
+  href: secrets-hash-time-0.1.md
 - name: "Built-in Node Catalog 0.1"
   href: built-in-node-catalog-0.1.md
 - name: "Compatibility Policy 0.1"

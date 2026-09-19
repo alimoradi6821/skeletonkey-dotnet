@@ -778,6 +778,9 @@
           "$ref": "#/$defs/locatorReferenceWrapper"
         },
         {
+          "$ref": "#/$defs/secretReferenceWrapper"
+        },
+        {
           "$ref": "#/$defs/literalWrapper"
         },
         {
@@ -789,6 +792,7 @@
                 "$expression",
                 "$resource",
                 "$locator",
+                "$secret",
                 "$literal"
               ]
             }
@@ -878,6 +882,22 @@
       },
       "required": [
         "$locator"
+      ],
+      "additionalProperties": false
+    },
+    "secretReferenceWrapper": {
+      "title": "Secret Reference Wrapper",
+      "description": "A host-resolved sensitive value reference.",
+      "type": "object",
+      "properties": {
+        "$secret": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "$secret"
       ],
       "additionalProperties": false
     },

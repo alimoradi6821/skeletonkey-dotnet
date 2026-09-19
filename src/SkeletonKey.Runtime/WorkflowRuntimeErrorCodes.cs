@@ -82,4 +82,13 @@ public static class WorkflowRuntimeErrorCodes
 
     /// <summary>A workflow requested host-lifetime resource reuse but no host registry was configured.</summary>
     public const string RuntimeHostResourceRegistryUnavailable = "SKR1026";
+
+    /// <summary>A workflow references a secret but no secret provider is configured.</summary>
+    public const string RuntimeSecretProviderUnavailable = "SKR1027";
+
+    /// <summary>A referenced secret name was not found by the configured provider.</summary>
+    public const string RuntimeSecretNotFound = "SKR1028";
+
+    /// <summary>The configured secret provider failed while resolving a secret.</summary>
+    public const string RuntimeSecretResolutionFailed = "SKR1029";
 }

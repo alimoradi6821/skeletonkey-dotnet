@@ -35,6 +35,7 @@
     <ProjectReference Include="..\..\src\SkeletonKey.Planning.Default\SkeletonKey.Planning.Default.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Runtime\SkeletonKey.Runtime.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.Runtime.Default\SkeletonKey.Runtime.Default.csproj" />
+    <ProjectReference Include="..\..\src\SkeletonKey.Secrets.Abstractions\SkeletonKey.Secrets.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.BuiltIns.Runtime\SkeletonKey.BuiltIns.Runtime.csproj" />
     <ProjectReference Include="..\..\src\SkeletonKey.State.Abstractions\SkeletonKey.State.Abstractions.csproj" />
   </ItemGroup>

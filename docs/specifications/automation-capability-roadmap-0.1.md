@@ -457,6 +457,12 @@ The node must use timeout and cancellation semantics consistent with existing ru
 
 # Phase 4 — Secrets, Hashing, and Workflow-Visible Time
 
+## Implementation Status
+
+Phase 4 is implemented through the provider-neutral `$secret` wrapper and secret-provider boundary, the default runner environment provider, deterministic `data.hash`, and runtime-owned `time.now`.
+
+Verification includes secret non-retention in framework checkpoints/events, child-workflow propagation, runner environment composition, canonical object/array hash cases, and exact fake-clock time output.
+
 ## 4.1 Secret Resolution
 
 ### Proposed Project

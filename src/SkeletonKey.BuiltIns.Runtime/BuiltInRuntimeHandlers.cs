@@ -29,6 +29,7 @@ public static class BuiltInRuntimeHandlers
             new FlowRepeatHandler(),
             new FlowSwitchHandler(),
             new FlowWhileHandler(),
+            new DataHashHandler(),
         ];
 
         if (interactionHandler is not null)

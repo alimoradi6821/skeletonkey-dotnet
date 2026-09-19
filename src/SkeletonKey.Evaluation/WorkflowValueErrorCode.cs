@@ -70,4 +70,7 @@ public static class WorkflowValueErrorCode
 
     /// <summary>Internal evaluation failure.</summary>
     public const string InternalEvaluationFailure = "SKV1022";
+
+    /// <summary>Secret reference cannot be JSON-materialized outside the runtime secret boundary.</summary>
+    public const string SecretReferenceCannotBeJsonMaterialized = "SKV1023";
 }

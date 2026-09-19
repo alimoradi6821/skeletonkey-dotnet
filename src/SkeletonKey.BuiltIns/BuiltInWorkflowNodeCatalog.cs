@@ -28,6 +28,8 @@ public static class BuiltInWorkflowNodeCatalog
             ForEach(),
             Repeat(),
             While(),
+            DataHash(),
+            TimeNow(),
             InteractionRequest(),
         ]);
 
@@ -230,6 +232,42 @@ public static class BuiltInWorkflowNodeCatalog
             ]);
     }
 
+    private static WorkflowNodeDefinition DataHash()
+    {
+        return new(
+            "data.hash",
+            1,
+            displayName: "Hash Data",
+            category: "data",
+            parametersSchema: SchemaObject(["value"]),
+            inputs: InputPorts("main"),
+            outputs: ActionDataPorts("hash", "algorithm"),
+            behavior: new WorkflowNodeBehaviorMetadata(WorkflowNodeBehaviorKind.Action),
+            stability: WorkflowNodeStability.Preview,
+            parameterExamples:
+            [
+                new JsonObject
+                {
+                    ["value"] = new JsonObject { ["id"] = 123, ["name"] = "example" },
+                    ["algorithm"] = "sha256",
+                },
+            ]);
+    }
+
+    private static WorkflowNodeDefinition TimeNow()
+    {
+        return new(
+            "time.now",
+            1,
+            displayName: "Current Time",
+            category: "time",
+            inputs: InputPorts("main"),
+            outputs: ActionDataPorts("utc", "unixTimeMilliseconds"),
+            behavior: new WorkflowNodeBehaviorMetadata(WorkflowNodeBehaviorKind.Action),
+            stability: WorkflowNodeStability.Preview,
+            parameterExamples: [new JsonObject()]);
+    }
+
     private static WorkflowNodeDefinition InteractionRequest()
     {
         return new(
@@ -274,6 +312,20 @@ public static class BuiltInWorkflowNodeCatalog
             static name => name,
             static name => new WorkflowPortDefinition(name, WorkflowPortDirection.Output),
             StringComparer.Ordinal);
+    }
+
+    private static IReadOnlyDictionary<string, WorkflowPortDefinition> ActionDataPorts(params string[] names)
+    {
+        Dictionary<string, WorkflowPortDefinition> result = new(StringComparer.Ordinal)
+        {
+            ["continue"] = new("continue", WorkflowPortDirection.Output, roles: ["control"]),
+        };
+        foreach (string name in names)
+        {
+            result[name] = new WorkflowPortDefinition(name, WorkflowPortDirection.Output, roles: ["data"]);
+        }
+
+        return result;
     }
 
     private static IReadOnlyDictionary<string, WorkflowPortDefinition> ResultPorts(params string[] names)

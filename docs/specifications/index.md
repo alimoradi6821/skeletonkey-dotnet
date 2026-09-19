@@ -30,6 +30,10 @@ For the GA 0.1.0 support boundary, start with:
 
 - [Structured Web Primitives 0.1](structured-web-primitives-0.1.md) defines parent-relative collection extraction, observable scrolling, distinct text-input operations, and bounded condition waits.
 
+## Phase 4 Data and Secret Contract
+
+- [Secrets, Hashing, and Workflow-Visible Time 0.1](secrets-hash-time-0.1.md) defines host-owned `$secret` resolution, deterministic `data.hash`, and runtime-clock-backed `time.now`.
+
 ## Proposed Packaging Contracts
 
 - [Standalone Export 0.1](standalone-export-0.1.md) defines the scenario-specific sealed executable output mode. It is intentionally separate from the workflow schema and remains proposed until implementation verification is complete.

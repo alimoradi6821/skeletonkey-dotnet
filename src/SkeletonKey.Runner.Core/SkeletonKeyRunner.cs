@@ -29,6 +29,7 @@ using SkeletonKey.Runtime;
 using SkeletonKey.Runtime.Default;
 using SkeletonKey.Runtime.Invocation;
 using SkeletonKey.Runtime.Resources;
+using SkeletonKey.Secrets.Abstractions;
 using SkeletonKey.Serialization.Json;
 using SkeletonKey.State.Abstractions;
 using SkeletonKey.State.BuiltIns;
@@ -51,6 +52,7 @@ public sealed class SkeletonKeyRunner
     private readonly TextWriter _error;
     private readonly IReadOnlyList<IWorkflowRuntimeResourceProvider> _hostResourceProviders;
     private readonly IWorkflowRuntimeHostResourceRegistry? _hostResourceRegistry;
+    private readonly IWorkflowSecretProvider? _secretProvider;
     private RunnerOutputFormat _outputFormat;
     private bool _diagnostics;
 
@@ -60,13 +62,15 @@ public sealed class SkeletonKeyRunner
         TextWriter output,
         TextWriter error,
         IReadOnlyList<IWorkflowRuntimeResourceProvider>? hostResourceProviders = null,
-        IWorkflowRuntimeHostResourceRegistry? hostResourceRegistry = null)
+        IWorkflowRuntimeHostResourceRegistry? hostResourceRegistry = null,
+        IWorkflowSecretProvider? secretProvider = null)
     {
         _input = input;
         _output = output;
         _error = error;
         _hostResourceProviders = Array.AsReadOnly([.. hostResourceProviders ?? []]);
         _hostResourceRegistry = hostResourceRegistry;
+        _secretProvider = secretProvider;
     }
 
     /// <summary>Executes one command and returns a process-style exit code.</summary>
@@ -232,6 +236,7 @@ public sealed class SkeletonKeyRunner
         ILocatorPlanResolver? locatorResolver = await LoadLocatorResolverAsync(options, cancellationToken).ConfigureAwait(false);
         using SystemHttpTransport httpTransport = new();
         using SqliteWorkflowStateStore? stateStore = options.StateDatabase is null ? null : new SqliteWorkflowStateStore(options.StateDatabase);
+        IWorkflowSecretProvider secretProvider = _secretProvider ?? new EnvironmentWorkflowSecretProvider(options.SecretEnvironmentPrefix);
         WorkflowNodeDefinitionCatalog catalog = Catalog(plugins);
         IReadOnlyList<INodeHandler> handlers = ComposeHandlers(plugins, httpTransport, stateStore, options.StateHostNamespace);
         IReadOnlyList<IWorkflowRuntimeResourceProvider> resourceProviders = ComposeResourceProviders(plugins);
@@ -251,7 +256,8 @@ public sealed class SkeletonKeyRunner
                 workflowRepository: workflowRepository,
                 resourceProviders: resourceProviders,
                 locatorResolver: locatorResolver,
-                hostResourceRegistry: hostResourceRegistry);
+                hostResourceRegistry: hostResourceRegistry,
+                secretProvider: secretProvider);
 
             string executionId = options.ExecutionId ?? "execution";
             string planId = ComputePlanId(workflow);
@@ -659,7 +665,7 @@ public sealed class SkeletonKeyRunner
 
     private async ValueTask WriteUsageAsync()
     {
-        await _output.WriteLineAsync("skeletonkey <version|plugins|validate|analyze|plan|run|resume|install-browsers> [--file <workflow.json>|-] [--workflow-directory <path>] [--locator-directory <path>] [--plugin-directory <path>] [--inputs <json>] [--inputs-file <inputs.json>] [--execution-id <id>] [--checkpoint-directory <path>] [--state-database <path>] [--state-host-namespace <name>] [--browser <name>] [--format <json|ndjson>] [--diagnostics]").ConfigureAwait(false);
+        await _output.WriteLineAsync("skeletonkey <version|plugins|validate|analyze|plan|run|resume|install-browsers> [--file <workflow.json>|-] [--workflow-directory <path>] [--locator-directory <path>] [--plugin-directory <path>] [--inputs <json>] [--inputs-file <inputs.json>] [--execution-id <id>] [--checkpoint-directory <path>] [--state-database <path>] [--state-host-namespace <name>] [--secret-env-prefix <prefix>] [--browser <name>] [--format <json|ndjson>] [--diagnostics]").ConfigureAwait(false);
     }
 
     private static bool IsHelp(string value)
@@ -687,6 +693,21 @@ public static class RunnerExitCodes
     public const int Cancelled = 130;
 }
 
+internal sealed class EnvironmentWorkflowSecretProvider(string prefix) : IWorkflowSecretProvider
+{
+    private readonly string _prefix = string.IsNullOrWhiteSpace(prefix)
+        ? throw new ArgumentException("Secret environment prefix cannot be empty.", nameof(prefix))
+        : prefix;
+
+    public ValueTask<WorkflowSecretValue?> ResolveAsync(string name, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        string? value = Environment.GetEnvironmentVariable(_prefix + name);
+        return ValueTask.FromResult(value is null ? null : new WorkflowSecretValue(value));
+    }
+}
+
 internal sealed class RunnerUsageException(string message) : Exception(message);
 
 internal sealed class RunnerOptions
@@ -709,6 +730,8 @@ internal sealed class RunnerOptions
 
     public string StateHostNamespace { get; private init; } = "default";
 
+    public string SecretEnvironmentPrefix { get; private init; } = "SKELETONKEY_SECRET_";
+
     public string? Browser { get; private init; }
 
     public IReadOnlyList<string> PluginDirectories { get; private init; } = Array.AsReadOnly(Array.Empty<string>());
@@ -728,6 +751,7 @@ internal sealed class RunnerOptions
         string? checkpointDirectory = null;
         string? stateDatabase = null;
         string stateHostNamespace = "default";
+        string secretEnvironmentPrefix = "SKELETONKEY_SECRET_";
         string? browser = null;
         List<string> pluginDirectories = [];
         RunnerOutputFormat outputFormat = RunnerOutputFormat.Json;
@@ -786,6 +810,14 @@ internal sealed class RunnerOptions
                     }
 
                     break;
+                case "--secret-env-prefix":
+                    secretEnvironmentPrefix = Next();
+                    if (string.IsNullOrWhiteSpace(secretEnvironmentPrefix))
+                    {
+                        throw new RunnerUsageException("Secret environment prefix cannot be empty.");
+                    }
+
+                    break;
                 case "--browser":
                     browser = Next();
                     break;
@@ -835,6 +867,7 @@ internal sealed class RunnerOptions
             CheckpointDirectory = checkpointDirectory,
             StateDatabase = stateDatabase,
             StateHostNamespace = stateHostNamespace,
+            SecretEnvironmentPrefix = secretEnvironmentPrefix,
             Browser = browser,
             PluginDirectories = pluginDirectories.AsReadOnly(),
             OutputFormat = outputFormat,

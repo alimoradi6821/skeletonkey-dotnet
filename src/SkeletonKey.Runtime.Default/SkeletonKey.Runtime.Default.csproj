@@ -17,6 +17,7 @@
     <ProjectReference Include="..\SkeletonKey.Runtime.Interactions\SkeletonKey.Runtime.Interactions.csproj" />
     <ProjectReference Include="..\SkeletonKey.Runtime.Invocation\SkeletonKey.Runtime.Invocation.csproj" />
     <ProjectReference Include="..\SkeletonKey.Runtime.Resources\SkeletonKey.Runtime.Resources.csproj" />
+    <ProjectReference Include="..\SkeletonKey.Secrets.Abstractions\SkeletonKey.Secrets.Abstractions.csproj" />
     <ProjectReference Include="..\SkeletonKey.Validation\SkeletonKey.Validation.csproj" />
     <ProjectReference Include="..\SkeletonKey.Workflow\SkeletonKey.Workflow.csproj" />
   </ItemGroup>
