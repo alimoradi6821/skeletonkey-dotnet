@@ -388,6 +388,125 @@ public sealed class Phase1RunnerIntegrationTests
         }
     }
 
+    /// <summary>Verifies a secret can populate an HTTP authorization header without being echoed by the runner.</summary>
+    [Fact]
+    public async Task RunnerResolvesEnvironmentSecretIntoHttpAuthorizationHeader()
+    {
+        const string secret = "Bearer phase4-http-sensitive-value";
+        const string environmentName = "PHASE4_HTTP_AUTH";
+        string? previous = Environment.GetEnvironmentVariable(environmentName);
+        string root = Path.Combine(Path.GetTempPath(), "skeletonkey-phase4-http-secret-runner", Guid.NewGuid().ToString("N"));
+        string workflowPath = Path.Combine(root, "http-secret.workflow.json");
+        Directory.CreateDirectory(root);
+        using TcpListener listener = new(IPAddress.Loopback, 0);
+        listener.Start();
+        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        Task<string> server = ServeJsonResponseAsync(listener);
+        Environment.SetEnvironmentVariable(environmentName, secret);
+        try
+        {
+            await File.WriteAllTextAsync(workflowPath, $"""
+                {
+                  "$schema": "https://schemas.skeletonkey.dev/workflow/0.1/schema.json",
+                  "specVersion": "0.1.0",
+                  "id": "phase4-http-secret-runner",
+                  "name": "phase4-http-secret-runner",
+                  "inputs": {},
+                  "variables": {},
+                  "nodes": [
+                    {
+                      "id": "start",
+                      "type": "core.start",
+                      "typeVersion": 1,
+                      "disabled": false,
+                      "parameters": {}
+                    },
+                    {
+                      "id": "request",
+                      "type": "http.request",
+                      "typeVersion": 1,
+                      "disabled": false,
+                      "parameters": {
+                        "url": "http://127.0.0.1:{{port}}/authorized",
+                        "headers": {
+                          "Authorization": {
+                            "$secret": "AUTH"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "id": "return",
+                      "type": "core.return",
+                      "typeVersion": 1,
+                      "disabled": false,
+                      "parameters": {
+                        "outcome": {
+                          "kind": "success",
+                          "code": "phase4-http-secret-complete"
+                        }
+                      }
+                    }
+                  ],
+                  "connections": [
+                    {
+                      "from": {
+                        "node": "start",
+                        "port": "main"
+                      },
+                      "to": {
+                        "node": "request",
+                        "port": "main"
+                      }
+                    },
+                    {
+                      "from": {
+                        "node": "request",
+                        "port": "continue"
+                      },
+                      "to": {
+                        "node": "return",
+                        "port": "main"
+                      }
+                    }
+                  ],
+                  "outputs": {}
+                }
+                """);
+
+            using StringReader input = new(string.Empty);
+            using StringWriter output = new();
+            using StringWriter error = new();
+            SkeletonKeyRunner runner = new(input, output, error);
+
+            int exitCode = await runner.ExecuteAsync(
+            [
+                "run",
+                "--file",
+                workflowPath,
+                "--execution-id",
+                "phase4-http-secret-execution",
+                "--secret-env-prefix",
+                "PHASE4_HTTP_",
+            ]);
+
+            string received = await server;
+            Assert.Equal(RunnerExitCodes.Success, exitCode);
+            Assert.Contains("Authorization: " + secret, received, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(secret, output.ToString(), StringComparison.Ordinal);
+            Assert.DoesNotContain(secret, error.ToString(), StringComparison.Ordinal);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(environmentName, previous);
+            listener.Stop();
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
     private static async Task<string> ServeJsonResponseAsync(TcpListener listener)
     {
         using TcpClient client = await listener.AcceptTcpClientAsync();
