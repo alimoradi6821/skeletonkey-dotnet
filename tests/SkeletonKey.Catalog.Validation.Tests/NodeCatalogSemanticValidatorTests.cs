@@ -31,6 +31,52 @@ public sealed class NodeCatalogSemanticValidatorTests
         Assert.True(result.IsValid);
     }
 
+    /// <summary>Verifies locator parameter pointers may traverse bounded array elements.</summary>
+    [Fact]
+    public void LocatorArrayElementPointerPasses()
+    {
+        NodeCatalogDocument document = new(
+            id: "catalog",
+            version: "1.0.0",
+            definitions:
+            [
+                new(
+                    "web.extract",
+                    1,
+                    locators: new Dictionary<string, NodeLocatorSlotDefinition>
+                    {
+                        ["field1"] = new("field1", "/fields/0/locator", acceptedCardinalities: [Locators.LocatorCardinality.One]),
+                    }),
+            ]);
+
+        NodeCatalogValidationResult result = _validator.Validate(document);
+
+        Assert.True(result.IsValid);
+    }
+
+    /// <summary>Verifies locator parameter pointers still reject empty path segments.</summary>
+    [Fact]
+    public void LocatorPointerWithEmptySegmentFails()
+    {
+        NodeCatalogDocument document = new(
+            id: "catalog",
+            version: "1.0.0",
+            definitions:
+            [
+                new(
+                    "web.extract",
+                    1,
+                    locators: new Dictionary<string, NodeLocatorSlotDefinition>
+                    {
+                        ["field1"] = new("field1", "/fields//locator", acceptedCardinalities: [Locators.LocatorCardinality.One]),
+                    }),
+            ]);
+
+        NodeCatalogValidationResult result = _validator.Validate(document);
+
+        Assert.Contains(result.Issues, issue => issue.Code == NodeCatalogValidationCodes.InvalidLocatorSlot);
+    }
+
     /// <summary>
     /// Verifies duplicate exact definitions are reported deterministically.
     /// </summary>

@@ -135,9 +135,9 @@ public sealed partial class NodeCatalogSemanticValidator
                 Add(issues, NodeCatalogValidationCodes.InvalidLocatorSlot, "Locator slot name has an invalid format or does not match its dictionary key.", locatorPath);
             }
 
-            if (!IsObjectPropertyPointer(locator.Value.ParameterPointer))
+            if (!IsSupportedParameterPointer(locator.Value.ParameterPointer))
             {
-                Add(issues, NodeCatalogValidationCodes.InvalidLocatorSlot, "Locator slot parameter pointer must be an RFC 6901 object-property pointer.", Combine(locatorPath, "parameterPointer"));
+                Add(issues, NodeCatalogValidationCodes.InvalidLocatorSlot, "Locator slot parameter pointer must be an RFC 6901 pointer with non-empty path segments.", Combine(locatorPath, "parameterPointer"));
             }
             else if (!pointers.Add(locator.Value.ParameterPointer))
             {
@@ -206,7 +206,7 @@ public sealed partial class NodeCatalogSemanticValidator
         return prefix + "/" + index.ToString(CultureInfo.InvariantCulture);
     }
 
-    private static bool IsObjectPropertyPointer(string pointer)
+    private static bool IsSupportedParameterPointer(string pointer)
     {
         if (string.IsNullOrWhiteSpace(pointer) || !pointer.StartsWith("/", StringComparison.Ordinal))
         {
@@ -214,7 +214,7 @@ public sealed partial class NodeCatalogSemanticValidator
         }
 
         string[] segments = pointer[1..].Split('/');
-        return segments.All(static segment => segment.Length > 0 && !int.TryParse(segment, NumberStyles.None, CultureInfo.InvariantCulture, out _));
+        return segments.All(static segment => segment.Length > 0);
     }
 
     [GeneratedRegex("^[A-Za-z][A-Za-z0-9_-]*$", RegexOptions.CultureInvariant)]
