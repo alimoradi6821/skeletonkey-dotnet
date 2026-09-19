@@ -173,7 +173,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowLea
         ValidateLeaseDuration(duration);
         await EnsureInitializedAsync(cancellationToken).ConfigureAwait(false);
 
-        DateTimeOffset now = _timeProvider.GetUtcNow();
+        DateTimeOffset now = _timeProvider.GetUtcNow().ToUniversalTime();
         DateTimeOffset expires = now.Add(duration);
         string leaseId = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
         try
@@ -202,7 +202,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowLea
             int changed = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
             WorkflowLease? current = await ReadActiveLeaseAsync(connection, address, now, cancellationToken).ConfigureAwait(false);
             return changed == 1
-                ? new WorkflowLeaseAcquireResult(true, current ?? throw new InvalidOperationException("Acquired lease could not be read back."), current)
+                ? new WorkflowLeaseAcquireResult(true, current ?? throw new InvalidOperationException("Acquired lease could not be read back."), null)
                 : new WorkflowLeaseAcquireResult(false, null, current);
         }
         catch (SqliteException exception)
@@ -229,7 +229,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowLea
 
         ValidateLeaseDuration(duration);
         await EnsureInitializedAsync(cancellationToken).ConfigureAwait(false);
-        DateTimeOffset now = _timeProvider.GetUtcNow();
+        DateTimeOffset now = _timeProvider.GetUtcNow().ToUniversalTime();
         DateTimeOffset expires = now.Add(duration);
         try
         {
@@ -273,7 +273,7 @@ public sealed class SqliteWorkflowStateStore : IWorkflowStateStore, IWorkflowLea
         }
 
         await EnsureInitializedAsync(cancellationToken).ConfigureAwait(false);
-        DateTimeOffset now = _timeProvider.GetUtcNow();
+        DateTimeOffset now = _timeProvider.GetUtcNow().ToUniversalTime();
         try
         {
             await using SqliteConnection connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);

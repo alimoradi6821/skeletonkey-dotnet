@@ -82,6 +82,62 @@ public sealed class Phase1StateCapabilityTests
         }
     }
 
+    /// <summary>Verifies two independent workers cannot simultaneously hold the same durable lease.</summary>
+    [Fact]
+    public async Task SqliteLeaseAllowsOnlyOneConcurrentOwner()
+    {
+        string path = DatabasePath();
+        WorkflowStateAddress address = new(WorkflowStateScopeKind.Host, "host-a", "exclusive/resource");
+        try
+        {
+            using SqliteWorkflowStateStore first = new(path, busyTimeoutSeconds: 10);
+            using SqliteWorkflowStateStore second = new(path, busyTimeoutSeconds: 10);
+            WorkflowLeaseAcquireResult[] results = await Task.WhenAll(
+                first.TryAcquireLeaseAsync(address, "worker-a", TimeSpan.FromMinutes(1)).AsTask(),
+                second.TryAcquireLeaseAsync(address, "worker-b", TimeSpan.FromMinutes(1)).AsTask());
+
+            WorkflowLeaseAcquireResult winner = Assert.Single(results, static result => result.Acquired);
+            WorkflowLeaseAcquireResult loser = Assert.Single(results, static result => !result.Acquired);
+            Assert.NotNull(winner.Lease);
+            Assert.NotNull(loser.Current);
+            Assert.Equal(winner.Lease!.LeaseId, loser.Current!.LeaseId);
+            Assert.Equal(winner.Lease.FencingToken, loser.Current.FencingToken);
+        }
+        finally
+        {
+            DeleteDatabase(path);
+        }
+    }
+
+    /// <summary>Verifies expired leases are reclaimed with a higher fencing token and stale owners lose mutation rights.</summary>
+    [Fact]
+    public async Task ExpiredSqliteLeaseIsReclaimedWithFencingProtection()
+    {
+        string path = DatabasePath();
+        MutableTimeProvider clock = new(new DateTimeOffset(2026, 9, 19, 8, 0, 0, TimeSpan.Zero));
+        WorkflowStateAddress address = new(WorkflowStateScopeKind.Custom, "leases", "resource");
+        try
+        {
+            using SqliteWorkflowStateStore store = new(path, timeProvider: clock);
+            WorkflowLeaseAcquireResult first = await store.TryAcquireLeaseAsync(address, "worker-a", TimeSpan.FromMinutes(1));
+            WorkflowLease original = Assert.IsType<WorkflowLease>(first.Lease);
+
+            clock.Advance(TimeSpan.FromMinutes(2));
+            WorkflowLeaseAcquireResult second = await store.TryAcquireLeaseAsync(address, "worker-b", TimeSpan.FromMinutes(1));
+            WorkflowLease replacement = Assert.IsType<WorkflowLease>(second.Lease);
+
+            Assert.True(second.Acquired);
+            Assert.True(replacement.FencingToken > original.FencingToken);
+            Assert.False((await store.RenewLeaseAsync(address, original.LeaseId, original.FencingToken, TimeSpan.FromMinutes(1))).Succeeded);
+            Assert.False((await store.ReleaseLeaseAsync(address, original.LeaseId, original.FencingToken)).Succeeded);
+            Assert.True((await store.RenewLeaseAsync(address, replacement.LeaseId, replacement.FencingToken, TimeSpan.FromMinutes(1))).Succeeded);
+        }
+        finally
+        {
+            DeleteDatabase(path);
+        }
+    }
+
     /// <summary>Verifies workflow-scoped handlers derive namespace from workflow identity across independent executions.</summary>
     [Fact]
     public async Task StateHandlersShareWorkflowScopeAcrossExecutions()
@@ -112,12 +168,14 @@ public sealed class Phase1StateCapabilityTests
         }
     }
 
-    /// <summary>Verifies the durable state catalog reserves the five generic operations.</summary>
+    /// <summary>Verifies the durable state catalog exposes key/value and fenced lease operations.</summary>
     [Fact]
-    public void StateCatalogContainsFiveGenericOperations()
+    public void StateCatalogContainsGenericStateAndLeaseOperations()
     {
         string[] types = StateBuiltInWorkflowNodeCatalog.Catalog.Definitions.Select(static definition => definition.Type).OrderBy(static type => type, StringComparer.Ordinal).ToArray();
-        Assert.Equal(["state.compareExchange", "state.delete", "state.exists", "state.get", "state.put"], types);
+        Assert.Equal(
+            ["state.compareExchange", "state.delete", "state.exists", "state.get", "state.leaseAcquire", "state.leaseRelease", "state.leaseRenew", "state.put"],
+            types);
     }
 
     private static NodeExecutionIdentity Identity(string executionId, string type)
@@ -136,6 +194,18 @@ public sealed class Phase1StateCapabilityTests
         if (!string.IsNullOrEmpty(directory) && Directory.Exists(directory))
         {
             Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    private sealed class MutableTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        private DateTimeOffset _utcNow = utcNow;
+
+        public override DateTimeOffset GetUtcNow() => _utcNow;
+
+        public void Advance(TimeSpan duration)
+        {
+            _utcNow = _utcNow.Add(duration);
         }
     }
 

@@ -24,6 +24,9 @@ public static class StateBuiltInWorkflowNodeCatalog
             Definition("state.exists", ["key"], "exists", "version"),
             Definition("state.delete", ["key"], "deleted"),
             Definition("state.compareExchange", ["key"], "succeeded", "found", "value", "version", "updatedAtUtc"),
+            Definition("state.leaseAcquire", ["key", "ownerId", "durationMilliseconds"], "acquired", "leaseId", "fencingToken", "acquiredAtUtc", "expiresAtUtc", "currentOwnerId", "currentFencingToken", "currentExpiresAtUtc"),
+            Definition("state.leaseRenew", ["key", "leaseId", "fencingToken", "durationMilliseconds"], "succeeded", "expiresAtUtc", "currentOwnerId", "currentFencingToken", "currentExpiresAtUtc"),
+            Definition("state.leaseRelease", ["key", "leaseId", "fencingToken"], "succeeded", "currentOwnerId", "currentFencingToken", "currentExpiresAtUtc"),
         ]);
 
     /// <summary>Gets the immutable durable state catalog.</summary>
@@ -76,14 +79,22 @@ public static class StateBuiltInRuntimeHandlers
     {
         ArgumentNullException.ThrowIfNull(store);
         ArgumentException.ThrowIfNullOrWhiteSpace(hostNamespace);
-        return Array.AsReadOnly<INodeHandler>(
+        List<INodeHandler> handlers =
         [
             new StateGetHandler(store, hostNamespace),
             new StatePutHandler(store, hostNamespace),
             new StateExistsHandler(store, hostNamespace),
             new StateDeleteHandler(store, hostNamespace),
             new StateCompareExchangeHandler(store, hostNamespace),
-        ]);
+        ];
+        if (store is IWorkflowLeaseStore leaseStore)
+        {
+            handlers.Add(new StateLeaseAcquireHandler(store, leaseStore, hostNamespace));
+            handlers.Add(new StateLeaseRenewHandler(store, leaseStore, hostNamespace));
+            handlers.Add(new StateLeaseReleaseHandler(store, leaseStore, hostNamespace));
+        }
+
+        return handlers.AsReadOnly();
     }
 }
 
@@ -189,6 +200,27 @@ public abstract class StateHandlerBase : INodeHandler
         return parameters[name] is JsonValue value && value.GetValueKind() == JsonValueKind.String ? value.GetValue<string>() : null;
     }
 
+    /// <summary>Reads a required positive integer parameter.</summary>
+    protected static long RequiredPositiveLong(JsonObject parameters, string name)
+    {
+        if (parameters[name] is not JsonValue value ||
+            (!value.TryGetValue(out long result) && !(value.TryGetValue(out int intValue) && (result = intValue) >= 0)) ||
+            result < 1)
+        {
+            throw new InvalidOperationException($"Parameter '{name}' must be a positive integer.");
+        }
+
+        return result;
+    }
+
+    /// <summary>Projects an active lease into stable workflow outputs.</summary>
+    protected static void AddLeaseOutputs(IDictionary<string, NodePortValueSet> outputs, WorkflowLease? lease, string prefix = "")
+    {
+        outputs[prefix + "OwnerId"] = new([lease is null ? null : JsonValue.Create(lease.OwnerId)]);
+        outputs[prefix + "FencingToken"] = new([lease is null ? null : JsonValue.Create(lease.FencingToken)]);
+        outputs[prefix + "ExpiresAtUtc"] = new([lease is null ? null : JsonValue.Create(lease.ExpiresAtUtc.ToString("O", CultureInfo.InvariantCulture))]);
+    }
+
     private static NodeHandlerResult Failure(NodeExecutionRequest request, string code, string message)
     {
         return NodeHandlerResult.Failure(new WorkflowError(code, message, request.Identity.NodeId));
@@ -270,6 +302,83 @@ public sealed class StateCompareExchangeHandler(IWorkflowStateStore store, strin
             ["succeeded"] = new([JsonValue.Create(result.Succeeded)]),
         };
         AddEntryOutputs(outputs, result.Current);
+        return Main(outputs);
+    }
+}
+
+
+/// <summary>Executes <c>state.leaseAcquire</c>.</summary>
+public sealed class StateLeaseAcquireHandler(
+    IWorkflowStateStore store,
+    IWorkflowLeaseStore leaseStore,
+    string hostNamespace = "default") : StateHandlerBase("state.leaseAcquire", store, hostNamespace)
+{
+    /// <inheritdoc />
+    protected override async ValueTask<NodeHandlerResult> ExecuteStateAsync(NodeExecutionRequest request, WorkflowStateAddress address, CancellationToken cancellationToken)
+    {
+        long durationMilliseconds = RequiredPositiveLong(request.Parameters, "durationMilliseconds");
+        WorkflowLeaseAcquireResult result = await leaseStore.TryAcquireLeaseAsync(
+            address,
+            RequiredString(request.Parameters, "ownerId"),
+            TimeSpan.FromMilliseconds(durationMilliseconds),
+            cancellationToken).ConfigureAwait(false);
+        Dictionary<string, NodePortValueSet> outputs = new(StringComparer.Ordinal)
+        {
+            ["acquired"] = new([JsonValue.Create(result.Acquired)]),
+            ["leaseId"] = new([result.Lease is null ? null : JsonValue.Create(result.Lease.LeaseId)]),
+            ["fencingToken"] = new([result.Lease is null ? null : JsonValue.Create(result.Lease.FencingToken)]),
+            ["acquiredAtUtc"] = new([result.Lease is null ? null : JsonValue.Create(result.Lease.AcquiredAtUtc.ToString("O", CultureInfo.InvariantCulture))]),
+            ["expiresAtUtc"] = new([result.Lease is null ? null : JsonValue.Create(result.Lease.ExpiresAtUtc.ToString("O", CultureInfo.InvariantCulture))]),
+        };
+        AddLeaseOutputs(outputs, result.Current, "current");
+        return Main(outputs);
+    }
+}
+
+/// <summary>Executes <c>state.leaseRenew</c>.</summary>
+public sealed class StateLeaseRenewHandler(
+    IWorkflowStateStore store,
+    IWorkflowLeaseStore leaseStore,
+    string hostNamespace = "default") : StateHandlerBase("state.leaseRenew", store, hostNamespace)
+{
+    /// <inheritdoc />
+    protected override async ValueTask<NodeHandlerResult> ExecuteStateAsync(NodeExecutionRequest request, WorkflowStateAddress address, CancellationToken cancellationToken)
+    {
+        WorkflowLeaseMutationResult result = await leaseStore.RenewLeaseAsync(
+            address,
+            RequiredString(request.Parameters, "leaseId"),
+            RequiredPositiveLong(request.Parameters, "fencingToken"),
+            TimeSpan.FromMilliseconds(RequiredPositiveLong(request.Parameters, "durationMilliseconds")),
+            cancellationToken).ConfigureAwait(false);
+        Dictionary<string, NodePortValueSet> outputs = new(StringComparer.Ordinal)
+        {
+            ["succeeded"] = new([JsonValue.Create(result.Succeeded)]),
+            ["expiresAtUtc"] = new([result.Succeeded && result.Current is not null ? JsonValue.Create(result.Current.ExpiresAtUtc.ToString("O", CultureInfo.InvariantCulture)) : null]),
+        };
+        AddLeaseOutputs(outputs, result.Succeeded ? null : result.Current, "current");
+        return Main(outputs);
+    }
+}
+
+/// <summary>Executes <c>state.leaseRelease</c>.</summary>
+public sealed class StateLeaseReleaseHandler(
+    IWorkflowStateStore store,
+    IWorkflowLeaseStore leaseStore,
+    string hostNamespace = "default") : StateHandlerBase("state.leaseRelease", store, hostNamespace)
+{
+    /// <inheritdoc />
+    protected override async ValueTask<NodeHandlerResult> ExecuteStateAsync(NodeExecutionRequest request, WorkflowStateAddress address, CancellationToken cancellationToken)
+    {
+        WorkflowLeaseMutationResult result = await leaseStore.ReleaseLeaseAsync(
+            address,
+            RequiredString(request.Parameters, "leaseId"),
+            RequiredPositiveLong(request.Parameters, "fencingToken"),
+            cancellationToken).ConfigureAwait(false);
+        Dictionary<string, NodePortValueSet> outputs = new(StringComparer.Ordinal)
+        {
+            ["succeeded"] = new([JsonValue.Create(result.Succeeded)]),
+        };
+        AddLeaseOutputs(outputs, result.Current, "current");
         return Main(outputs);
     }
 }
