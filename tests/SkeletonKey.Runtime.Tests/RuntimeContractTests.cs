@@ -172,7 +172,7 @@ public sealed class RuntimeContractTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new RuntimeWorkflowEvent("bad", 0, "execution", "workflow", "invocation", null, DateTimeOffset.UtcNow, RuntimeWorkflowEventKind.ExecutionStarted));
     }
 
-    /// <summary>Verifies checkpoint 0.3 remains compatible with the 0.2 retry and legacy 0.1 formats.</summary>
+    /// <summary>Verifies checkpoint 0.4 preserves retry metadata and remains compatible with 0.3, 0.2, and 0.1 formats.</summary>
     [Fact]
     public void CheckpointStepPreservesRetryBoundaryMetadata()
     {
@@ -191,10 +191,11 @@ public sealed class RuntimeContractTests
 
         Assert.Equal(2, step.RetryAttempt);
         Assert.Equal(notBefore, step.RetryNotBeforeUtc);
-        Assert.Equal("0.3", WorkflowExecutionCheckpoint.CurrentFormatVersion);
+        Assert.Equal("0.4", WorkflowExecutionCheckpoint.CurrentFormatVersion);
         Assert.True(WorkflowExecutionCheckpoint.IsSupportedFormatVersion(WorkflowExecutionCheckpoint.CurrentFormatVersion));
         Assert.True(WorkflowExecutionCheckpoint.IsSupportedFormatVersion(WorkflowExecutionCheckpoint.PreviousFormatVersion));
         Assert.True(WorkflowExecutionCheckpoint.IsSupportedFormatVersion(WorkflowExecutionCheckpoint.LegacyFormatVersion));
+        Assert.True(WorkflowExecutionCheckpoint.IsSupportedFormatVersion(WorkflowExecutionCheckpoint.OldestLegacyFormatVersion));
         Assert.False(WorkflowExecutionCheckpoint.IsSupportedFormatVersion("9.9"));
         Assert.Throws<ArgumentOutOfRangeException>(() => new WorkflowCheckpointStep("step", "node", "demo.node", WorkflowStepRuntimeStatus.Ready, false, retryAttempt: -1));
         Assert.Throws<ArgumentException>(() => new WorkflowCheckpointStep("step", "node", "demo.node", WorkflowStepRuntimeStatus.Ready, false, retryNotBeforeUtc: notBefore));
