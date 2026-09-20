@@ -27,6 +27,7 @@ public static class WebBuiltInWorkflowNodeCatalog
             Definition("web.getText", locatorRequired: true, locatorUsage: LocatorUsageMode.Collection, outputs: DataOutput("result", allowsMultiple: true), capabilities: [StandardWorkflowResourceCapabilities.WebText, StandardWorkflowResourceCapabilities.WebLocators]),
             Definition("web.getAttribute", locatorRequired: true, locatorUsage: LocatorUsageMode.Collection, outputs: DataOutput("result", allowsMultiple: true), capabilities: [StandardWorkflowResourceCapabilities.WebAttributes, StandardWorkflowResourceCapabilities.WebLocators]),
             Definition("web.getCount", locatorRequired: true, locatorUsage: LocatorUsageMode.Collection, outputs: DataOutput("count"), capabilities: [StandardWorkflowResourceCapabilities.WebLocators]),
+            Definition("web.evaluate", outputs: DataOutput("result"), capabilities: [StandardWorkflowResourceCapabilities.WebScript]),
             Definition("web.screenshot", locatorRequired: false, outputs: DataOutput("image"), capabilities: [StandardWorkflowResourceCapabilities.WebScreenshot, StandardWorkflowResourceCapabilities.WebLocators]),
             Definition("web.openPage", outputs: DataOutputs("page", "url"), capabilities: [StandardWorkflowResourceCapabilities.WebNavigation]),
             Definition("web.listPages", outputs: DataOutput("pages", allowsMultiple: true), capabilities: [StandardWorkflowResourceCapabilities.WebNavigation]),
@@ -64,7 +65,7 @@ public static class WebBuiltInWorkflowNodeCatalog
         }
 
         Dictionary<string, NodeLocatorSlotDefinition> locators = new(StringComparer.Ordinal);
-        if (type != "web.navigate")
+        if (type is not ("web.navigate" or "web.evaluate"))
         {
             locators["target"] = new("target", "/target", locatorRequired, locatorUsage, Accepted(locatorUsage), "Target locator.");
         }
