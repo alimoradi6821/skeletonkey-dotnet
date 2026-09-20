@@ -68,6 +68,7 @@ Built-in catalogs follow these conventions:
 * Terminal nodes consume `main`.
 * Action and interaction nodes consume `main` and normally produce `continue`.
 * Branch nodes consume `main` and produce explicit branch outputs such as `true`, `false`, and `default`.
+* `flow.merge` is an exclusive merge point: its `main` input allows multiple incoming control connections and any activated incoming branch produces one `continue` activation. It does not synchronize all branches.
 * Loop nodes consume `main`, `continue`, and `break`, and produce `body` and `completed`.
 
 ## Lifecycle
@@ -96,7 +97,7 @@ The reserved names are stable for specification version 0.1. Existing names such
 
 ## Examples
 
-An action node succeeds by activating `continue`. An `if` node activates exactly one of `true` or `false`. A `switch` node activates a matching dynamic case output or `default`. A loop node activates `body` for each iteration and `completed` after normal completion.
+An action node succeeds by activating `continue`. An `if` node activates exactly one of `true` or `false`. A `switch` node activates a matching dynamic case output or `default`. Multiple mutually-exclusive branches may target `flow.merge.main`, which forwards the activated branch through `continue`. A loop node activates `body` for each iteration and `completed` after normal completion.
 
 ## Deferred Work
 
