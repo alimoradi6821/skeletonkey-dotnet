@@ -33,6 +33,7 @@ public sealed class PlaywrightPageResourceProvider : IWorkflowRuntimeResourceRec
         StandardWorkflowResourceCapabilities.WebAttributes,
         StandardWorkflowResourceCapabilities.WebForms,
         StandardWorkflowResourceCapabilities.WebScreenshot,
+        StandardWorkflowResourceCapabilities.WebScript,
         StandardWorkflowResourceCapabilities.WebNetworkInterception,
     ]);
 
