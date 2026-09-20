@@ -22,6 +22,8 @@ public static class BuiltInWorkflowNodeCatalog
             Start(),
             End(),
             Return(),
+            EnvironmentVariable(),
+            HttpRequest(),
             Invoke(),
             If(),
             Switch(),
@@ -82,6 +84,51 @@ public static class BuiltInWorkflowNodeCatalog
                         ["kind"] = "success",
                         ["code"] = "done",
                     },
+                },
+            ]);
+    }
+
+    private static WorkflowNodeDefinition EnvironmentVariable()
+    {
+        return new(
+            "core.environment",
+            1,
+            displayName: "Read Environment Variable",
+            category: "core",
+            parametersSchema: SchemaObject(["name"]),
+            inputs: InputPorts("main"),
+            outputs: ControlAndDataPorts("continue", "value"),
+            behavior: new WorkflowNodeBehaviorMetadata(WorkflowNodeBehaviorKind.Action),
+            stability: WorkflowNodeStability.Preview,
+            parameterExamples:
+            [
+                new JsonObject
+                {
+                    ["name"] = "MY_SETTING",
+                    ["required"] = true,
+                },
+            ]);
+    }
+
+    private static WorkflowNodeDefinition HttpRequest()
+    {
+        return new(
+            "http.request",
+            1,
+            displayName: "HTTP Request",
+            category: "http",
+            parametersSchema: SchemaObject(["url"]),
+            inputs: InputPorts("main"),
+            outputs: ControlAndDataPorts("continue", "status", "body", "json", "selected"),
+            behavior: new WorkflowNodeBehaviorMetadata(WorkflowNodeBehaviorKind.Action),
+            stability: WorkflowNodeStability.Preview,
+            parameterExamples:
+            [
+                new JsonObject
+                {
+                    ["method"] = "POST",
+                    ["url"] = "https://example.com/api",
+                    ["jsonBody"] = new JsonObject(),
                 },
             ]);
     }
@@ -274,6 +321,20 @@ public static class BuiltInWorkflowNodeCatalog
             static name => name,
             static name => new WorkflowPortDefinition(name, WorkflowPortDirection.Output),
             StringComparer.Ordinal);
+    }
+
+    private static IReadOnlyDictionary<string, WorkflowPortDefinition> ControlAndDataPorts(string control, params string[] data)
+    {
+        Dictionary<string, WorkflowPortDefinition> ports = new(StringComparer.Ordinal)
+        {
+            [control] = new(control, WorkflowPortDirection.Output),
+        };
+        foreach (string name in data)
+        {
+            ports[name] = new(name, WorkflowPortDirection.Output, roles: ["data"]);
+        }
+
+        return ports;
     }
 
     private static IReadOnlyDictionary<string, WorkflowPortDefinition> ResultPorts(params string[] names)
