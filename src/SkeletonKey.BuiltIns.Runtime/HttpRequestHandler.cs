@@ -88,7 +88,7 @@ public sealed class HttpRequestHandler : INodeHandler
                 message.Content = new StringContent(bodyValue.GetValue<string>(), Encoding.UTF8, contentType);
             }
 
-            using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(timeoutMilliseconds);
             using HttpResponseMessage response = await _client.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
             string body = await ReadBoundedBodyAsync(response, timeout.Token).ConfigureAwait(false);
@@ -211,7 +211,7 @@ public sealed class HttpRequestHandler : INodeHandler
             return true;
         }
 
-        if (!pointer.StartsWith('/', StringComparison.Ordinal))
+        if (!pointer.StartsWith("/", StringComparison.Ordinal))
         {
             value = null;
             return false;
