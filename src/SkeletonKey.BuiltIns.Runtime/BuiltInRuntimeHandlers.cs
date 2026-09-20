@@ -24,6 +24,8 @@ public static class BuiltInRuntimeHandlers
             new CoreStartHandler(),
             new CoreEndHandler(),
             new CoreReturnHandler(),
+            new EnvironmentVariableHandler(),
+            new HttpRequestHandler(),
             new FlowIfHandler(),
             new FlowForEachHandler(),
             new FlowRepeatHandler(),
