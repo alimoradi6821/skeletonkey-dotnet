@@ -22,6 +22,7 @@ public static class WebBuiltInRuntimeHandlers
             new WebGetTextHandler(),
             new WebGetAttributeHandler(),
             new WebGetCountHandler(),
+            new WebEvaluateHandler(),
             new WebScreenshotHandler(),
             new WebOpenPageHandler(),
             new WebListPagesHandler(),
