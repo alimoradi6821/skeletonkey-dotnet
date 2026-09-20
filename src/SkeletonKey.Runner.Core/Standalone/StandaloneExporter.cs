@@ -318,7 +318,7 @@ public sealed class StandaloneExporter
         start.ArgumentList.Add("true");
         start.ArgumentList.Add("--output");
         start.ArgumentList.Add(publishDirectory);
-        AddProperty(start, "AssemblyName", assemblyName);
+        AddProperty(start, "StandaloneAssemblyName", assemblyName);
         AddProperty(start, "StandaloneWorkflowPath", snapshot.WorkflowPath);
         AddProperty(start, "StandaloneSettingsPath", snapshot.SettingsPath);
         AddProperty(start, "StandalonePackageManifestPath", manifestPath);
