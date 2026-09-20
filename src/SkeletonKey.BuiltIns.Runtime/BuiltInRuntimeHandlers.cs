@@ -27,6 +27,7 @@ public static class BuiltInRuntimeHandlers
             new EnvironmentVariableHandler(),
             new HttpRequestHandler(),
             new FlowIfHandler(),
+            new FlowMergeHandler(),
             new FlowForEachHandler(),
             new FlowRepeatHandler(),
             new FlowSwitchHandler(),
