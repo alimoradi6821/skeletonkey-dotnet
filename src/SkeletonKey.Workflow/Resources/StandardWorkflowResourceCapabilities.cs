@@ -50,6 +50,9 @@ public static class StandardWorkflowResourceCapabilities
     /// <summary>Requires screenshot capture.</summary>
     public const string WebScreenshot = "web.screenshot";
 
+    /// <summary>Requires bounded page script evaluation.</summary>
+    public const string WebScript = "web.script";
+
     /// <summary>Requires bounded request interception and synthetic response support.</summary>
     public const string WebNetworkInterception = "web.network-interception";
 
