@@ -185,7 +185,7 @@ public sealed class BuiltInRuntimeHandlerTests
     {
         IReadOnlyList<INodeHandler> handlers = BuiltInRuntimeHandlers.Create();
 
-        Assert.Equal(["core.end", "core.return", "core.start", "flow.foreach", "flow.if", "flow.repeat", "flow.switch", "flow.while"], handlers.Select(static handler => handler.Definition.Type));
+        Assert.Equal(["core.end", "core.environment", "core.return", "core.start", "flow.foreach", "flow.if", "flow.repeat", "flow.switch", "flow.while", "http.request"], handlers.Select(static handler => handler.Definition.Type));
         Assert.All(handlers, handler => Assert.True(BuiltInWorkflowNodeCatalog.Catalog.TryGetDefinition(handler.Definition.Type, handler.Definition.Version, out _)));
         Assert.DoesNotContain(handlers, static handler => handler.Definition.Type == "workflow.invoke");
     }
