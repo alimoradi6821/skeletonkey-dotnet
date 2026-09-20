@@ -106,6 +106,19 @@ public sealed class BuiltInRuntimeHandlerTests
     }
 
     /// <summary>
+    /// Verifies flow.merge passes an activated branch through its continue port.
+    /// </summary>
+    [Fact]
+    public async Task FlowMergeActivatesContinue()
+    {
+        NodeHandlerResult result = await new FlowMergeHandler().ExecuteAsync(Request("flow.merge"), Context("flow.merge"));
+
+        Assert.Equal(NodeHandlerCompletionStatus.Succeeded, result.Status);
+        Assert.Equal(["continue"], result.Outputs.ActivatedControlOutputs);
+        Assert.Empty(result.Outputs.DataOutputs);
+    }
+
+    /// <summary>
     /// Verifies flow.switch selects the first deterministic matching case.
     /// </summary>
     [Fact]
@@ -185,7 +198,7 @@ public sealed class BuiltInRuntimeHandlerTests
     {
         IReadOnlyList<INodeHandler> handlers = BuiltInRuntimeHandlers.Create();
 
-        Assert.Equal(["core.end", "core.environment", "core.return", "core.start", "flow.foreach", "flow.if", "flow.repeat", "flow.switch", "flow.while", "http.request"], handlers.Select(static handler => handler.Definition.Type));
+        Assert.Equal(["core.end", "core.environment", "core.return", "core.start", "flow.foreach", "flow.if", "flow.merge", "flow.repeat", "flow.switch", "flow.while", "http.request"], handlers.Select(static handler => handler.Definition.Type));
         Assert.All(handlers, handler => Assert.True(BuiltInWorkflowNodeCatalog.Catalog.TryGetDefinition(handler.Definition.Type, handler.Definition.Version, out _)));
         Assert.DoesNotContain(handlers, static handler => handler.Definition.Type == "workflow.invoke");
     }
