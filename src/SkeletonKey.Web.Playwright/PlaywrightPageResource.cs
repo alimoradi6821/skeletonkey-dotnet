@@ -73,10 +73,12 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
         IBrowserContext context;
         if (constraints.Persistent)
         {
+            string userDataDirectory = Environment.ExpandEnvironmentVariables(constraints.UserDataDirectory!);
             context = await browserType.LaunchPersistentContextAsync(
-                constraints.UserDataDirectory!,
+                userDataDirectory,
                 new BrowserTypeLaunchPersistentContextOptions
                 {
+                    Channel = constraints.Channel,
                     Headless = constraints.Headless,
                     Locale = constraints.Locale,
                     UserAgent = constraints.UserAgent,
@@ -86,7 +88,7 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
         }
         else
         {
-            browser = await browserType.LaunchAsync(new BrowserTypeLaunchOptions { Headless = constraints.Headless }).ConfigureAwait(false);
+            browser = await browserType.LaunchAsync(new BrowserTypeLaunchOptions { Channel = constraints.Channel, Headless = constraints.Headless }).ConfigureAwait(false);
             context = await browser.NewContextAsync(contextOptions).ConfigureAwait(false);
         }
 
