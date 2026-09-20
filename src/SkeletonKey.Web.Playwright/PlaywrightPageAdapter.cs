@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Playwright;
 using SkeletonKey.Artifacts;
 using SkeletonKey.Locators;
@@ -174,6 +176,46 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
         }
 
         _activePageId = state.ActivePageId;
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<JsonNode?> EvaluateAsync(
+        string script,
+        int timeoutMilliseconds = 30000,
+        WebTargetContext? targetContext = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(script))
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.WebActionFailed, "Page evaluation script is empty.", "evaluate"));
+        }
+
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await ApplyTargetAsync(targetContext ?? new WebTargetContext(), cancellationToken).ConfigureAwait(false);
+            JsonElement result = await ActivePage()
+                .EvaluateAsync<JsonElement>(script)
+                .WaitAsync(TimeSpan.FromMilliseconds(BoundedTimeout(timeoutMilliseconds)), cancellationToken)
+                .ConfigureAwait(false);
+            return result.ValueKind == JsonValueKind.Undefined ? null : JsonNode.Parse(result.GetRawText());
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TimeoutException exception)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.LocatorOperationTimeout, "Page script evaluation timed out.", "evaluate"), exception);
+        }
+        catch (PlaywrightException exception)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.WebActionFailed, "Page script evaluation failed.", "evaluate"), exception);
+        }
+        catch (JsonException exception)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.WebQueryFailed, "Page script result was not valid JSON.", "evaluate"), exception);
+        }
     }
 
     /// <inheritdoc />
