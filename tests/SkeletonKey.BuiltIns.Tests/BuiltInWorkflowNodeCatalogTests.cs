@@ -18,6 +18,7 @@ public sealed class BuiltInWorkflowNodeCatalogTests
         "workflow.invoke",
         "flow.if",
         "flow.switch",
+        "flow.merge",
         "flow.foreach",
         "flow.repeat",
         "flow.while",
@@ -84,6 +85,10 @@ public sealed class BuiltInWorkflowNodeCatalogTests
         Assert.Equal(["false", "true"], Definition("flow.if").Outputs.Keys.Order(StringComparer.Ordinal));
         Assert.Equal(["main"], Definition("flow.switch").Inputs.Keys);
         Assert.Equal(["default"], Definition("flow.switch").Outputs.Keys);
+        WorkflowNodeDefinition merge = Definition("flow.merge");
+        Assert.Equal(["main"], merge.Inputs.Keys);
+        Assert.True(merge.Inputs["main"].AllowsMultiple);
+        Assert.Equal(["continue"], merge.Outputs.Keys);
 
         foreach (string type in new[] { "flow.foreach", "flow.repeat", "flow.while" })
         {
