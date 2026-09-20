@@ -27,6 +27,7 @@ public static class BuiltInWorkflowNodeCatalog
             Invoke(),
             If(),
             Switch(),
+            Merge(),
             ForEach(),
             Repeat(),
             While(),
@@ -212,6 +213,23 @@ public static class BuiltInWorkflowNodeCatalog
                     },
                 },
             ]);
+    }
+
+    private static WorkflowNodeDefinition Merge()
+    {
+        return new(
+            "flow.merge",
+            1,
+            displayName: "Merge",
+            category: "flow",
+            inputs: new Dictionary<string, WorkflowPortDefinition>(StringComparer.Ordinal)
+            {
+                ["main"] = new("main", WorkflowPortDirection.Input, allowsMultiple: true),
+            },
+            outputs: OutputPorts("continue"),
+            behavior: new WorkflowNodeBehaviorMetadata(WorkflowNodeBehaviorKind.Action),
+            stability: WorkflowNodeStability.Preview,
+            parameterExamples: [new JsonObject()]);
     }
 
     private static WorkflowNodeDefinition ForEach()
