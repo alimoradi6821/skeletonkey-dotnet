@@ -195,6 +195,11 @@ public sealed class HttpRequestHandler : INodeHandler
             }
         }
 
+        if (json is null)
+        {
+            return JsonValue.Create(body);
+        }
+
         if (pointers is not null && pointers.Count > 0)
         {
             return JsonValue.Create(string.Empty);
