@@ -13,6 +13,8 @@ public sealed class BuiltInWorkflowNodeCatalogTests
         "core.start",
         "core.end",
         "core.return",
+        "core.environment",
+        "http.request",
         "workflow.invoke",
         "flow.if",
         "flow.switch",
