@@ -12,6 +12,9 @@ public sealed record PlaywrightPageConstraints
     /// <summary>Gets the selected browser engine.</summary>
     public string Engine { get; init; } = "chromium";
 
+    /// <summary>Gets an optional installed Chromium channel such as msedge or chrome.</summary>
+    public string? Channel { get; init; }
+
     /// <summary>Gets whether the browser is headless.</summary>
     public bool Headless { get; init; } = true;
 
@@ -55,6 +58,7 @@ public sealed record PlaywrightPageConstraints
             result = property.Key switch
             {
                 "engine" => result.WithEngine(ReadString(property.Value, property.Key)),
+                "channel" => result with { Channel = ReadString(property.Value, property.Key) },
                 "visibility" => result.WithVisibility(ReadString(property.Value, property.Key)),
                 "profile" => result.WithProfile(ReadString(property.Value, property.Key)),
                 "userDataDirectory" => result with { UserDataDirectory = ReadString(property.Value, property.Key) },
@@ -71,6 +75,11 @@ public sealed record PlaywrightPageConstraints
         if (result.Engine is not ("chromium" or "firefox" or "webkit"))
         {
             throw new ArgumentException("Browser engine must be chromium, firefox, or webkit.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(result.Channel) && result.Engine != "chromium")
+        {
+            throw new ArgumentException("Browser channels are supported only with the chromium engine.");
         }
 
         if (result.Persistent && string.IsNullOrWhiteSpace(result.UserDataDirectory))
