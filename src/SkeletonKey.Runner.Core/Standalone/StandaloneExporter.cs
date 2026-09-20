@@ -381,8 +381,18 @@ public sealed class StandaloneExporter
 
     private static string Bound(string value)
     {
+        const int maximumLength = 4096;
+        const int headLength = 512;
+        const string separator = " ... ";
+
         string normalized = value.Replace('\r', ' ').Replace('\n', ' ').Trim();
-        return normalized.Length <= 1024 ? normalized : normalized[..1024];
+        if (normalized.Length <= maximumLength)
+        {
+            return normalized;
+        }
+
+        int tailLength = maximumLength - headLength - separator.Length;
+        return normalized[..headLength] + separator + normalized[^tailLength..];
     }
 
     private static void TryDeleteDirectory(string path)
