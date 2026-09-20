@@ -23,7 +23,7 @@ public sealed class WebBuiltInHandlerTests
     public void WebCatalogDefinitionsAreValid()
     {
         Assert.True(new NodeCatalogSemanticValidator().Validate(WebBuiltInWorkflowNodeCatalog.Document).IsValid);
-        Assert.Equal(27, WebBuiltInWorkflowNodeCatalog.Document.Definitions.Count);
+        Assert.Equal(28, WebBuiltInWorkflowNodeCatalog.Document.Definitions.Count);
     }
 
     /// <summary>
