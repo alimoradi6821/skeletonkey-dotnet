@@ -72,6 +72,14 @@ public sealed class SkeletonKeyRunner
         try
         {
             string command = args[0];
+            if (string.Equals(command, "export", StringComparison.Ordinal))
+            {
+                _outputFormat = RunnerOutputFormat.Json;
+                _diagnostics = false;
+                await WriteDiagnosticAsync("command-start", command).ConfigureAwait(false);
+                return await ExportAsync(args.Skip(1).ToArray(), cancellationToken).ConfigureAwait(false);
+            }
+
             var options = RunnerOptions.Parse(args.Skip(1).ToArray());
             _outputFormat = options.OutputFormat;
             _diagnostics = options.Diagnostics;
@@ -99,6 +107,11 @@ public sealed class SkeletonKeyRunner
             await _error.WriteLineAsync(exception.Message).ConfigureAwait(false);
             return RunnerExitCodes.Usage;
         }
+        catch (StandaloneExportException exception)
+        {
+            await WriteEnvelopeAsync(RunnerEnvelope.Failure("export", exception.Message, exception.Code), cancellationToken: CancellationToken.None).ConfigureAwait(false);
+            return RunnerExitCodes.Failed;
+        }
         catch (WorkflowCheckpointStoreException exception)
         {
             await WriteEnvelopeAsync(RunnerEnvelope.Failure(args[0], exception.Message, exception.Code), cancellationToken: CancellationToken.None).ConfigureAwait(false);
@@ -114,6 +127,22 @@ public sealed class SkeletonKeyRunner
             await WriteEnvelopeAsync(RunnerEnvelope.Failure("error", exception.Message, "SKR1999"), cancellationToken: CancellationToken.None).ConfigureAwait(false);
             return RunnerExitCodes.Exception;
         }
+    }
+
+    private async ValueTask<int> ExportAsync(IReadOnlyList<string> args, CancellationToken cancellationToken)
+    {
+        StandaloneExportResult result = await new StandaloneExporter().ExportAsync(args, cancellationToken).ConfigureAwait(false);
+        await WriteEnvelopeAsync(RunnerEnvelope.Success("export", new
+        {
+            result.OutputPath,
+            result.PackageId,
+            result.WorkflowId,
+            result.WorkflowSha256,
+            result.SettingsSha256,
+            result.TargetRuntime,
+            result.Bytes,
+        }), cancellationToken).ConfigureAwait(false);
+        return RunnerExitCodes.Success;
     }
 
     private async ValueTask<int> VersionAsync(CancellationToken cancellationToken)
@@ -622,7 +651,7 @@ public sealed class SkeletonKeyRunner
 
     private async ValueTask WriteUsageAsync()
     {
-        await _output.WriteLineAsync("skeletonkey <version|plugins|validate|analyze|plan|run|resume|install-browsers> [--file <workflow.json>|-] [--workflow-directory <path>] [--locator-directory <path>] [--plugin-directory <path>] [--inputs <json>] [--inputs-file <inputs.json>] [--execution-id <id>] [--checkpoint-directory <path>] [--browser <name>] [--format <json|ndjson>] [--diagnostics]").ConfigureAwait(false);
+        await _output.WriteLineAsync("skeletonkey <version|plugins|validate|analyze|plan|run|resume|install-browsers|export> [--file <workflow.json>|-] [--workflow-directory <path>] [--locator-directory <path>] [--plugin-directory <path>] [--inputs <json>] [--inputs-file <inputs.json>] [--execution-id <id>] [--checkpoint-directory <path>] [--browser <name>] [--format <json|ndjson>] [--diagnostics]").ConfigureAwait(false);
     }
 
     private static bool IsHelp(string value)
