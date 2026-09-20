@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using SkeletonKey.Artifacts;
 using SkeletonKey.Locators;
 
@@ -37,6 +38,9 @@ public interface IWebPageAdapter
 
     /// <summary>Gets the number of resolved locator matches.</summary>
     public ValueTask<int> GetCountAsync(ResolvedLocatorPlan locator, int timeoutMilliseconds = 30000, WebTargetContext? targetContext = null, CancellationToken cancellationToken = default);
+
+    /// <summary>Evaluates bounded JavaScript in the selected page and returns its JSON-serializable result.</summary>
+    public ValueTask<JsonNode?> EvaluateAsync(string script, int timeoutMilliseconds = 30000, WebTargetContext? targetContext = null, CancellationToken cancellationToken = default) => throw new NotSupportedException("Page script evaluation is unavailable.");
 
     /// <summary>Captures a page or target screenshot.</summary>
     public ValueTask<WebScreenshotResult> ScreenshotAsync(ResolvedLocatorPlan? locator, WebScreenshotRequest request, CancellationToken cancellationToken = default);
