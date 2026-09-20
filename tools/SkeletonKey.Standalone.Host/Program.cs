@@ -9,7 +9,7 @@ if (args.Length != 0)
     return RunnerExitCodes.Usage;
 }
 
-using CancellationTokenSource shutdown = new();
+using var shutdown = new CancellationTokenSource();
 ConsoleCancelEventHandler cancelHandler = (_, eventArgs) =>
 {
     eventArgs.Cancel = true;
@@ -20,17 +20,17 @@ Console.CancelKeyPress += cancelHandler;
 string? workspace = null;
 try
 {
-    StandaloneEmbeddedPayload payload = await StandaloneEmbeddedPayload.MaterializeAsync(Assembly.GetExecutingAssembly(), shutdown.Token).ConfigureAwait(false);
+    var payload = await StandaloneEmbeddedPayload.MaterializeAsync(Assembly.GetExecutingAssembly(), shutdown.Token).ConfigureAwait(false);
     workspace = payload.Workspace;
-    StandaloneExecutionSettings settings = StandaloneExecutionSettings.Parse(await File.ReadAllTextAsync(payload.SettingsPath, shutdown.Token).ConfigureAwait(false));
+    var settings = StandaloneExecutionSettings.Parse(await File.ReadAllTextAsync(payload.SettingsPath, shutdown.Token).ConfigureAwait(false));
 
-    DateTimeOffset startedAtUtc = DateTimeOffset.UtcNow;
-    StandaloneScheduleCursor cursor = new(settings.Schedule, startedAtUtc);
-    long sequence = 0;
+    var startedAtUtc = DateTimeOffset.UtcNow;
+    var cursor = new StandaloneScheduleCursor(settings.Schedule, startedAtUtc);
+    var sequence = 0L;
 
     async ValueTask<int> RunOccurrenceAsync()
     {
-        string executionId = payload.Manifest.PackageId + ":" + Interlocked.Increment(ref sequence).ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + DateTimeOffset.UtcNow.ToString("yyyyMMddTHHmmssfffffffZ", System.Globalization.CultureInfo.InvariantCulture);
+        var executionId = payload.Manifest.PackageId + ":" + Interlocked.Increment(ref sequence).ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + DateTimeOffset.UtcNow.ToString("yyyyMMddTHHmmssfffffffZ", System.Globalization.CultureInfo.InvariantCulture);
         List<string> runnerArgs = ["run", "--file", payload.WorkflowPath, "--execution-id", executionId, "--format", "json"];
         if (payload.LocatorDirectory is not null)
         {
@@ -44,8 +44,8 @@ try
             runnerArgs.Add(payload.WorkflowDirectory);
         }
 
-        using StringReader input = new(string.Empty);
-        SkeletonKeyRunner runner = new(
+        using var input = new StringReader(string.Empty);
+        var runner = new SkeletonKeyRunner(
             input,
             Console.Out,
             Console.Error,
@@ -60,7 +60,7 @@ try
 
     if (settings.Execution.RunImmediately)
     {
-        int immediate = await RunOccurrenceAsync().ConfigureAwait(false);
+        var immediate = await RunOccurrenceAsync().ConfigureAwait(false);
         if (immediate == RunnerExitCodes.Cancelled)
         {
             return immediate;
@@ -74,15 +74,15 @@ try
 
     while (!shutdown.IsCancellationRequested)
     {
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-        DateTimeOffset due = cursor.GetNextDueAfter(now) ?? throw new InvalidOperationException("Recurring standalone schedule did not produce a future occurrence.");
-        TimeSpan delay = due - now;
+        var now = DateTimeOffset.UtcNow;
+        var due = cursor.GetNextDueAfter(now) ?? throw new InvalidOperationException("Recurring standalone schedule did not produce a future occurrence.");
+        var delay = due - now;
         if (delay > TimeSpan.Zero)
         {
             await Task.Delay(delay, shutdown.Token).ConfigureAwait(false);
         }
 
-        int result = await RunOccurrenceAsync().ConfigureAwait(false);
+        var result = await RunOccurrenceAsync().ConfigureAwait(false);
         if (result == RunnerExitCodes.Cancelled)
         {
             return result;
@@ -158,22 +158,22 @@ internal sealed record StandaloneEmbeddedPayload(
 
     public static async ValueTask<StandaloneEmbeddedPayload> MaterializeAsync(Assembly assembly, CancellationToken cancellationToken)
     {
-        byte[] manifestBytes = await ReadResourceAsync(assembly, ManifestResource, cancellationToken).ConfigureAwait(false);
-        StandalonePackageManifest manifest = StandalonePackageManifest.Deserialize(Encoding.UTF8.GetString(manifestBytes));
+        var manifestBytes = await ReadResourceAsync(assembly, ManifestResource, cancellationToken).ConfigureAwait(false);
+        var manifest = StandalonePackageManifest.Deserialize(Encoding.UTF8.GetString(manifestBytes));
 
-        byte[] workflowBytes = await ReadResourceAsync(assembly, WorkflowResource, cancellationToken).ConfigureAwait(false);
-        byte[] settingsBytes = await ReadResourceAsync(assembly, SettingsResource, cancellationToken).ConfigureAwait(false);
+        var workflowBytes = await ReadResourceAsync(assembly, WorkflowResource, cancellationToken).ConfigureAwait(false);
+        var settingsBytes = await ReadResourceAsync(assembly, SettingsResource, cancellationToken).ConfigureAwait(false);
         Verify(manifest.Workflow, workflowBytes, "scenario.workflow.json");
         Verify(manifest.Settings, settingsBytes, "execution.settings.json");
 
-        string workspace = Path.Combine(Path.GetTempPath(), "skeletonkey-standalone", SafePackageSegment(manifest.PackageId), Guid.NewGuid().ToString("N"));
+        var workspace = Path.Combine(Path.GetTempPath(), "skeletonkey-standalone", SafePackageSegment(manifest.PackageId), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(workspace);
-        string workflowPath = Path.Combine(workspace, "scenario.workflow.json");
-        string settingsPath = Path.Combine(workspace, "execution.settings.json");
+        var workflowPath = Path.Combine(workspace, "scenario.workflow.json");
+        var settingsPath = Path.Combine(workspace, "execution.settings.json");
         await File.WriteAllBytesAsync(workflowPath, workflowBytes, cancellationToken).ConfigureAwait(false);
         await File.WriteAllBytesAsync(settingsPath, settingsBytes, cancellationToken).ConfigureAwait(false);
 
-        string[] resources = assembly.GetManifestResourceNames();
+        var resources = assembly.GetManifestResourceNames();
         string? locatorDirectory = null;
         string? workflowDirectory = null;
         foreach (StandaloneContentIdentity dependency in manifest.Dependencies.OrderBy(static item => item.Path, StringComparer.Ordinal))
@@ -183,14 +183,14 @@ internal sealed record StandaloneEmbeddedPayload(
             string targetDirectory;
             if (dependency.Path.StartsWith("locators/", StringComparison.Ordinal))
             {
-                string name = dependency.Path["locators/".Length..];
+                var name = dependency.Path["locators/".Length..];
                 resourceName = LocatorPrefix + name;
                 locatorDirectory ??= Path.Combine(workspace, "locators");
                 targetDirectory = locatorDirectory;
             }
             else if (dependency.Path.StartsWith("workflows/", StringComparison.Ordinal))
             {
-                string name = dependency.Path["workflows/".Length..];
+                var name = dependency.Path["workflows/".Length..];
                 resourceName = WorkflowPrefix + name;
                 workflowDirectory ??= Path.Combine(workspace, "workflows");
                 targetDirectory = workflowDirectory;
@@ -205,10 +205,10 @@ internal sealed record StandaloneEmbeddedPayload(
                 throw new StandalonePackageException("SKX2003", "Embedded dependency resource is missing: " + dependency.Path + ".");
             }
 
-            byte[] bytes = await ReadResourceAsync(assembly, resourceName, cancellationToken).ConfigureAwait(false);
+            var bytes = await ReadResourceAsync(assembly, resourceName, cancellationToken).ConfigureAwait(false);
             Verify(dependency, bytes, dependency.Path);
             Directory.CreateDirectory(targetDirectory);
-            string fileName = Path.GetFileName(dependency.Path);
+            var fileName = Path.GetFileName(dependency.Path);
             await File.WriteAllBytesAsync(Path.Combine(targetDirectory, fileName), bytes, cancellationToken).ConfigureAwait(false);
         }
 
@@ -217,16 +217,16 @@ internal sealed record StandaloneEmbeddedPayload(
 
     private static async ValueTask<byte[]> ReadResourceAsync(Assembly assembly, string name, CancellationToken cancellationToken)
     {
-        await using Stream stream = assembly.GetManifestResourceStream(name)
+        await using var stream = assembly.GetManifestResourceStream(name)
             ?? throw new StandalonePackageException("SKX2004", "Required embedded standalone resource is missing: " + name + ".");
-        using MemoryStream buffer = new();
+        using var buffer = new MemoryStream();
         await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
         return buffer.ToArray();
     }
 
     private static void Verify(StandaloneContentIdentity expected, byte[] bytes, string path)
     {
-        string digest = StandalonePackageManifest.ComputeSha256(bytes);
+        var digest = StandalonePackageManifest.ComputeSha256(bytes);
         if (expected.Bytes != bytes.LongLength || !string.Equals(expected.Sha256, digest, StringComparison.Ordinal))
         {
             throw new StandalonePackageException("SKX2005", "Embedded standalone content failed digest verification: " + path + ".");
@@ -235,7 +235,7 @@ internal sealed record StandaloneEmbeddedPayload(
 
     private static string SafePackageSegment(string packageId)
     {
-        string digest = packageId[(packageId.LastIndexOf(':') + 1)..];
+        var digest = packageId[(packageId.LastIndexOf(':') + 1)..];
         return digest.Length <= 32 ? digest : digest[..32];
     }
 }
