@@ -3,6 +3,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <OutputType>Exe</OutputType>
     <RootNamespace>SkeletonKey.Standalone.Host</RootNamespace>
+    <AssemblyName Condition="'$(StandaloneAssemblyName)' != ''">$(StandaloneAssemblyName)</AssemblyName>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
