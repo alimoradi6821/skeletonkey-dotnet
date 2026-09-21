@@ -36,3 +36,7 @@ jobs:
       - name: Test
         shell: pwsh
         run: dotnet test SkeletonKey.sln -c Release --no-build --no-restore
+
+      - name: Standalone export smoke
+        shell: pwsh
+        run: ./build/verify-standalone-export.ps1
