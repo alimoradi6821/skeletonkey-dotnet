@@ -142,7 +142,7 @@ public sealed class PlaywrightProviderConfigurationTests
     [Fact]
     public void ConstraintsAcceptCdpAttachment()
     {
-        PlaywrightPageConstraints parsed = PlaywrightPageConstraints.Parse(new JsonObject
+        var parsed = PlaywrightPageConstraints.Parse(new JsonObject
         {
             ["engine"] = "chromium",
             ["connection"] = "cdp",
