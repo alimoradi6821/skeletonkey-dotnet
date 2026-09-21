@@ -16,7 +16,8 @@ public sealed class PlaywrightPageProviderOptions
         string testIdAttribute = "data-testid",
         IWorkflowArtifactStore? artifactStore = null,
         bool allowRemoteCdpEndpoints = false,
-        int cdpConnectTimeoutMilliseconds = 30000)
+        int cdpConnectTimeoutMilliseconds = 30000,
+        ManagedCdpBrowserHost? managedCdpBrowserHost = null)
     {
         if (cdpConnectTimeoutMilliseconds is <= 0 or > 300000)
         {
@@ -28,6 +29,7 @@ public sealed class PlaywrightPageProviderOptions
         ArtifactStore = artifactStore;
         AllowRemoteCdpEndpoints = allowRemoteCdpEndpoints;
         CdpConnectTimeoutMilliseconds = cdpConnectTimeoutMilliseconds;
+        ManagedCdpBrowserHost = managedCdpBrowserHost;
     }
 
     /// <summary>Gets the navigation policy applied before page navigation.</summary>
@@ -44,4 +46,7 @@ public sealed class PlaywrightPageProviderOptions
 
     /// <summary>Gets the bounded timeout used while establishing a CDP connection.</summary>
     public int CdpConnectTimeoutMilliseconds { get; }
+
+    /// <summary>Gets the optional host-lifetime managed CDP browser owner.</summary>
+    public ManagedCdpBrowserHost? ManagedCdpBrowserHost { get; }
 }
