@@ -111,5 +111,5 @@ public static class WebAutomationErrorCodes
     public const string AdvancedWaitFailed = "SKR2038";
 
     /// <summary>Connection to an externally managed browser failed.</summary>
-    public const string BrowserConnectionFailed = "SKR2039";
+    public const string BrowserConnectionFailed = "SKR2040";
 }
