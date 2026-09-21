@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text;
 using SkeletonKey.Desktop.FlaUI;
 using SkeletonKey.Runner.Core;
+using SkeletonKey.Web.Playwright;
 
 if (args.Length != 0)
 {
@@ -23,6 +24,8 @@ try
     StandaloneEmbeddedPayload payload = await StandaloneEmbeddedPayload.MaterializeAsync(Assembly.GetExecutingAssembly(), shutdown.Token).ConfigureAwait(false);
     workspace = payload.Workspace;
     var settings = StandaloneExecutionSettings.Parse(await File.ReadAllTextAsync(payload.SettingsPath, shutdown.Token).ConfigureAwait(false));
+    await using var managedCdpBrowserHost = new ManagedCdpBrowserHost();
+    var webPageProviderOptions = new PlaywrightPageProviderOptions(managedCdpBrowserHost: managedCdpBrowserHost);
 
     DateTimeOffset startedAtUtc = DateTimeOffset.UtcNow;
     var cursor = new StandaloneScheduleCursor(settings.Schedule, startedAtUtc);
@@ -49,7 +52,8 @@ try
             input,
             Console.Out,
             Console.Error,
-            [new FlaUiApplicationResourceProvider()]);
+            [new FlaUiApplicationResourceProvider()],
+            webPageProviderOptions);
         return await runner.ExecuteAsync(runnerArgs, shutdown.Token).ConfigureAwait(false);
     }
 
