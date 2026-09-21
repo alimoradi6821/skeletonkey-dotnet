@@ -75,3 +75,4 @@ if ($LASTEXITCODE -ne 2) { throw "Generated standalone executable did not reject
 Write-Host "[standalone] PASS"
 Write-Host "  once:     $onceOutput"
 Write-Host "  interval: $intervalOutput"
+exit 0
