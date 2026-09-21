@@ -42,7 +42,7 @@ $intervalSettings = Join-Path $work "interval.execution.settings.json"
 }
 '@ | Set-Content -LiteralPath $intervalSettings -Encoding utf8
 
-$workflow = Join-Path $repo "examples\minimal.workflow.json"
+$workflow = Join-Path $repo "tests\fixtures\conformance\valid\core-return.workflow.json"
 $onceOutput = Join-Path $work "minimal-once.exe"
 $intervalOutput = Join-Path $work "minimal-interval.exe"
 $runner = Join-Path $repo "src\SkeletonKey.Runner\bin\Release\net10.0-windows\skeletonkey.dll"
