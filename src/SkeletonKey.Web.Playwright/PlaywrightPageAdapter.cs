@@ -758,15 +758,47 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
     /// <inheritdoc />
     public async ValueTask WaitForUrlAsync(string url, WebTargetContext targetContext, int timeoutMilliseconds = 30000, CancellationToken cancellationToken = default)
     {
-        await ApplyTargetAsync(targetContext, cancellationToken).ConfigureAwait(false);
-        await ActivePage().WaitForURLAsync(url, new PageWaitForURLOptions { Timeout = BoundedTimeout(timeoutMilliseconds) }).WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await ApplyTargetAsync(targetContext, cancellationToken).ConfigureAwait(false);
+            await ActivePage().WaitForURLAsync(url, new PageWaitForURLOptions { Timeout = BoundedAdvancedWaitTimeout(timeoutMilliseconds) }).WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TimeoutException exception)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.AdvancedWaitFailed, "Wait for URL timed out.", "waitForUrl"), exception);
+        }
+        catch (PlaywrightException exception)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.AdvancedWaitFailed, "Wait for URL failed.", "waitForUrl"), exception);
+        }
     }
 
     /// <inheritdoc />
     public async ValueTask WaitForLoadStateAsync(WebNavigationWaitUntil state, WebTargetContext targetContext, int timeoutMilliseconds = 30000, CancellationToken cancellationToken = default)
     {
-        await ApplyTargetAsync(targetContext, cancellationToken).ConfigureAwait(false);
-        await ActivePage().WaitForLoadStateAsync(MapLoadState(state), new PageWaitForLoadStateOptions { Timeout = BoundedTimeout(timeoutMilliseconds) }).WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await ApplyTargetAsync(targetContext, cancellationToken).ConfigureAwait(false);
+            await ActivePage().WaitForLoadStateAsync(MapLoadState(state), new PageWaitForLoadStateOptions { Timeout = BoundedAdvancedWaitTimeout(timeoutMilliseconds) }).WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TimeoutException exception)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.AdvancedWaitFailed, "Wait for load state timed out.", "waitForLoadState"), exception);
+        }
+        catch (PlaywrightException exception)
+        {
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.AdvancedWaitFailed, "Wait for load state failed.", "waitForLoadState"), exception);
+        }
     }
 
     private async ValueTask<ILocator> ResolveSingleAsync(ResolvedLocatorPlan plan, int timeoutMilliseconds, int? elementIndex, string operation, CancellationToken cancellationToken, WebTargetContext? targetContext = null)
@@ -1111,7 +1143,22 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
 
     private static float BoundedTimeout(int value)
     {
-        return value is > 0 and <= 300000 ? value : 30000;
+        if (value <= 0)
+        {
+            return 30000;
+        }
+
+        return Math.Min(value, 300000);
+    }
+
+    private static float BoundedAdvancedWaitTimeout(int value)
+    {
+        if (value <= 0)
+        {
+            return 30000;
+        }
+
+        return Math.Min(value, 1800000);
     }
 
     private static WaitUntilState MapWait(WebNavigationWaitUntil wait)
