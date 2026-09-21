@@ -6,7 +6,7 @@ Supported constraints are `engine`, `connection`, `cdpEndpoint`, `visibility`, `
 
 ## Connection modes
 
-The default `connection: "launch"` mode keeps the existing managed-browser behavior. The provider launches Chromium, Firefox, or WebKit itself. Persistent profile mode requires an explicit user-data directory. Raw browser launch arguments are not accepted.
+The default `connection: "launch"` mode keeps the existing Playwright-managed browser behavior. The provider launches Chromium, Firefox, or WebKit itself. Persistent profile mode requires an explicit user-data directory. Raw browser launch arguments are not accepted.
 
 `connection: "cdp"` attaches to an already-running Chromium-based browser through Chrome DevTools Protocol by calling Playwright's CDP connection API. It requires an explicit `cdpEndpoint`, for example:
 
@@ -27,6 +27,31 @@ By default the host permits only loopback CDP endpoints. A host must explicitly 
 
 CDP-attached resources do not participate in durable browser-context reconstruction and do not support storage-state import that replaces the browser context. Ordinary provider-neutral page operations continue through `IWebPageAdapter`.
 
+
+### Managed CDP
+
+`connection: "cdp-managed"` is the host-managed CDP mode for long-running applications. SkeletonKey launches an installed Edge or Chrome process itself, but does not launch it through Playwright. The browser is started with a dedicated persistent profile, a loopback-only debugging address, and an automatically selected debugging port. SkeletonKey then attaches through the same provider-neutral `IWebPageAdapter`.
+
+```json
+{
+  "engine": "chromium",
+  "connection": "cdp-managed",
+  "channel": "msedge",
+  "visibility": "headful",
+  "profile": "persistent",
+  "userDataDirectory": "%LOCALAPPDATA%\\SkeletonKey\\BrowserProfile",
+  "defaultTimeoutMilliseconds": 30000
+}
+```
+
+Managed CDP accepts only the installed-browser channels `msedge` and `chrome` in version 0.1. It requires a persistent profile and an explicit user-data directory. It never exposes the debugging service beyond loopback and uses Chromium's `DevToolsActivePort` handshake with `--remote-debugging-port=0`, avoiding a globally fixed debugging port. Arbitrary executable paths and arbitrary browser launch arguments are not accepted from workflow JSON.
+
+A `ManagedCdpBrowserHost` may be supplied through `PlaywrightPageProviderOptions`. The standalone host creates one host-lifetime instance and reuses it across recurring workflow occurrences, so a recurring schedule does not restart the browser between occurrences. If no host-lifetime owner is supplied, a one-shot runner owns the managed browser for that execution.
+
+The browser process is independent from the Playwright connection. Each workflow occurrence attaches and disconnects without closing the externally created browser context. The host-lifetime owner shuts down processes it started when the host exits. If a valid `DevToolsActivePort` endpoint already exists for the same profile, a restarted host can attach to it instead of attempting to start a second browser process.
+
+Managed CDP is a lifecycle and connection mode, not an anti-detection or stealth feature.
+
 ## Network interception
 
 When `network` is present in launch mode, the provider registers one browser-context route before page creation, blocks service workers, applies the bounded first-match policy described by [Web Network Interception 0.1](web-network-interception-0.1.md), and restores the route when storage-state import replaces an ephemeral context.
@@ -37,4 +62,4 @@ The provider implements runtime-resource recovery for launched ephemeral profile
 
 Recovery launches a new browser, creates a new context with the saved storage state, then reconstructs open pages by navigating to their captured absolute URLs. Every navigation is revalidated by `IWebNavigationPolicy`; an HTTP error response or policy rejection aborts recovery. Network interception is attached before page reconstruction.
 
-Persistent profiles, CDP-attached resources, and resources with pending dialogs are explicitly non-resumable. In-flight page operations, downloads, uploads, popup waits, and dialogs are never replayed. Storage state can contain sensitive authentication material, so hosts must protect checkpoint storage appropriately.
+Persistent profiles, externally attached CDP resources, managed-CDP resources, and resources with pending dialogs are explicitly non-resumable. In-flight page operations, downloads, uploads, popup waits, and dialogs are never replayed. Storage state can contain sensitive authentication material, so hosts must protect checkpoint storage appropriately.
