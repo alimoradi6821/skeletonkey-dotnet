@@ -44,6 +44,7 @@ public sealed class SkeletonKeyRunner
     private readonly TextWriter _output;
     private readonly TextWriter _error;
     private readonly IReadOnlyList<IWorkflowRuntimeResourceProvider> _hostResourceProviders;
+    private readonly PlaywrightPageProviderOptions _webPageProviderOptions;
     private RunnerOutputFormat _outputFormat;
     private bool _diagnostics;
 
@@ -52,12 +53,14 @@ public sealed class SkeletonKeyRunner
         TextReader input,
         TextWriter output,
         TextWriter error,
-        IReadOnlyList<IWorkflowRuntimeResourceProvider>? hostResourceProviders = null)
+        IReadOnlyList<IWorkflowRuntimeResourceProvider>? hostResourceProviders = null,
+        PlaywrightPageProviderOptions? webPageProviderOptions = null)
     {
         _input = input;
         _output = output;
         _error = error;
         _hostResourceProviders = Array.AsReadOnly([.. hostResourceProviders ?? []]);
+        _webPageProviderOptions = webPageProviderOptions ?? new PlaywrightPageProviderOptions();
     }
 
     /// <summary>Executes one command and returns a process-style exit code.</summary>
@@ -541,7 +544,7 @@ public sealed class SkeletonKeyRunner
 
     private IReadOnlyList<IWorkflowRuntimeResourceProvider> ComposeResourceProviders(SkeletonKeyPluginLoadResult plugins)
     {
-        IReadOnlyList<IWorkflowRuntimeResourceProvider> providers = [new PlaywrightPageResourceProvider(), .. _hostResourceProviders, .. plugins.ResourceProviders];
+        IReadOnlyList<IWorkflowRuntimeResourceProvider> providers = [new PlaywrightPageResourceProvider(_webPageProviderOptions), .. _hostResourceProviders, .. plugins.ResourceProviders];
         if (providers.GroupBy(static provider => provider.Kind, StringComparer.Ordinal).Any(static group => group.Count() > 1))
         {
             throw new SkeletonKeyPluginLoadException("SKP2210", "A plugin resource provider conflicts with a host provider.");
