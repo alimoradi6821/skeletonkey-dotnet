@@ -230,4 +230,103 @@ public sealed class PlaywrightProviderConfigurationTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new PlaywrightPageProviderOptions(cdpConnectTimeoutMilliseconds: 300001));
     }
 
+    /// <summary>Verifies managed CDP accepts a host-owned persistent Edge profile.</summary>
+    [Fact]
+    public void ConstraintsAcceptManagedCdp()
+    {
+        var parsed = PlaywrightPageConstraints.Parse(new JsonObject
+        {
+            ["engine"] = "chromium",
+            ["connection"] = "cdp-managed",
+            ["channel"] = "msedge",
+            ["visibility"] = "headful",
+            ["profile"] = "persistent",
+            ["userDataDirectory"] = "%LOCALAPPDATA%\\SkeletonKey\\ManagedCdp",
+        });
+
+        Assert.Equal("cdp-managed", parsed.Connection);
+        Assert.Equal("msedge", parsed.Channel);
+        Assert.True(parsed.Persistent);
+        Assert.False(parsed.Headless);
+    }
+
+    /// <summary>Verifies managed CDP requires an approved installed-browser channel.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("chromium")]
+    [InlineData("msedge-beta")]
+    public void ManagedCdpRequiresSupportedChannel(string? channel)
+    {
+        JsonObject constraints = new()
+        {
+            ["connection"] = "cdp-managed",
+            ["profile"] = "persistent",
+            ["userDataDirectory"] = "profile",
+        };
+        if (channel is not null)
+        {
+            constraints["channel"] = channel;
+        }
+
+        Assert.Throws<ArgumentException>(() => PlaywrightPageConstraints.Parse(constraints));
+    }
+
+    /// <summary>Verifies managed CDP requires a persistent explicit profile.</summary>
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public void ManagedCdpRequiresPersistentProfile(bool includeProfile, bool includeDirectory)
+    {
+        JsonObject constraints = new()
+        {
+            ["connection"] = "cdp-managed",
+            ["channel"] = "msedge",
+        };
+        if (includeProfile)
+        {
+            constraints["profile"] = "persistent";
+        }
+
+        if (includeDirectory)
+        {
+            constraints["userDataDirectory"] = "profile";
+        }
+
+        Assert.Throws<ArgumentException>(() => PlaywrightPageConstraints.Parse(constraints));
+    }
+
+    /// <summary>Verifies managed CDP chooses its own loopback endpoint.</summary>
+    [Fact]
+    public void ManagedCdpRejectsExplicitEndpoint()
+    {
+        Assert.Throws<ArgumentException>(() => PlaywrightPageConstraints.Parse(new JsonObject
+        {
+            ["connection"] = "cdp-managed",
+            ["channel"] = "msedge",
+            ["profile"] = "persistent",
+            ["userDataDirectory"] = "profile",
+            ["cdpEndpoint"] = "http://127.0.0.1:9222",
+        }));
+    }
+
+    /// <summary>Verifies managed CDP rejects context-only settings.</summary>
+    [Theory]
+    [InlineData("viewportWidth")]
+    [InlineData("viewportHeight")]
+    [InlineData("locale")]
+    [InlineData("userAgent")]
+    public void ManagedCdpRejectsContextCreationConstraints(string property)
+    {
+        JsonObject constraints = new()
+        {
+            ["connection"] = "cdp-managed",
+            ["channel"] = "msedge",
+            ["profile"] = "persistent",
+            ["userDataDirectory"] = "profile",
+        };
+        constraints[property] = property is "viewportWidth" or "viewportHeight" ? 1024 : "value";
+
+        Assert.Throws<ArgumentException>(() => PlaywrightPageConstraints.Parse(constraints));
+    }
+
 }
