@@ -85,9 +85,9 @@ public sealed record PlaywrightPageConstraints
             throw new ArgumentException("Browser engine must be chromium, firefox, or webkit.");
         }
 
-        if (result.Connection is not ("launch" or "cdp"))
+        if (result.Connection is not ("launch" or "cdp" or "cdp-managed"))
         {
-            throw new ArgumentException("Browser connection must be launch or cdp.");
+            throw new ArgumentException("Browser connection must be launch, cdp, or cdp-managed.");
         }
 
         if (!string.IsNullOrWhiteSpace(result.Channel) && result.Engine != "chromium")
@@ -123,6 +123,41 @@ public sealed record PlaywrightPageConstraints
             if (result.NetworkPolicy is not null)
             {
                 throw new ArgumentException("CDP attachment does not support declarative network interception.");
+            }
+        }
+        else if (result.Connection == "cdp-managed")
+        {
+            if (result.Engine != "chromium")
+            {
+                throw new ArgumentException("Managed CDP is supported only with the chromium engine.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(result.CdpEndpoint))
+            {
+                throw new ArgumentException("Managed CDP chooses a loopback endpoint automatically and does not accept cdpEndpoint.");
+            }
+
+            if (result.Channel is not ("msedge" or "chrome"))
+            {
+                throw new ArgumentException("Managed CDP requires channel msedge or chrome.");
+            }
+
+            if (!result.Persistent || string.IsNullOrWhiteSpace(result.UserDataDirectory))
+            {
+                throw new ArgumentException("Managed CDP requires a persistent profile and explicit user-data directory.");
+            }
+
+            if (constraints.ContainsKey("viewportWidth") ||
+                constraints.ContainsKey("viewportHeight") ||
+                constraints.ContainsKey("locale") ||
+                constraints.ContainsKey("userAgent"))
+            {
+                throw new ArgumentException("Managed CDP does not accept context-creation constraints.");
+            }
+
+            if (result.NetworkPolicy is not null)
+            {
+                throw new ArgumentException("Managed CDP does not support declarative network interception.");
             }
         }
         else
