@@ -20,11 +20,11 @@ Console.CancelKeyPress += cancelHandler;
 string? workspace = null;
 try
 {
-    var payload = await StandaloneEmbeddedPayload.MaterializeAsync(Assembly.GetExecutingAssembly(), shutdown.Token).ConfigureAwait(false);
+    StandaloneEmbeddedPayload payload = await StandaloneEmbeddedPayload.MaterializeAsync(Assembly.GetExecutingAssembly(), shutdown.Token).ConfigureAwait(false);
     workspace = payload.Workspace;
     var settings = StandaloneExecutionSettings.Parse(await File.ReadAllTextAsync(payload.SettingsPath, shutdown.Token).ConfigureAwait(false));
 
-    var startedAtUtc = DateTimeOffset.UtcNow;
+    DateTimeOffset startedAtUtc = DateTimeOffset.UtcNow;
     var cursor = new StandaloneScheduleCursor(settings.Schedule, startedAtUtc);
     long sequence = 0;
 
@@ -74,7 +74,7 @@ try
 
     while (!shutdown.IsCancellationRequested)
     {
-        var now = DateTimeOffset.UtcNow;
+        DateTimeOffset now = DateTimeOffset.UtcNow;
         DateTimeOffset due = cursor.GetNextDueAfter(now) ?? throw new InvalidOperationException("Recurring standalone schedule did not produce a future occurrence.");
         TimeSpan delay = due - now;
         if (delay > TimeSpan.Zero)
