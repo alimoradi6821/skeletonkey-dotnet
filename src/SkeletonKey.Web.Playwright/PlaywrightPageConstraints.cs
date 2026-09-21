@@ -12,6 +12,12 @@ public sealed record PlaywrightPageConstraints
     /// <summary>Gets the selected browser engine.</summary>
     public string Engine { get; init; } = "chromium";
 
+    /// <summary>Gets whether Playwright launches a browser or attaches over CDP.</summary>
+    public string Connection { get; init; } = "launch";
+
+    /// <summary>Gets the Chrome DevTools Protocol endpoint used by CDP attachment mode.</summary>
+    public string? CdpEndpoint { get; init; }
+
     /// <summary>Gets an optional installed Chromium channel such as msedge or chrome.</summary>
     public string? Channel { get; init; }
 
@@ -58,6 +64,8 @@ public sealed record PlaywrightPageConstraints
             result = property.Key switch
             {
                 "engine" => result.WithEngine(ReadString(property.Value, property.Key)),
+                "connection" => result with { Connection = ReadString(property.Value, property.Key) },
+                "cdpEndpoint" => result with { CdpEndpoint = ReadString(property.Value, property.Key) },
                 "channel" => result with { Channel = ReadString(property.Value, property.Key) },
                 "visibility" => result.WithVisibility(ReadString(property.Value, property.Key)),
                 "profile" => result.WithProfile(ReadString(property.Value, property.Key)),
@@ -77,14 +85,57 @@ public sealed record PlaywrightPageConstraints
             throw new ArgumentException("Browser engine must be chromium, firefox, or webkit.");
         }
 
+        if (result.Connection is not ("launch" or "cdp"))
+        {
+            throw new ArgumentException("Browser connection must be launch or cdp.");
+        }
+
         if (!string.IsNullOrWhiteSpace(result.Channel) && result.Engine != "chromium")
         {
             throw new ArgumentException("Browser channels are supported only with the chromium engine.");
         }
 
-        if (result.Persistent && string.IsNullOrWhiteSpace(result.UserDataDirectory))
+        if (result.Connection == "cdp")
         {
-            throw new ArgumentException("Persistent browser profiles require an explicit user-data directory.");
+            if (result.Engine != "chromium")
+            {
+                throw new ArgumentException("CDP attachment is supported only with the chromium engine.");
+            }
+
+            if (string.IsNullOrWhiteSpace(result.CdpEndpoint))
+            {
+                throw new ArgumentException("CDP attachment requires an explicit cdpEndpoint.");
+            }
+
+            ValidateCdpEndpoint(result.CdpEndpoint);
+            if (constraints.ContainsKey("channel") ||
+                constraints.ContainsKey("visibility") ||
+                constraints.ContainsKey("profile") ||
+                constraints.ContainsKey("userDataDirectory") ||
+                constraints.ContainsKey("viewportWidth") ||
+                constraints.ContainsKey("viewportHeight") ||
+                constraints.ContainsKey("locale") ||
+                constraints.ContainsKey("userAgent"))
+            {
+                throw new ArgumentException("CDP attachment cannot use browser launch or context-creation constraints.");
+            }
+
+            if (result.NetworkPolicy is not null)
+            {
+                throw new ArgumentException("CDP attachment does not support declarative network interception.");
+            }
+        }
+        else
+        {
+            if (!string.IsNullOrWhiteSpace(result.CdpEndpoint))
+            {
+                throw new ArgumentException("cdpEndpoint is valid only when connection is cdp.");
+            }
+
+            if (result.Persistent && string.IsNullOrWhiteSpace(result.UserDataDirectory))
+            {
+                throw new ArgumentException("Persistent browser profiles require an explicit user-data directory.");
+            }
         }
 
         return result;
@@ -113,6 +164,15 @@ public sealed record PlaywrightPageConstraints
             "persistent" => this with { Persistent = true },
             _ => throw new ArgumentException("Browser profile must be any, ephemeral, or persistent."),
         };
+    }
+
+    private static void ValidateCdpEndpoint(string endpoint)
+    {
+        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out Uri? uri) ||
+            uri.Scheme is not ("http" or "https" or "ws" or "wss"))
+        {
+            throw new ArgumentException("cdpEndpoint must be an absolute HTTP(S) or WebSocket URL.");
+        }
     }
 
     private static string ReadString(JsonNode? value, string property)

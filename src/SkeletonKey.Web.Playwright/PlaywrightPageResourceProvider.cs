@@ -83,10 +83,15 @@ public sealed class PlaywrightPageResourceProvider : IWorkflowRuntimeResourceRec
             playwright?.Dispose();
             throw;
         }
+        catch (WebAutomationException)
+        {
+            playwright?.Dispose();
+            throw;
+        }
         catch (Exception exception)
         {
             playwright?.Dispose();
-            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.BrowserLaunchFailed, "Browser launch failed.", "create"), exception);
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.BrowserLaunchFailed, "Browser launch or connection failed.", "create"), exception);
         }
     }
 }

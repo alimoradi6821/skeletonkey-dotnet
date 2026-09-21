@@ -138,4 +138,96 @@ public sealed class PlaywrightProviderConfigurationTests
 
         Assert.Throws<ArgumentException>(() => PlaywrightPageConstraints.Parse(new JsonObject { ["network"] = network }));
     }
+    /// <summary>Verifies CDP attachment parses as an explicit Chromium-only connection mode.</summary>
+    [Fact]
+    public void ConstraintsAcceptCdpAttachment()
+    {
+        PlaywrightPageConstraints parsed = PlaywrightPageConstraints.Parse(new JsonObject
+        {
+            ["engine"] = "chromium",
+            ["connection"] = "cdp",
+            ["cdpEndpoint"] = "http://127.0.0.1:9222",
+            ["defaultTimeoutMilliseconds"] = 45000,
+        });
+
+        Assert.Equal("cdp", parsed.Connection);
+        Assert.Equal("http://127.0.0.1:9222", parsed.CdpEndpoint);
+        Assert.Equal(45000, parsed.DefaultTimeoutMilliseconds);
+    }
+
+    /// <summary>Verifies CDP attachment requires an explicit endpoint.</summary>
+    [Fact]
+    public void CdpAttachmentRequiresEndpoint()
+    {
+        Assert.Throws<ArgumentException>(() => PlaywrightPageConstraints.Parse(new JsonObject
+        {
+            ["connection"] = "cdp",
+        }));
+    }
+
+    /// <summary>Verifies CDP attachment is Chromium-only.</summary>
+    [Fact]
+    public void CdpAttachmentRejectsNonChromiumEngines()
+    {
+        Assert.Throws<ArgumentException>(() => PlaywrightPageConstraints.Parse(new JsonObject
+        {
+            ["engine"] = "firefox",
+            ["connection"] = "cdp",
+            ["cdpEndpoint"] = "http://127.0.0.1:9222",
+        }));
+    }
+
+    /// <summary>Verifies externally managed CDP browsers cannot receive launch-only constraints.</summary>
+    [Theory]
+    [InlineData("channel")]
+    [InlineData("visibility")]
+    [InlineData("profile")]
+    [InlineData("userDataDirectory")]
+    [InlineData("viewportWidth")]
+    [InlineData("viewportHeight")]
+    [InlineData("locale")]
+    [InlineData("userAgent")]
+    public void CdpAttachmentRejectsLaunchOnlyConstraints(string property)
+    {
+        JsonObject constraints = new()
+        {
+            ["connection"] = "cdp",
+            ["cdpEndpoint"] = "http://127.0.0.1:9222",
+        };
+        constraints[property] = property switch
+        {
+            "viewportWidth" or "viewportHeight" => 1024,
+            "visibility" => "headful",
+            "profile" => "persistent",
+            "userDataDirectory" => "profile",
+            _ => "value",
+        };
+
+        Assert.Throws<ArgumentException>(() => PlaywrightPageConstraints.Parse(constraints));
+    }
+
+    /// <summary>Verifies CDP endpoints use supported endpoint schemes.</summary>
+    [Theory]
+    [InlineData("file:///tmp/devtools")]
+    [InlineData("not-a-url")]
+    public void CdpAttachmentRejectsUnsupportedEndpoints(string endpoint)
+    {
+        Assert.Throws<ArgumentException>(() => PlaywrightPageConstraints.Parse(new JsonObject
+        {
+            ["connection"] = "cdp",
+            ["cdpEndpoint"] = endpoint,
+        }));
+    }
+
+    /// <summary>Verifies remote CDP is denied by default and connection timeout is bounded.</summary>
+    [Fact]
+    public void ProviderOptionsUseSafeCdpDefaults()
+    {
+        PlaywrightPageProviderOptions options = new();
+
+        Assert.False(options.AllowRemoteCdpEndpoints);
+        Assert.Equal(30000, options.CdpConnectTimeoutMilliseconds);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new PlaywrightPageProviderOptions(cdpConnectTimeoutMilliseconds: 300001));
+    }
+
 }

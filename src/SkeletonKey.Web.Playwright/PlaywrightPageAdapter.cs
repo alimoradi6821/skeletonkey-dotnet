@@ -25,6 +25,9 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
     private readonly PlaywrightNetworkInterceptor? _networkInterceptor;
     private readonly string _testIdAttribute;
     private readonly int _defaultTimeoutMilliseconds;
+    private readonly bool _ownsContext;
+    private readonly bool _allowContextReplacement;
+    private readonly bool _supportsCheckpointRecovery;
     private IBrowserContext _context;
     private string _activePageId = _primaryPageId;
     private int _nextPageNumber = 2;
@@ -35,11 +38,22 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
     /// Initializes a Playwright page adapter.
     /// </summary>
     public PlaywrightPageAdapter(IBrowser? browser, IBrowserContext context, BrowserNewContextOptions contextOptions, IPage page, IWebNavigationPolicy navigationPolicy, string testIdAttribute, int defaultTimeoutMilliseconds)
-        : this(browser, context, contextOptions, page, navigationPolicy, testIdAttribute, defaultTimeoutMilliseconds, null)
+        : this(browser, context, contextOptions, page, navigationPolicy, testIdAttribute, defaultTimeoutMilliseconds, null, ownsContext: true, allowContextReplacement: true, supportsCheckpointRecovery: true)
     {
     }
 
-    internal PlaywrightPageAdapter(IBrowser? browser, IBrowserContext context, BrowserNewContextOptions contextOptions, IPage page, IWebNavigationPolicy navigationPolicy, string testIdAttribute, int defaultTimeoutMilliseconds, PlaywrightNetworkInterceptor? networkInterceptor)
+    internal PlaywrightPageAdapter(
+        IBrowser? browser,
+        IBrowserContext context,
+        BrowserNewContextOptions contextOptions,
+        IPage page,
+        IWebNavigationPolicy navigationPolicy,
+        string testIdAttribute,
+        int defaultTimeoutMilliseconds,
+        PlaywrightNetworkInterceptor? networkInterceptor,
+        bool ownsContext = true,
+        bool allowContextReplacement = true,
+        bool supportsCheckpointRecovery = true)
     {
         _browser = browser;
         _context = context;
@@ -48,6 +62,9 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
         _networkInterceptor = networkInterceptor;
         _testIdAttribute = testIdAttribute;
         _defaultTimeoutMilliseconds = defaultTimeoutMilliseconds;
+        _ownsContext = ownsContext;
+        _allowContextReplacement = allowContextReplacement;
+        _supportsCheckpointRecovery = supportsCheckpointRecovery;
         _pages[_primaryPageId] = new PageSlot(_primaryPageId, page, _contextGeneration);
     }
 
@@ -68,7 +85,10 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
         _dialogs.Clear();
         try
         {
-            await _context.CloseAsync().ConfigureAwait(false);
+            if (_ownsContext)
+            {
+                await _context.CloseAsync().ConfigureAwait(false);
+            }
         }
         finally
         {
@@ -85,7 +105,8 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
     internal async ValueTask<WorkflowRuntimeResourceCheckpointState?> CaptureCheckpointStateAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (_browser is null ||
+        if (!_supportsCheckpointRecovery ||
+            _browser is null ||
             _dialogs.Count > 0 ||
             _pages.Count > PlaywrightPageCheckpointState.MaximumPages ||
             _stalePageIds.Count > PlaywrightPageCheckpointState.MaximumPages ||
@@ -679,9 +700,9 @@ public sealed class PlaywrightPageAdapter : IWebPageAdapter
     public async ValueTask ImportStorageStateAsync(IWorkflowArtifactStore artifactStore, WorkflowArtifactReference artifact, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (_browser is null)
+        if (!_allowContextReplacement || _browser is null)
         {
-            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.StorageStateImportFailed, "Storage-state import requires an ephemeral browser context.", "importStorageState"));
+            throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.StorageStateImportFailed, "Storage-state import requires an owned ephemeral browser context.", "importStorageState"));
         }
 
         WorkflowArtifactMetadata metadata = await artifactStore.GetMetadataAsync(artifact, cancellationToken).ConfigureAwait(false);

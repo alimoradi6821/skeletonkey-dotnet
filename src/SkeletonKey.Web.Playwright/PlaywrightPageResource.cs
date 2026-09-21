@@ -50,6 +50,11 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
             throw new ArgumentException("Persistent Playwright contexts do not support checkpoint reconstruction.", nameof(checkpointState));
         }
 
+        if (recovery is not null && constraints.Connection == "cdp")
+        {
+            throw new ArgumentException("CDP-attached browser resources do not support checkpoint reconstruction.", nameof(checkpointState));
+        }
+
         IBrowserType browserType = constraints.Engine switch
         {
             "firefox" => playwright.Firefox,
@@ -71,7 +76,30 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
 
         IBrowser? browser = null;
         IBrowserContext context;
-        if (constraints.Persistent)
+        bool ownsContext = true;
+        bool allowContextReplacement = true;
+        bool supportsCheckpointRecovery = true;
+        if (constraints.Connection == "cdp")
+        {
+            ValidateCdpEndpointPolicy(constraints.CdpEndpoint!, options);
+            try
+            {
+                browser = await playwright.Chromium.ConnectOverCDPAsync(
+                    constraints.CdpEndpoint!,
+                    new BrowserTypeConnectOverCDPOptions { Timeout = options.CdpConnectTimeoutMilliseconds }).ConfigureAwait(false);
+            }
+            catch (PlaywrightException exception)
+            {
+                throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.BrowserConnectionFailed, "CDP browser connection failed.", "connect"), exception);
+            }
+
+            context = browser.Contexts.FirstOrDefault()
+                ?? throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.BrowserConnectionFailed, "CDP browser did not expose a default context.", "connect"));
+            ownsContext = false;
+            allowContextReplacement = false;
+            supportsCheckpointRecovery = false;
+        }
+        else if (constraints.Persistent)
         {
             string userDataDirectory = Environment.ExpandEnvironmentVariables(constraints.UserDataDirectory!);
             context = await browserType.LaunchPersistentContextAsync(
@@ -100,13 +128,33 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
         }
 
         IPage page = context.Pages.Count > 0 ? context.Pages[0] : await context.NewPageAsync().ConfigureAwait(false);
-        PlaywrightPageAdapter adapter = new(browser, context, contextOptions, page, options.NavigationPolicy, options.TestIdAttribute, constraints.DefaultTimeoutMilliseconds, networkInterceptor);
+        PlaywrightPageAdapter adapter = new(
+            browser,
+            context,
+            contextOptions,
+            page,
+            options.NavigationPolicy,
+            options.TestIdAttribute,
+            constraints.DefaultTimeoutMilliseconds,
+            networkInterceptor,
+            ownsContext,
+            allowContextReplacement,
+            supportsCheckpointRecovery);
         if (recovery is not null)
         {
             await adapter.RestoreCheckpointStateAsync(recovery, cancellationToken).ConfigureAwait(false);
         }
 
         return new PlaywrightPageResource(request.ResourceName, request.Definition.Access, playwright, browser, capabilities, adapter, options.ArtifactStore);
+    }
+
+    private static void ValidateCdpEndpointPolicy(string endpoint, PlaywrightPageProviderOptions options)
+    {
+        Uri uri = new(endpoint, UriKind.Absolute);
+        if (!options.AllowRemoteCdpEndpoints && !uri.IsLoopback)
+        {
+            throw new ArgumentException("Remote CDP endpoints are disabled by the host.");
+        }
     }
 
     /// <inheritdoc />
