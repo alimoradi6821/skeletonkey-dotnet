@@ -18,9 +18,20 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
     private readonly PlaywrightPageAdapter _adapter;
     private readonly IWorkflowArtifactStore? _artifactStore;
     private readonly IReadOnlyList<string> _capabilities;
+    private readonly bool _ownsBrowser;
+    private readonly ManagedCdpBrowserHost? _ownedManagedCdpBrowserHost;
     private bool _disposed;
 
-    private PlaywrightPageResource(string resourceName, WorkflowResourceAccessMode access, IPlaywright playwright, IBrowser? browser, IReadOnlyList<string> capabilities, PlaywrightPageAdapter adapter, IWorkflowArtifactStore? artifactStore)
+    private PlaywrightPageResource(
+        string resourceName,
+        WorkflowResourceAccessMode access,
+        IPlaywright playwright,
+        IBrowser? browser,
+        IReadOnlyList<string> capabilities,
+        PlaywrightPageAdapter adapter,
+        IWorkflowArtifactStore? artifactStore,
+        bool ownsBrowser,
+        ManagedCdpBrowserHost? ownedManagedCdpBrowserHost)
     {
         ResourceName = resourceName;
         Access = access;
@@ -29,6 +40,8 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
         _capabilities = new ReadOnlyCollection<string>([.. capabilities]);
         _adapter = adapter;
         _artifactStore = artifactStore;
+        _ownsBrowser = ownsBrowser;
+        _ownedManagedCdpBrowserHost = ownedManagedCdpBrowserHost;
     }
 
     /// <summary>
@@ -50,7 +63,7 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
             throw new ArgumentException("Persistent Playwright contexts do not support checkpoint reconstruction.", nameof(checkpointState));
         }
 
-        if (recovery is not null && constraints.Connection == "cdp")
+        if (recovery is not null && constraints.Connection is "cdp" or "cdp-managed")
         {
             throw new ArgumentException("CDP-attached browser resources do not support checkpoint reconstruction.", nameof(checkpointState));
         }
@@ -76,20 +89,60 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
 
         IBrowser? browser = null;
         IBrowserContext context;
+        bool ownsBrowser = false;
         bool ownsContext = true;
         bool allowContextReplacement = true;
         bool supportsCheckpointRecovery = true;
-        if (constraints.Connection == "cdp")
+        ManagedCdpBrowserHost? ownedManagedCdpBrowserHost = null;
+        if (constraints.Connection is "cdp" or "cdp-managed")
         {
-            ValidateCdpEndpointPolicy(constraints.CdpEndpoint!, options);
+            string endpoint;
+            if (constraints.Connection == "cdp")
+            {
+                ValidateCdpEndpointPolicy(constraints.CdpEndpoint!, options);
+                endpoint = constraints.CdpEndpoint!;
+            }
+            else
+            {
+                ManagedCdpBrowserHost managedCdpBrowserHost = options.ManagedCdpBrowserHost ?? new ManagedCdpBrowserHost();
+                if (options.ManagedCdpBrowserHost is null)
+                {
+                    ownedManagedCdpBrowserHost = managedCdpBrowserHost;
+                }
+
+                try
+                {
+                    endpoint = await managedCdpBrowserHost.GetOrStartEndpointAsync(
+                        constraints,
+                        options.CdpConnectTimeoutMilliseconds,
+                        cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception exception) when (exception is not OperationCanceledException and not WebAutomationException)
+                {
+                    if (ownedManagedCdpBrowserHost is not null)
+                    {
+                        await ownedManagedCdpBrowserHost.DisposeAsync().ConfigureAwait(false);
+                    }
+
+                    throw new WebAutomationException(
+                        new WebOperationError(WebAutomationErrorCodes.BrowserConnectionFailed, "Managed CDP browser startup failed.", "connect"),
+                        exception);
+                }
+            }
+
             try
             {
                 browser = await playwright.Chromium.ConnectOverCDPAsync(
-                    constraints.CdpEndpoint!,
+                    endpoint,
                     new BrowserTypeConnectOverCDPOptions { Timeout = options.CdpConnectTimeoutMilliseconds }).ConfigureAwait(false);
             }
             catch (PlaywrightException exception)
             {
+                if (ownedManagedCdpBrowserHost is not null)
+                {
+                    await ownedManagedCdpBrowserHost.DisposeAsync().ConfigureAwait(false);
+                }
+
                 throw new WebAutomationException(new WebOperationError(WebAutomationErrorCodes.BrowserConnectionFailed, "CDP browser connection failed.", "connect"), exception);
             }
 
@@ -117,6 +170,7 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
         else
         {
             browser = await browserType.LaunchAsync(new BrowserTypeLaunchOptions { Channel = constraints.Channel, Headless = constraints.Headless }).ConfigureAwait(false);
+            ownsBrowser = true;
             context = await browser.NewContextAsync(contextOptions).ConfigureAwait(false);
         }
 
@@ -145,7 +199,16 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
             await adapter.RestoreCheckpointStateAsync(recovery, cancellationToken).ConfigureAwait(false);
         }
 
-        return new PlaywrightPageResource(request.ResourceName, request.Definition.Access, playwright, browser, capabilities, adapter, options.ArtifactStore);
+        return new PlaywrightPageResource(
+            request.ResourceName,
+            request.Definition.Access,
+            playwright,
+            browser,
+            capabilities,
+            adapter,
+            options.ArtifactStore,
+            ownsBrowser,
+            ownedManagedCdpBrowserHost);
     }
 
     private static void ValidateCdpEndpointPolicy(string endpoint, PlaywrightPageProviderOptions options)
@@ -195,12 +258,16 @@ public sealed class PlaywrightPageResource : IWorkflowRuntimeResourceInstance, I
         _disposed = true;
         List<Exception> errors = [];
         await TryDisposeAsync(async () => await _adapter.DisposeAsync().ConfigureAwait(false), errors).ConfigureAwait(false);
-        if (_browser is not null)
+        if (_ownsBrowser && _browser is not null)
         {
             await TryDisposeAsync(async () => await _browser.CloseAsync().ConfigureAwait(false), errors).ConfigureAwait(false);
         }
 
         _playwright.Dispose();
+        if (_ownedManagedCdpBrowserHost is not null)
+        {
+            await TryDisposeAsync(async () => await _ownedManagedCdpBrowserHost.DisposeAsync().ConfigureAwait(false), errors).ConfigureAwait(false);
+        }
         if (errors.Count == 1)
         {
             throw errors[0];
